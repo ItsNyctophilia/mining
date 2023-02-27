@@ -13,13 +13,10 @@ class TestDrone(unittest.TestCase):
         capacity = 5
         moves = 1
         self.drone_ = Drone(health, capacity, moves)
+        self.scout_ = ScoutDrone(health, capacity, moves)
 
     def test_drone_init(self):
         self.assertIsInstance(self.drone_, Drone)
 
     def test_scout_init(self):
-        health = 1
-        capacity = 5
-        moves = 1
-        self.drone_ = ScoutDrone(health, capacity, moves)
-        self.assertIsInstance(self.drone_, ScoutDrone)
+        self.assertIsInstance(self.scout_, ScoutDrone)

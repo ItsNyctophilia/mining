@@ -20,3 +20,10 @@ class TestDrone(unittest.TestCase):
 
     def test_scout_init(self):
         self.assertIsInstance(self.scout_, ScoutDrone)
+
+    def test_miner_init(self):
+        health = 1
+        capacity = 5
+        moves = 1
+        miner = MinerDrone(health, capacity, moves)
+        self.assertIsInstance(miner, MinerDrone)

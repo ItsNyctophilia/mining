@@ -25,3 +25,14 @@ class TestDrone(unittest.TestCase):
 
     def test_miner_init(self):
         self.assertIsInstance(self.miner_, MinerDrone)
+
+    def test_drones_action(self):
+        context = None
+        directions = ["NORTH", "SOUTH", "EAST", "WEST"]
+        for _ in range(50):
+            result_drone = self.drone_.action(context)
+            self.assertTrue(result_drone in directions, f"{result_drone}")
+            result_scout = self.drone_.action(context)
+            self.assertTrue(result_scout in directions, f"{result_scout}")
+            result_miner = self.drone_.action(context)
+            self.assertTrue(result_miner in directions, f"{result_miner}")

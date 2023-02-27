@@ -2,6 +2,7 @@
 import unittest
 
 from zerg.drones.drone import Drone
+from zerg.drones.scout import ScoutDrone
 
 
 class TestDrone(unittest.TestCase):

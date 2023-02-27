@@ -1,6 +1,8 @@
 """Test class for drone zerg units."""
 import unittest
 
+from zerg.drones.drone import Drone
+
 
 class TestDrone(unittest.TestCase):
     """Test class for drone zerg units."""

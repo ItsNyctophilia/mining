@@ -1,4 +1,5 @@
 """Test class for drone zerg units."""
+import random
 import unittest
 
 from zerg.drones.drone import Drone
@@ -36,3 +37,13 @@ class TestDrone(unittest.TestCase):
             self.assertTrue(result_scout in directions, f"{result_scout}")
             result_miner = self.drone_.action(context)
             self.assertTrue(result_miner in directions, f"{result_miner}")
+
+    def test_dynamic_drone(self):
+        for _ in range(50):
+            health = random.randrange(10, 101, 10)
+            capacity = random.randrange(5, 51, 5)
+            moves = random.randrange(1, 11, 5)
+            Blueprint = Drone.drone_blueprint(health, capacity, moves)
+            self.assertIsInstance(Blueprint, type)
+            drone = Blueprint()
+            self.assertIsInstance(drone, Drone)

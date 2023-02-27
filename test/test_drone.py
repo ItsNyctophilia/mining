@@ -15,6 +15,7 @@ class TestDrone(unittest.TestCase):
         moves = 1
         self.drone_ = Drone(health, capacity, moves)
         self.scout_ = ScoutDrone(health, capacity, moves)
+        self.miner_ = MinerDrone(health, capacity, moves)
 
     def test_drone_init(self):
         self.assertIsInstance(self.drone_, Drone)
@@ -23,8 +24,4 @@ class TestDrone(unittest.TestCase):
         self.assertIsInstance(self.scout_, ScoutDrone)
 
     def test_miner_init(self):
-        health = 1
-        capacity = 5
-        moves = 1
-        miner = MinerDrone(health, capacity, moves)
-        self.assertIsInstance(miner, MinerDrone)
+        self.assertIsInstance(self.miner_, MinerDrone)

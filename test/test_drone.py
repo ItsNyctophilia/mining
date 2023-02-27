@@ -10,7 +10,7 @@ class TestDrone(unittest.TestCase):
     """Test class for drone zerg units."""
 
     def setUp(self) -> None:
-        health = 1
+        health = 40
         capacity = 5
         moves = 1
         self.drone_ = Drone(health, capacity, moves)

@@ -1,7 +1,7 @@
 """Parent class for all drone zerg units."""
 from __future__ import annotations
 
-from typing import Optional, Type
+from typing import List, Optional, Type
 
 from utils import Context, Coordinate, Directions
 from zerg.zerg import Zerg
@@ -19,8 +19,7 @@ class Drone(Zerg):
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
-        self._dest: Optional[Coordinate] = None
-        # TODO: temp attribute, will eventually keep a list of path travelled
+        self._path: Optional[List[Coordinate]] = None
         self._steps = 0
 
     @property
@@ -42,12 +41,23 @@ class Drone(Zerg):
         return self._moves
 
     @property
+    def path(self) -> Optional[List[Coordinate]]:
+        """The path this drone will take to its destination.
+
+        The destination of this drone will always be the final element of this
+        list. Setting the path implicitly sets the destination.
+        """
+        return self._path
+
+    @property
     def dest(self) -> Optional[Coordinate]:
         """The coordinates of the current intended destination of this drone.
 
         This value will automatically be set when the path is updated.
         """
-        return self._dest
+        if self._path:
+            return self._path[-1]
+        return None
 
     @classmethod
     def drone_blueprint(

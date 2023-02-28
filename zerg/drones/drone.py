@@ -38,3 +38,7 @@ class Drone(Zerg):
                 "max_moves": moves,
             },
         )
+
+    @classmethod
+    def get_init_cost(cls) -> int:
+        return 0

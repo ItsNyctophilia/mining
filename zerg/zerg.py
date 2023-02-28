@@ -1,6 +1,4 @@
 """Abstract base class for all zerg units"""
-
-
 from abc import ABC
 from enum import Enum
 

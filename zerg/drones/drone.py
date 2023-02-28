@@ -1,4 +1,8 @@
 """Parent class for all drone zerg units."""
+from __future__ import annotations
+
+from typing import Type
+
 from zerg.zerg import Zerg
 
 
@@ -22,5 +26,15 @@ class Drone(Zerg):
         self._moves = self.max_moves
 
     @classmethod
-    def drone_blueprint(cls, health: int, capacity: int, moves: int):
-        return None
+    def drone_blueprint(
+        cls, health: int, capacity: int, moves: int
+    ) -> Type[Drone]:
+        return type(
+            "CustomDrone",
+            (Drone,),
+            {
+                "max_health": health,
+                "max_capacity": capacity,
+                "max_moves": moves,
+            },
+        )

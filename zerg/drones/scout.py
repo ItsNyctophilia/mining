@@ -1,6 +1,4 @@
 """Scout drone, whose primary purpose is revealing the map."""
-
-
 from zerg.drones.drone import Drone
 
 

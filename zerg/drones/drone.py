@@ -40,5 +40,9 @@ class Drone(Zerg):
         )
 
     @classmethod
-    def get_init_cost(cls) -> int:
-        return 0
+    def get_init_cost(cls) -> float:
+        return (
+            (cls.max_health / 10)
+            + (cls.max_capacity / 5)
+            + (cls.max_moves * 3)
+        )

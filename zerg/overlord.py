@@ -18,10 +18,14 @@ class Overlord(Zerg):
         self.dashboard = dashboard
         self.maps = {}    # a map id as key and summary as value
         self.drones = {}  # a drone id as key and drone as value
-        self._minerals = {}  # a list of the coordinates of minerals
+        self._minerals = []  # a list of the coordinates of minerals
+        self._deployed = {}  # a drone id as key and map id as value
         for value in range(3):
+            # Create three MinerDrones and three ScoutDrones
             self._create_drone("Miner")
             self._create_drone("Scout")
+        for drone in self.drones:
+            self._deployed[id(self.drones[drone])] = 0
 
     def _create_drone(self, type: str):
         drone_types = {"Drone": Drone(),
@@ -30,8 +34,36 @@ class Overlord(Zerg):
         new_drone = drone_types[type]
         self.drones[id(new_drone)] = new_drone
 
-    def add_map(self, map_id, summary):
+    def add_map(self, map_id: int, summary: float):
         self.maps[map_id] = summary
 
+    def _select_map(self):
+        zerg_per_map = {}
+        for map in self.maps.keys():
+            zerg_per_map.update({map: 0})
+        for drone in self._deployed.keys():
+            current_map = self._deployed[drone]
+            if not current_map:
+                continue
+            zerg_per_map[current_map] += 1
+        return min(zerg_per_map, key=zerg_per_map.get)
+
+    def _set_drone_path(self, drone_id: int):
+        # TODO: find path using Dijkstra's
+        pass
+
     def action(self, context=None):
-        return None
+        action = None
+        # Deploy all scouts at start
+        for drone in self.drones.values():
+            if isinstance(drone, ScoutDrone):
+                if not self._deployed[id(drone)]:
+                    continue
+                action = f"DEPLOY {id(drone)} {self._select_map()}"
+                break
+
+        for drone in self.drones.values():
+            if drone not in self._deployed or drone.path:
+                continue
+            self.set_drone_path()
+        return action

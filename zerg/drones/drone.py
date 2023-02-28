@@ -1,7 +1,7 @@
 """Parent class for all drone zerg units."""
 from __future__ import annotations
 
-from typing import Type
+from typing import Optional, Type
 
 from utils import Context, Coordinate, Directions
 from zerg.zerg import Zerg
@@ -19,6 +19,7 @@ class Drone(Zerg):
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
+        self._dest: Optional[Coordinate] = None
         # TODO: temp attribute, will eventually keep a list of path travelled
         self._steps = 0
 
@@ -39,6 +40,10 @@ class Drone(Zerg):
             int: The drone's max moves.
         """
         return self._moves
+
+    @property
+    def dest(self) -> Optional[Coordinate]:
+        return self._dest
 
     @classmethod
     def drone_blueprint(

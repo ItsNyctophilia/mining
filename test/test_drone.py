@@ -64,3 +64,12 @@ class TestDrone(unittest.TestCase):
                 self.custom_drone_stats_[drone_n][self.INIT], type
             )
             self.assertIsInstance(self.custom_drones_[drone_n], Drone)
+
+    def test_drone_cost(self):
+        for drone_n in range(self.custom_drone_count_):
+            check_cost = self.custom_drones_[drone_n].get_init_cost()
+            health = self.custom_drone_stats_[drone_n][self.HEALTH]
+            capacity = self.custom_drone_stats_[drone_n][self.CAPACITY]
+            moves = self.custom_drone_stats_[drone_n][self.MOVES]
+            total_cost = (health / 10) + (capacity / 5) + (moves * 3)
+            self.assertEqual(check_cost, total_cost)

@@ -22,6 +22,7 @@ class TestDrone(unittest.TestCase):
     INIT = 3
 
     def setUp(self) -> None:
+        self.phony_context_ = Context()
         self.base_drone_ = Drone()
         self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()
@@ -48,14 +49,13 @@ class TestDrone(unittest.TestCase):
         self.assertIsInstance(self.base_miner_, MinerDrone)
 
     def test_drones_action(self):
-        context = Context()
         directions = ["NORTH", "SOUTH", "EAST", "WEST"]
         for _ in range(50):
-            result_drone = self.base_drone_.action(context)
+            result_drone = self.base_drone_.action(self.phony_context_)
             self.assertTrue(result_drone in directions, f"{result_drone}")
-            result_scout = self.base_drone_.action(context)
+            result_scout = self.base_drone_.action(self.phony_context_)
             self.assertTrue(result_scout in directions, f"{result_scout}")
-            result_miner = self.base_drone_.action(context)
+            result_miner = self.base_drone_.action(self.phony_context_)
             self.assertTrue(result_miner in directions, f"{result_miner}")
 
     def test_dynamic_drone(self):

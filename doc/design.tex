@@ -1,0 +1,132 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+
+\begin{document}
+
+\begin{titlepage}
+%https://www.overleaf.com/project/63fcda2d47db2df20619255b
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\Large University of Maryland Baltimore Campus}\\[1.5cm] % Name of your university/college
+\textsc{\Large Tool Developer Qualification Course}\\[0.5cm] % Major heading such as course name
+\textsc{\large Josh Carroll, James Viner, Raymone Miller}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Zerg Mining Expedition\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+
+\includegraphics[width=10cm, height=7cm]{logo}
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+%https://www.overleaf.com/project/63fcda2d47db2df20619255b
+
+\end{titlepage}
+\tableofcontents
+\newpage
+
+
+\section{Project Summary}
+The program is designed to be an API which will help a developer in coding an actual program. This API will consist of Zerg overlords and Zerg Drones. The overlords will send drones out upon mining expeditions to collect and bring back minerals that the Zerg race need to survive. As these drones are deployed and explore the map they will suggest a route that is the best path to the minerals according to the drone's current knowledge of the map.
+\section{Features Targeted}
+\subsection{Map}
+The program will be able to read maps, that will have certain mineral densities. These mineral densities will detail to the zerg overlord, How much minerals there are overall in the map. These maps will also have hazards to the drones such as walls and puddles of acids.
+\subsection{Drones}
+Drones in this program will explore the maps and collect minerals on the behalf of the overlord. While exploring the map after being deployed they will endure hazards such as acid and puddles and will return not only minerals to the Zerg Overlord that they work for but also the next desired position based off knowledge they currently hold of the map.
+\subsection{Overlord}
+The Overlord will handle the movement of drones, from deployment into the map, movement around the map and return from the map. Based off knowledge returned from the drones, the overlord will make the decision they seem best. If the Overlord does not make their decision within one second(they are on a tight schedule) their move will be skipped.
+\newpage
+\subsection{Refined Mineral}
+Refined minerals are what the entire program will revolve around. The drones will collect refined minerals for the Overlord and refined minerals will be used in the production of not only normal drones but other classes of drones as well. For every 10 points of health a drone will have it will cost 1 refined mineral. For every 5 units of capacity the drone will have it will cost 1 mineral. For every 1 move that the drone will have it will cost 3 minerals.
+\subsection{Dashboard}
+The dashboard will be what the user uses to see the full context of the map, It will display the map with specific items representing hazards among other things that may prove beneficial for the overlord. A "\#" symbol represents a wall, a "\_" represents a deployment zone and "*" represents minerals. These representations will be among others detailed in the map description page of the rubric.
+\subsection{Path Finding Algorithm}
+A path finding algorithm will be needed to best find a way to reach specific minerals in a map. This will most likely be Dijkstra's algorithm, however if we find implementation easier then thought then we can implement A* algorithm. This will require heavy testing as it will serve as the foundation of the program.
+\subsection{Map Context}
+The map context is what the drone object will return to the overlord at the end of a tick. This will show what is at either direction of the drone and where the drone currently is on the map with an X and Y coordinate.
+\newpage
+\section{Architecture}
+\subsection{Data}
+The file will read in the files initially as a string. Their will be a Zerg parent class. The Overlord class and the Drone class will inherit from that Zerg parent class. There will also be a dashboard class that will be responsible for drone movements and their surroundings. This class will be present in the GUI.
+\section{Significant Functions}
+
+\begin{lstlisting}[basicstyle=\large]
+
+Overlord.build_drone(health, capacity, moves)
+\end{lstlisting}
+\large{This method takes in a health integer, capacity integer and a moves integer as a parameter and builds a drone.}\\
+
+\begin{lstlisting}[basicstyle=\large]
+Overlord.add_map(map_id, summary)
+\end{lstlisting}
+\large{This method registers an identifier for a map with the Overlord, along with a summary of the map}\\
+\begin{lstlisting}[basicstyle=\large]
+Overlord.action(context)
+\end{lstlisting}
+\large{This method takes a map context object as parameter and returns a value representing the action taken}\\
+\newpage
+\begin{lstlisting}[basicstyle=\large]
+Overlord.remove_drone(drone)
+\end{lstlisting}
+\large{This function removes a drone from the game Overlord's inventory, usually when said drone is dead.}\\
+
+\begin{lstlisting}[basicstyle=\large]
+drone.action(context)
+\end{lstlisting}
+\large{Checks the map context object and returns what direction a drone would prefer to move in.}\\
+
+\begin{lstlisting}[basicstyle=\large]
+drone.steps()
+\end{lstlisting}
+\large{returns cumulative steps a drone has taken since deployment.}\\
+
+\begin{lstlisting}[basicstyle=\large]
+drone.get_init_cost()
+\end{lstlisting}
+\large{returns the cost in minerals needed for a drone to be built}\\
+
+\begin{lstlisting}[basicstyle=\large]
+Overlord.return_drone(drone)
+\end{lstlisting}
+\large{calls the drone to be returned to the overlord}\\
+
+\begin{lstlisting}[basicstyle=\large]
+Menu.present()
+\end{lstlisting}
+\large{presents a overall menu to the user}\\
+
+\section{Order of features}
+\begin{enumerate}
+  \item Initialize a Github page for the project.
+  \item submit up a design plan.
+  \item submit up a man page
+  \item Build basic objects for drone and overlord
+  \item adding testing to ensure needed objects can be produced as needed.
+  \item implement a path finding algorithm
+  \item produce necessities for GUI implementation such as classes need
+  \item implement file reading with maps
+  \item produce maps in GUI that meet restrictions.
+  \item Have overlord produce drones
+  \item enable path finding behavior in drones.
+  \item Have drones draw their path as they traverse it in the GUI interface.
+  \item run through program several times to find any unique bugs
+  \item final writeup.
+\end{enumerate}
+\section{User Interface}
+This program will use the CLI on the initial start up so the user can decide what maps the program will take. It will use a GUI to show what parts of the map the drones have discovered as well as what stats are being used during game play.
+\end{document}

@@ -87,12 +87,13 @@ class TestDrone(unittest.TestCase):
     def test_drone_reach_dest(self):
         for _ in range(self.RANDOM_TEST_RUNS):
             ticks, _, dest, curr, path = self.travel(self.base_scout_)
-            self.assertEqual(ticks, len(path))
+            msg = f"current location: {curr} destination: {dest}"
+            self.assertEqual(ticks, len(path), msg)
             self.assertEqual(curr, dest)
 
     def generate_path(self) -> List[Coordinate]:
-        x = random.randint(0, 100)
-        y = random.randint(0, 100)
+        x = random.randint(-100, 100)
+        y = random.randint(-100, 100)
         dest = Coordinate(x, y)
         path: List[Coordinate] = []
         x, y = 0, 0
@@ -100,19 +101,15 @@ class TestDrone(unittest.TestCase):
             if x < dest.x:
                 x += 1
                 path.append(Coordinate(x, y))
-                continue
             elif x > dest.x:
                 x -= 1
                 path.append(Coordinate(x, y))
-                continue
             elif y < dest.y:
                 y += 1
                 path.append(Coordinate(x, y))
-                continue
             elif y > dest.y:
                 y -= 1
                 path.append(Coordinate(x, y))
-                continue
         path.append(dest)
         return path
 
@@ -146,7 +143,7 @@ class TestDrone(unittest.TestCase):
             else:
                 break
             # handle infinite loops
-            if ticks >= len(path) * 2:
+            if ticks >= len(path) * 5:
                 break
             curr = Coordinate(x, y)
         return (ticks, steps, dest, curr, path)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Type
 
+from utils.context import Context
 from zerg.zerg import Zerg
 
 
@@ -24,6 +25,8 @@ class Drone(Zerg):
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
+        # TODO: temp attribute, will eventually keep a list of path travelled
+        self._steps = 0
 
     @classmethod
     def drone_blueprint(
@@ -47,5 +50,9 @@ class Drone(Zerg):
             + (cls.max_moves * 3)
         )
 
+    def action(self, context: Context) -> str:
+        self._steps += 1
+        return self.Directions.NORTH.value
+
     def steps(self) -> int:
-        return 0
+        return self._steps

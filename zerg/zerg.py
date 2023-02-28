@@ -18,4 +18,4 @@ class Zerg(ABC):
         self._health = health
 
     def action(self, context: Context) -> str:
-        return Zerg.Directions.NORTH.value
+        return self.Directions.NORTH.value

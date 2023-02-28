@@ -11,12 +11,9 @@ class TestDrone(unittest.TestCase):
     """Test class for drone zerg units."""
 
     def setUp(self) -> None:
-        health = 40
-        capacity = 5
-        moves = 1
-        self.drone_ = Drone(health, capacity, moves)
-        self.scout_ = ScoutDrone(health, capacity, moves)
-        self.miner_ = MinerDrone(health, capacity, moves)
+        self.drone_ = Drone()
+        self.scout_ = ScoutDrone()
+        self.miner_ = MinerDrone()
 
     def test_drone_init(self):
         self.assertIsInstance(self.drone_, Drone)

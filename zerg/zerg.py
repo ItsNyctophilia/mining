@@ -1,6 +1,7 @@
 """Abstract base class for all zerg units"""
 from abc import ABC
 from enum import Enum
+from typing import NamedTuple
 
 from utils.context import Context
 
@@ -13,6 +14,10 @@ class Zerg(ABC):
         SOUTH = "SOUTH"
         EAST = "EAST"
         WEST = "WEST"
+
+    class Coordinate(NamedTuple):
+        x: int
+        y: int
 
     def __init__(self, health: int) -> None:
         self._health = health

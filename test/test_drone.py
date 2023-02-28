@@ -109,8 +109,7 @@ class TestDrone(unittest.TestCase):
                 if ticks >= len(path) * 2:
                     break
                 curr = Coordinate(x, y)
-            # +1 to tick count to allow drone to tell me they want to stop
-            self.assertEqual(ticks, len(path) + 1)
+            self.assertEqual(ticks, len(path))
             self.assertEqual(curr, dest)
 
     def generate_path(self) -> List[Coordinate]:

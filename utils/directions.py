@@ -7,3 +7,4 @@ class Directions(Enum):
     SOUTH = "SOUTH"
     EAST = "EAST"
     WEST = "WEST"
+    CENTER = "CENTER"

@@ -50,7 +50,7 @@ class TestDrone(unittest.TestCase):
         self.assertIsInstance(self.base_miner_, MinerDrone)
 
     def test_drones_action(self):
-        directions = ["NORTH", "SOUTH", "EAST", "WEST"]
+        directions = ["NORTH", "SOUTH", "EAST", "WEST", "CENTER"]
         for _ in range(50):
             result_drone = self.base_drone_.action(self.phony_context_)
             self.assertTrue(result_drone in directions, f"{result_drone}")

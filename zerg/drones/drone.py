@@ -1,6 +1,4 @@
 """Parent class for all drone zerg units."""
-
-
 from zerg.zerg import Zerg
 
 
@@ -22,3 +20,7 @@ class Drone(Zerg):
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
+
+    @classmethod
+    def drone_blueprint(cls, health: int, capacity: int, moves: int):
+        return None

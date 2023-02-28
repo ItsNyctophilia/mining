@@ -2,6 +2,7 @@
 import random
 import unittest
 
+from utils.context import Context
 from zerg.drones.drone import Drone
 from zerg.drones.miner import MinerDrone
 from zerg.drones.scout import ScoutDrone
@@ -25,7 +26,7 @@ class TestDrone(unittest.TestCase):
         self.assertIsInstance(self.miner_, MinerDrone)
 
     def test_drones_action(self):
-        context = None
+        context = Context()
         directions = ["NORTH", "SOUTH", "EAST", "WEST"]
         for _ in range(50):
             result_drone = self.drone_.action(context)

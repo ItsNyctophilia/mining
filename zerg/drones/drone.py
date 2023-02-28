@@ -19,7 +19,8 @@ class Drone(Zerg):
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
-        self._path: Optional[List[Coordinate]] = None
+        self._path_to_goal: Optional[List[Coordinate]] = None
+        self._path_traveled: Optional[List[Coordinate]] = None
         self._steps = 0
 
     @property
@@ -47,11 +48,12 @@ class Drone(Zerg):
         The destination of this drone will always be the final element of this
         list. Setting the path implicitly sets the destination.
         """
-        return self._path
+        return self._path_to_goal
 
     @path.setter
     def path(self, new_path: List[Coordinate]) -> None:
-        self._path = new_path
+        self._path_to_goal = new_path
+        self._path_traveled = []
 
     @property
     def dest(self) -> Optional[Coordinate]:
@@ -59,8 +61,8 @@ class Drone(Zerg):
 
         This value will automatically be set when the path is updated.
         """
-        if self._path:
-            return self._path[-1]
+        if self._path_to_goal:
+            return self._path_to_goal[-1]
         return None
 
     @classmethod

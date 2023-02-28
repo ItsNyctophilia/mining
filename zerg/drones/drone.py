@@ -61,9 +61,7 @@ class Drone(Zerg):
 
         This value will automatically be set when the path is updated.
         """
-        if self._path_to_goal:
-            return self._path_to_goal[-1]
-        return None
+        return self._path_to_goal[-1] if self._path_to_goal else None
 
     @classmethod
     def drone_blueprint(
@@ -158,20 +156,19 @@ class Drone(Zerg):
         # choose direction to move in
         if x_diff > 0:
             self._steps += 1
-            direction = Directions.EAST.value
+            return Directions.EAST.value
         elif x_diff < 0:
             self._steps += 1
-            direction = Directions.WEST.value
+            return Directions.WEST.value
         elif y_diff > 0:
             self._steps += 1
-            direction = Directions.NORTH.value
+            return Directions.NORTH.value
         elif y_diff < 0:
             self._steps += 1
-            direction = Directions.SOUTH.value
+            return Directions.SOUTH.value
         else:  # x_diff == 0 and y_diff == 0
             # do not move if at current destination
-            direction = Directions.CENTER.value
-        return direction
+            return Directions.CENTER.value
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.

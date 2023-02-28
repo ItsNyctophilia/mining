@@ -1,7 +1,7 @@
 """Test class for drone zerg units."""
 import random
 import unittest
-from typing import List, NamedTuple, Type
+from typing import List, NamedTuple, Tuple, Type
 
 from utils import Context
 from utils.coordinate import Coordinate
@@ -84,31 +84,7 @@ class TestDrone(unittest.TestCase):
 
     def test_drone_reach_dest(self):
         for _ in range(self.RANDOM_TEST_RUNS):
-            path = self.generate_path()
-            dest = path[-1]
-            curr = Coordinate(0, 0)
-            self.base_scout_.path = path
-            ticks = 0
-            while True:
-                context = Context(*curr, " ", " ", " ", " ")
-                result = self.base_scout_.action(context)
-                ticks += 1
-                x = curr.x
-                y = curr.y
-                if result == "NORTH":
-                    y += 1
-                elif result == "SOUTH":
-                    y -= 1
-                elif result == "EAST":
-                    x += 1
-                elif result == "WEST":
-                    x -= 1
-                else:
-                    break
-                # handle infinite loops
-                if ticks >= len(path) * 2:
-                    break
-                curr = Coordinate(x, y)
+            ticks, _, dest, curr, path = self.travel(self.base_scout_)
             self.assertEqual(ticks, len(path))
             self.assertEqual(curr, dest)
 
@@ -137,3 +113,38 @@ class TestDrone(unittest.TestCase):
                 continue
         path.append(dest)
         return path
+
+    def travel(
+        self, drone: Drone
+    ) -> Tuple[int, int, Coordinate, Coordinate, List[Coordinate]]:
+        path = self.generate_path()
+        dest = path[-1]
+        curr = Coordinate(0, 0)
+        self.base_scout_.path = path
+        ticks = 0
+        steps = 0
+        while True:
+            context = Context(*curr, " ", " ", " ", " ")
+            result = drone.action(context)
+            ticks += 1
+            x = curr.x
+            y = curr.y
+            if result == "NORTH":
+                y += 1
+                steps += 1
+            elif result == "SOUTH":
+                y -= 1
+                steps += 1
+            elif result == "EAST":
+                x += 1
+                steps += 1
+            elif result == "WEST":
+                x -= 1
+                steps += 1
+            else:
+                break
+            # handle infinite loops
+            if ticks >= len(path) * 2:
+                break
+            curr = Coordinate(x, y)
+        return (ticks, steps, dest, curr, path)

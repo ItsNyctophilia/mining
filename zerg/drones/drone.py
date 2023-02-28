@@ -43,12 +43,30 @@ class Drone(Zerg):
 
     @property
     def dest(self) -> Optional[Coordinate]:
+        """The coordinates current intended destination of this drone.
+
+        Returns:
+            Optional[Coordinate]: The destination coordinates.
+        """
         return self._dest
 
     @classmethod
     def drone_blueprint(
         cls, health: int, capacity: int, moves: int
     ) -> Type[Drone]:
+        """Create a custom drone class, with given stats.
+
+        This method can be used to dynamically create a class with arbitrary
+        stats, and is ready to be instantiated.
+
+        Args:
+            health (int): The drone's maximum health.
+            capacity (int): The drone's maximum mineral capacity.
+            moves (int): The drone's maximum move's per tick.
+
+        Returns:
+            Type[Drone]: A custome drone class.
+        """
         return type(
             "CustomDrone",
             (Drone,),
@@ -61,6 +79,11 @@ class Drone(Zerg):
 
     @classmethod
     def get_init_cost(cls) -> float:
+        """Return the refined mineral cost to create a drone of this type.
+
+        Returns:
+            float: The refined mineral cost.
+        """
         return (
             (cls.max_health / 10)
             + (cls.max_capacity / 5)
@@ -68,8 +91,21 @@ class Drone(Zerg):
         )
 
     def action(self, context: Context) -> str:
+        """Perform some action, based on the type of drone.
+
+        Args:
+            context (Context): The context surrounding the drone.
+
+        Returns:
+            str: The direction the drone would like to move.
+        """
         self._steps += 1
         return Directions.NORTH.value
 
     def steps(self) -> int:
+        """Accumulated number of steps since the drone was created.
+
+        Returns:
+            int: The total number of steps.
+        """
         return self._steps

@@ -28,6 +28,24 @@ class Drone(Zerg):
         # TODO: temp attribute, will eventually keep a list of path travelled
         self._steps = 0
 
+    @property
+    def capacity(self) -> int:
+        """The max mineral capacitry for this drone.
+
+        Returns:
+            int: The max capacity.
+        """
+        return self._capacity
+
+    @property
+    def moves(self) -> int:
+        """The max moves this drone can take in 1 tick.
+
+        Returns:
+            int: The drone's max moves.
+        """
+        return self._moves
+
     @classmethod
     def drone_blueprint(
         cls, health: int, capacity: int, moves: int

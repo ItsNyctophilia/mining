@@ -10,11 +10,5 @@ class MinerDrone(Drone):
     max_moves = 2
 
     def __init__(self) -> None:
-        """Initialize a MinerDrone.
-
-        Args:
-            health (int): The max health of the miner.
-            capacity (int): the max mineral capacity of the miner.
-            moves (int): the max moves per tick for the miner.
-        """
+        """Initialize a MinerDrone."""
         super().__init__()

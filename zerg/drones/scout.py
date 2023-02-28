@@ -10,11 +10,5 @@ class ScoutDrone(Drone):
     max_moves = 1
 
     def __init__(self) -> None:
-        """Initialize a ScoutDrone.
-
-        Args:
-            health (int): The max health of the scout.
-            capacity (int): the max mineral capacity of the scout.
-            moves (int): the max moves per tick for the scout.
-        """
+        """Initialize a ScoutDrone."""
         super().__init__()

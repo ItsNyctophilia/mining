@@ -15,13 +15,7 @@ class Drone(Zerg):
     max_moves = 1
 
     def __init__(self) -> None:
-        """Initialize a Drone.
-
-        Args:
-            health (int): The max health of the drone.
-            capacity (int): the max mineral capacity of the drone.
-            moves (int): the max moves per tick for the drone.
-        """
+        """Initialize a Drone."""
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves

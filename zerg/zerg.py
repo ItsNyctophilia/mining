@@ -1,23 +1,11 @@
 """Abstract base class for all zerg units"""
 from abc import ABC
-from enum import Enum
-from typing import NamedTuple
 
-from utils.context import Context
+from utils import Context, Directions
 
 
 class Zerg(ABC):
     """Abstract base class for all zerg units"""
-
-    class Directions(Enum):
-        NORTH = "NORTH"
-        SOUTH = "SOUTH"
-        EAST = "EAST"
-        WEST = "WEST"
-
-    class Coordinate(NamedTuple):
-        x: int
-        y: int
 
     def __init__(self, health: int) -> None:
         self._health = health
@@ -32,4 +20,4 @@ class Zerg(ABC):
         return self._health
 
     def action(self, context: Context) -> str:
-        return self.Directions.NORTH.value
+        return Directions.NORTH.value

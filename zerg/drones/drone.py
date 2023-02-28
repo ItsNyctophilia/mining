@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Type
 
-from utils.context import Context
+from utils import Context, Coordinate, Directions
 from zerg.zerg import Zerg
 
 
@@ -64,7 +64,7 @@ class Drone(Zerg):
 
     def action(self, context: Context) -> str:
         self._steps += 1
-        return self.Directions.NORTH.value
+        return Directions.NORTH.value
 
     def steps(self) -> int:
         return self._steps

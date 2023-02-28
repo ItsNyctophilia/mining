@@ -3,7 +3,7 @@ import random
 import unittest
 from typing import List, NamedTuple, Type
 
-from utils.context import Context
+from utils import Context
 from zerg.drones.drone import Drone
 from zerg.drones.miner import MinerDrone
 from zerg.drones.scout import ScoutDrone
@@ -23,7 +23,7 @@ class TestDrone(unittest.TestCase):
     )
 
     def setUp(self) -> None:
-        self.phony_context_ = Context()
+        self.phony_context_ = Context(0, 0, "", "", "", "")
         self.base_drone_ = Drone()
         self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()

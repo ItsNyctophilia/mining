@@ -46,3 +46,6 @@ class Drone(Zerg):
             + (cls.max_capacity / 5)
             + (cls.max_moves * 3)
         )
+
+    def steps(self) -> int:
+        return 0

@@ -43,10 +43,9 @@ class Drone(Zerg):
 
     @property
     def dest(self) -> Optional[Coordinate]:
-        """The coordinates current intended destination of this drone.
+        """The coordinates of the current intended destination of this drone.
 
-        Returns:
-            Optional[Coordinate]: The destination coordinates.
+        This value will automatically be set when the path is updated.
         """
         return self._dest
 

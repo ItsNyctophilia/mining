@@ -78,9 +78,11 @@ class TestDrone(unittest.TestCase):
 
     def test_drone_steps_taken(self):
         ticks = random.randint(0, 100)
-        for _ in range(ticks):
-            self.base_scout_.action(self.phony_context_)
-        self.assertEqual(self.base_scout_.steps(), ticks)
+        steps = 0
+        for _ in range(self.RANDOM_TEST_RUNS):
+            _, curr_steps, _, _, _ = self.travel(self.base_scout_)
+            steps += curr_steps
+        self.assertEqual(self.base_scout_.steps(), steps)
 
     def test_drone_reach_dest(self):
         for _ in range(self.RANDOM_TEST_RUNS):

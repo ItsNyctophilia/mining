@@ -112,24 +112,35 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
-        # do not move if at current destination or no destination set
-        if not self.dest or (
-            self.dest.x == context.x and self.dest.y == context.y
-        ):
-            return Directions.CENTER.value
-        if context.x < self.dest.x:
+        result = Directions.CENTER.value
+        # do not move if no destination set
+        if self.dest:
+            current_location = Coordinate(context.x, context.y)
+            result = self._choose_direction(current_location, self.dest)
+        return result
+
+    def _choose_direction(
+        self, location: Coordinate, destination: Coordinate
+    ) -> str:
+        x_diff, y_diff = location.difference(destination)
+
+        # choose direction to move in
+        if x_diff > 0:
             self._steps += 1
-            return Directions.EAST.value
-        elif context.x > self.dest.x:
+            direction = Directions.EAST.value
+        elif x_diff < 0:
             self._steps += 1
-            return Directions.WEST.value
-        elif context.y < self.dest.y:
+            direction = Directions.WEST.value
+        elif y_diff > 0:
             self._steps += 1
-            return Directions.NORTH.value
-        elif context.y > self.dest.y:
+            direction = Directions.NORTH.value
+        elif y_diff < 0:
             self._steps += 1
-            return Directions.SOUTH.value
-        return Directions.CENTER.value
+            direction = Directions.SOUTH.value
+        else:  # x_diff == 0 and y_diff == 0
+            # do not move if at current destination
+            direction = Directions.CENTER.value
+        return direction
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.

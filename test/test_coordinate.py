@@ -17,6 +17,6 @@ class TestCoordinate(unittest.TestCase):
         self.assertEqual(x_diff, x_check)
         self.assertEqual(y_diff, y_check)
 
-        x_diff, y_diff = c_1.difference((x, y))
+        x_diff, y_diff = c_1.difference(x, y)
         self.assertEqual(x_diff, x_check)
         self.assertEqual(y_diff, y_check)

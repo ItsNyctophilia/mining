@@ -73,3 +73,9 @@ class TestDrone(unittest.TestCase):
             moves = self.custom_drone_stats_[drone_n][self.MOVES]
             total_cost = (health / 10) + (capacity / 5) + (moves * 3)
             self.assertEqual(check_cost, total_cost)
+
+    def test_drone_steps_taken(self):
+        ticks = random.randint(0, 100)
+        for _ in range(ticks):
+            self.base_scout_.action(self.phony_context_)
+        self.assertEqual(self.base_scout_.steps(), ticks)

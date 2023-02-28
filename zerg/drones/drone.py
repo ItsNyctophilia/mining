@@ -113,16 +113,45 @@ class Drone(Zerg):
             str: The direction the drone would like to move.
         """
         result = Directions.CENTER.value
-        # do not move if no destination set
-        if self.dest:
+        # do not move if no path set
+        if self.path:
             current_location = Coordinate(context.x, context.y)
-            result = self._choose_direction(current_location, self.dest)
+            dest = self._update_path(current_location, self.path)
+            result = self._choose_direction(current_location, dest)
         return result
 
-    def _choose_direction(
-        self, location: Coordinate, destination: Coordinate
-    ) -> str:
-        x_diff, y_diff = location.difference(destination)
+    def _update_path(
+        self, curr: Coordinate, path: List[Coordinate]
+    ) -> Coordinate:
+        """Check if the currecnt location is on the path, and remove if so.
+
+        Args:
+            curr (Coordinate): The drone's current location.
+            path (List[Coordinate]): The path the drone should follow.
+
+        Returns:
+            Coordinate: The intended next destination of the drone.
+        """
+        dest = path[0]
+        if curr.x == path[0].x and curr.y == path[0].y:
+            path.pop(0)
+            # may have popped off the last item in the path, which is the
+            # final destination
+            if path:
+                dest = path[0]
+        return dest
+
+    def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
+        """Choose which cardinal direction the drone should head.
+
+        Args:
+            curr (Coordinate): The drone's current location.
+            dest (Coordinate): The destination of the drone.
+
+        Returns:
+            str: The direction the drone should head to reach the destination.
+        """
+        x_diff, y_diff = curr.difference(dest)
 
         # choose direction to move in
         if x_diff > 0:

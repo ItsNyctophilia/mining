@@ -122,7 +122,7 @@ class TestDrone(unittest.TestCase):
         path = self.generate_path()
         dest = path[-1]
         curr = Coordinate(0, 0)
-        self.base_scout_.path = path
+        self.base_scout_.path = list(path)
         ticks = 0
         steps = 0
         while True:

@@ -49,6 +49,10 @@ class Drone(Zerg):
         """
         return self._path
 
+    @path.setter
+    def path(self, new_path: List[Coordinate]) -> None:
+        self._path = new_path
+
     @property
     def dest(self) -> Optional[Coordinate]:
         """The coordinates of the current intended destination of this drone.

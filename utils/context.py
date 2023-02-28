@@ -4,13 +4,25 @@
 class Context:
     """A context object, used to describe the surrounding's of a drone."""
 
-    def __init__(self) -> None:
-        self._x = 0
-        self._y = 0
-        self._north = " "
-        self._south = " "
-        self._east = " "
-        self._west = " "
+    def __init__(
+        self, x: int, y: int, north: str, south: str, east: str, west: str
+    ) -> None:
+        """Initialize a context object.
+
+        Args:
+            x (int): The X coordinate of the drone.
+            y (int): The Y coordinate of the drone.
+            north (str): The tile to the north of the drone.
+            south (str): The tile to the south of the drone.
+            east (str): The tile to the east of the drone.
+            west (str): The tile to the west of the drone.
+        """
+        self._x = x
+        self._y = y
+        self._north = north
+        self._south = south
+        self._east = east
+        self._west = west
 
     @property
     def x(self) -> int:

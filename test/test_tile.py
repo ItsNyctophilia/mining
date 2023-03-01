@@ -5,9 +5,11 @@ from utils import Coordinate, Icon, Tile
 
 
 class TestTile(unittest.TestCase):
-    def test_tile_init(self):
+    def setUp(self) -> None:
         coord = Coordinate(5, 9)
         icon = Icon["EMPTY"]
         discovered = True
-        tile = Tile(coord, icon, discovered)
-        self.assertIsInstance(tile, Tile)
+        self.tile_ = Tile(coord, icon, discovered)
+
+    def test_tile_init(self):
+        self.assertIsInstance(self.tile_, Tile)

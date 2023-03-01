@@ -13,3 +13,9 @@ class TestTile(unittest.TestCase):
 
     def test_tile_init(self):
         self.assertIsInstance(self.tile_, Tile)
+
+    def test_tile_immutable_coordinate(self):
+        coord = Coordinate(5, 9)
+        self.assertEqual(self.tile_.coordinate, coord)
+        with self.assertRaises(AttributeError):
+            self.tile_.coordinate = coord

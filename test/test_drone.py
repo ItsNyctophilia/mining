@@ -5,6 +5,7 @@ from typing import List, NamedTuple, Tuple, Type
 
 from utils import Context
 from utils.coordinate import Coordinate
+from utils.directions import Directions
 from zerg.drones.drone import Drone
 from zerg.drones.miner import MinerDrone
 from zerg.drones.scout import ScoutDrone
@@ -56,7 +57,7 @@ class TestDrone(unittest.TestCase):
         self.assertIsInstance(self.base_miner_, MinerDrone)
 
     def test_drones_action(self):
-        directions = ["NORTH", "SOUTH", "EAST", "WEST", "CENTER"]
+        directions = [d.name for d in Directions]
         for _ in range(self.RANDOM_TEST_RUNS):
             result_drone = self.base_drone_.action(self.phony_context_)
             self.assertTrue(result_drone in directions, f"{result_drone}")

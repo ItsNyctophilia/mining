@@ -8,8 +8,13 @@ from tkinter import ttk
 class Dashboard(tkinter.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
+        photo = tkinter.PhotoImage(file = 'icon.png')
+        self.wm_iconphoto(False, photo)
+        self.minsize(500, 300)
         self.title("Overlord's Dashboard")
-        self.map_tree = self.make_tree("bottom", "Map", "Map ID")
+        self.map_tree = self.make_tree("top", "Map", "Map ID")
+        self.turn_tree = self.make_tree("bottom", "Tick", "Action")
+        #self.map_tree.insert('', 'end', text='Listbox', values=('15KB', 'Yesterday'))
         
     #https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def make_tree(self, aligment, column1, column2):

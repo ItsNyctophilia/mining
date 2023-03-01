@@ -4,7 +4,8 @@
 from dataclasses import InitVar, dataclass
 from typing import Optional
 
-from utils import Coordinate, Icon
+from .coordinate import Coordinate
+from .icon import Icon
 
 
 @dataclass

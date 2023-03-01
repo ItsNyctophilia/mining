@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import List, Optional, Type, TypeVar
 
 from utils import Context, Coordinate, Directions
-from zerg.zerg import Zerg
+from zerg import Zerg
 
 
 class Drone(Zerg):

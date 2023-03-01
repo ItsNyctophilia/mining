@@ -3,13 +3,8 @@ import random
 import unittest
 from typing import Dict, List, NamedTuple, Optional, Tuple, Type
 
-from utils import Context
-from utils.coordinate import Coordinate
-from utils.directions import Directions
-from utils.icon import Icon
-from zerg.drones.drone import Drone
-from zerg.drones.miner import MinerDrone
-from zerg.drones.scout import ScoutDrone
+from utils import Context, Coordinate, Directions, Icon
+from zerg.drones import Drone, MinerDrone, ScoutDrone
 
 
 class TestDrone(unittest.TestCase):

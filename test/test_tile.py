@@ -18,7 +18,7 @@ class TestTile(unittest.TestCase):
         coord = Coordinate(5, 9)
         self.assertEqual(self.tile_.coordinate, coord)
         with self.assertRaises(AttributeError):
-            self.tile_.coordinate = coord
+            self.tile_.coordinate = coord  # type: ignore
 
     def test_tile_discoverability(self):
         coord = Coordinate(5, 9)

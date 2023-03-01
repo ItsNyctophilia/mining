@@ -1,16 +1,14 @@
-"""Test class for drone zerg units."""
+"""Test class for basic drone zerg units."""
 import random
-import unittest
-from typing import Dict, List, NamedTuple, Optional, Tuple, Type
+from typing import List, NamedTuple, Type
 
-from utils import Context, Coordinate, Directions, Icon
 from zerg.drones import Drone, MinerDrone, ScoutDrone
 
+from .base_drone_tester import BaseDroneTester
 
-class TestDrone(unittest.TestCase):
-    """Test class for drone zerg units."""
 
-    RANDOM_TEST_RUNS = 50
+class TestDrone(BaseDroneTester):
+    """Test class for basic drone zerg units."""
 
     CustomDroneStat = NamedTuple(
         "CustomDroneStat",
@@ -23,10 +21,8 @@ class TestDrone(unittest.TestCase):
     )
 
     DRONE_TYPES = [Drone, MinerDrone, ScoutDrone]
-    DIRECTIONS = [d.name for d in Directions]
 
     def setUp(self) -> None:
-        self.phony_context_ = Context()
         self.base_drone_ = Drone()
         self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()
@@ -77,13 +73,13 @@ class TestDrone(unittest.TestCase):
     def test_drone_steps_taken(self):
         steps = 0
         for _ in range(self.RANDOM_TEST_RUNS):
-            _, curr_steps, _, _, _, _ = self.travel(self.base_scout_)
+            _, curr_steps, _, _, _, _ = self._travel(self.base_scout_)
             steps += curr_steps
         self.assertEqual(self.base_scout_.steps(), steps)
 
     def test_drone_reach_dest(self):
         for _ in range(self.RANDOM_TEST_RUNS):
-            ticks, _, _, dest, curr, path = self.travel(self.base_scout_)
+            ticks, _, _, dest, curr, path = self._travel(self.base_scout_)
             path_len = len(path)
             msg = (
                 f"It took {'more' if ticks > path_len else 'less'} time "
@@ -91,98 +87,3 @@ class TestDrone(unittest.TestCase):
             )
             self.assertEqual(curr, dest)
             self.assertEqual(ticks, path_len, msg)
-
-    def _init_start_dest(
-        self,
-        start: Optional[Coordinate] = None,
-        dest: Optional[Coordinate] = None,
-    ) -> Tuple[Coordinate, Coordinate]:
-        if not dest:
-            x = random.randint(-100, 100)
-            y = random.randint(-100, 100)
-            dest = Coordinate(x, y)
-        if not start:
-            start = Coordinate(0, 0)
-        return start, dest
-
-    def _update_axis(self, curr_axis: int, dest_axis: int) -> int:
-        if curr_axis < dest_axis:
-            return 1
-        elif curr_axis > dest_axis:
-            return -1
-        else:
-            return 0
-
-    def generate_path(
-        self,
-        *,
-        start: Optional[Coordinate] = None,
-        dest: Optional[Coordinate] = None,
-    ) -> List[Coordinate]:
-        start, dest = self._init_start_dest(start, dest)
-        path: List[Coordinate] = [dest]
-        x, y = dest
-        while x != start.x or y != start.y:
-            if update := self._update_axis(x, start.x):
-                x += update
-            else:
-                y += self._update_axis(y, start.y)
-            path.insert(0, Coordinate(x, y))
-        return path
-
-    def _drone_act(self, travel_info: Dict[str, int], drone: Drone) -> bool:
-        space = Icon.EMPTY.value
-        context = Context(travel_info["x"], travel_info["y"])
-        direction = drone.action(context)
-        if direction == Directions.EAST.name:
-            return self._move_up_or_right(travel_info, "x")
-        elif direction == Directions.NORTH.name:
-            return self._move_up_or_right(travel_info, "y")
-        elif direction == Directions.SOUTH.name:
-            return self._move_down_or_left(travel_info, "y")
-        elif direction == Directions.WEST.name:
-            return self._move_down_or_left(travel_info, "x")
-        else:
-            return False
-
-    def _move_down_or_left(
-        self, travel_info: Dict[str, int], axis: str
-    ) -> bool:
-        travel_info[axis] -= 1
-        travel_info["steps"] += 1
-        return True
-
-    def _move_up_or_right(
-        self, travel_info: Dict[str, int], axis: str
-    ) -> bool:
-        travel_info[axis] += 1
-        travel_info["steps"] += 1
-        return True
-
-    def travel(
-        self,
-        drone: Drone,
-        start: Optional[Coordinate] = None,
-        dest: Optional[Coordinate] = None,
-    ) -> Tuple[int, int, Coordinate, Coordinate, Coordinate, List[Coordinate]]:
-        path = self.generate_path(start=start, dest=dest)
-        start = path[0]
-        travel_info = {"x": start.x, "y": start.y, "steps": 0}
-        # duplicate path, drone will modify its internal copy
-        drone.path = list(path)
-        ticks = 1
-        max_ticks = len(path) * 2
-
-        # handle infinite loops
-        while ticks < max_ticks and self._drone_act(travel_info, drone):
-            ticks += 1
-        return (
-            ticks,
-            travel_info["steps"],
-            start,
-            path[-1],  # drone's intended destination
-            Coordinate(
-                travel_info["x"], travel_info["y"]
-            ),  # drone's current locations
-            path,
-        )

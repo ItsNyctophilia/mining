@@ -29,7 +29,7 @@ class TestDrone(unittest.TestCase):
     DRONE_TYPES = [Drone, MinerDrone, ScoutDrone]
 
     def setUp(self) -> None:
-        self.phony_context_ = Context(0, 0, "", "", "", "")
+        self.phony_context_ = Context()
         self.base_drone_ = Drone()
         self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()
@@ -127,7 +127,7 @@ class TestDrone(unittest.TestCase):
         ticks = 0
         steps = 0
         while True:
-            context = Context(*curr, " ", " ", " ", " ")
+            context = Context(*curr)
             result = drone.action(context)
             ticks += 1
             x = curr.x

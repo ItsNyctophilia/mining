@@ -13,7 +13,7 @@ class Tile:
     icon: Optional[Icon] = None
     discovered: bool = False
 
-    def __post_init__(self, location):
+    def __post_init__(self, location: Coordinate):
         if self.discovered and not self.icon:
             raise ValueError("A discovered tile must have an icon")
         if not self.discovered and self.icon:

@@ -19,3 +19,12 @@ class TestTile(unittest.TestCase):
         self.assertEqual(self.tile_.coordinate, coord)
         with self.assertRaises(AttributeError):
             self.tile_.coordinate = coord
+
+    def test_tile_discoverability(self):
+        coord = Coordinate(5, 9)
+        icon = Icon["WALL"]
+        discovered = True
+        with self.assertRaises(ValueError):
+            Tile(coord, icon, not discovered)
+        with self.assertRaises(ValueError):
+            Tile(coord, None, discovered)

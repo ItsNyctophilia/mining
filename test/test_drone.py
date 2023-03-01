@@ -31,7 +31,7 @@ class TestDrone(unittest.TestCase):
     DIRECTIONS = [d.name for d in Directions]
 
     def setUp(self) -> None:
-        self.phony_context_ = Context(0, 0, "", "", "", "")
+        self.phony_context_ = Context()
         self.base_drone_ = Drone()
         self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()
@@ -137,9 +137,7 @@ class TestDrone(unittest.TestCase):
 
     def _drone_act(self, travel_info: Dict[str, int], drone: Drone) -> bool:
         space = Icon.EMPTY.value
-        context = Context(
-            travel_info["x"], travel_info["y"], space, space, space, space
-        )
+        context = Context(travel_info["x"], travel_info["y"])
         direction = drone.action(context)
         if direction == Directions.EAST.name:
             return self._move_up_or_right(travel_info, "x")

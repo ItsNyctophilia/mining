@@ -90,7 +90,7 @@ class Dashboard(tkinter.Toplevel):
         treev = ttk.Treeview(self, selectmode='browse')
 
         # Defining number of columns
-        treev["columns"] = ("1", "2", "3", "4")
+        treev["columns"] = ("1", "2", "3", "4", "5")
 
         # Defining heading
         treev['show'] = 'headings'
@@ -99,15 +99,17 @@ class Dashboard(tkinter.Toplevel):
         # respective columns
         treev.column("1", width=180, anchor='c')
         treev.column("2", width=180, anchor='se')
-        treev.column("3", width=180, anchor='se')
-        treev.column("4", width=180, anchor='se')
+        treev.column("3", width=120, anchor='se')
+        treev.column("4", width=120, anchor='se')
+        treev.column("5", width=120, anchor='se')
 
         # Assigning the heading names to the
         # respective columns
-        treev.heading("1", text="Drone")
-        treev.heading("2", text="Health")
-        treev.heading("3", text="Capacity")
-        treev.heading("4", text="Moves")
+        treev.heading("1", text="Drone ID")
+        treev.heading("2", text="Drone Type")
+        treev.heading("3", text="Health")
+        treev.heading("4", text="Capacity")
+        treev.heading("5", text="Moves")
         return treev
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def add_drone_to_tree(self, new_drone):
@@ -115,13 +117,22 @@ class Dashboard(tkinter.Toplevel):
         Adds a drone to the drone tree in the gui
         """
         typeofdrone = type(new_drone).__name__
-        self.drone_tree.insert('', 'end', text='Listbox', values=(typeofdrone, new_drone.health, new_drone.capacity, new_drone.moves))
+        self.drone_tree.insert('', 'end', text='Listbox', values=(id(new_drone), typeofdrone, new_drone.health, new_drone.capacity, new_drone.moves))
 
 
-    def clear_tree(self, tree):
+    def clear_table(self, tree):
         """
-        Adds a drone to the drone tree in the gui
+        clears any of the tables in the GUI
         """
-        for tree in treeview.get_children()
-    
+        for entry in tree.get_children():
+            tree.delete(entry)
+
+
+    def update_drone_table(self, drone_dict):
+        """
+        clears any of the tables in the GUI
+        """
+        self.clear_table(self.drone_tree)
+        for entry in drone_dict.values():
+            self.add_drone_to_tree(entry)
 

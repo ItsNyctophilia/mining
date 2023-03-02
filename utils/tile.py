@@ -79,3 +79,10 @@ class Tile:
             return False
         self._icon = self._old_icon
         return True
+
+    def __eq__(self, __o):
+        return (
+            self._coordinate == __o._coordinate
+            if isinstance(__o, Tile)
+            else NotImplemented
+        )

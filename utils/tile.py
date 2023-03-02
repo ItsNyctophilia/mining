@@ -1,27 +1,35 @@
 """A single tile on the map."""
-
-
-from dataclasses import InitVar, dataclass
 from typing import Optional
 
 from .coordinate import Coordinate
 from .icon import Icon
 
 
-@dataclass
 class Tile:
-    location: InitVar[Coordinate]
-    icon: Optional[Icon] = None
-    discovered: bool = False
-
-    def __post_init__(self, location: Coordinate):
-        if self.discovered and not self.icon:
-            raise ValueError("A discovered tile must have an icon")
-        if not self.discovered and self.icon:
-            raise ValueError("An undiscovered tile cannot have an icon")
-        self._coordinate = location
+    def __init__(self, coordinate: Coordinate, icon: Optional[Icon] = None):
+        self._coordinate = coordinate
+        self._icon = icon
 
     @property
     def coordinate(self) -> Coordinate:
         """The coordinates of this tile on the map."""
         return self._coordinate
+
+    @property
+    def icon(self) -> Optional[Icon]:
+        """The icon for this tile.
+
+        Setting the icon for a tile implicitly makes it discovered. If a tile
+        is not discovered, the icon will always be None."""
+        return self._icon or None
+
+    @icon.setter
+    def icon(self, icon: Icon) -> None:
+        if not icon:
+            raise ValueError("Cannot set icon to None")
+        self._icon = icon
+
+    @property
+    def discovered(self) -> bool:
+        """True if the tile has been discovered and has an icon, else False."""
+        return bool(self.icon)

@@ -18,10 +18,14 @@ Dict = {id(cocopebbles): cocopebbles,
 
 
 
+Map_dict =  {1: "Waffle House", 
+        2: "IHOP",
+          3: "Denny's"}
 
 
 
 example.add_drone_to_tree(cocopebbles)
+example.fill_map_table(Map_dict)
 example.update_drone_table(Dict)
 
 

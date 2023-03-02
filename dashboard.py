@@ -31,7 +31,7 @@ class Dashboard(tkinter.Toplevel):
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self.title("Overlord's Dashboard")
-        self.map_tree = self.make_tree("Map", "Map ID")
+        self.map_tree = self.make_tree("Window Title", "Map ID")
         self.map_tree.grid(row=0, column=0,padx=(20, 20), pady=(20, 20))
         self.turn_tree = self.make_tree("Tick", "Action")
         self.turn_tree.grid(row=0, column=1,padx=(20, 20), pady=(20, 20))
@@ -135,4 +135,14 @@ class Dashboard(tkinter.Toplevel):
         self.clear_table(self.drone_tree)
         for entry in drone_dict.values():
             self.add_drone_to_tree(entry)
+
+    def fill_map_table(self, map_dict):
+        """
+        fills the map table
+        """
+        window_counter = 0
+        self.clear_table(self.map_tree)
+        for entry in map_dict.values():
+            window_counter += 1
+            self.map_tree.insert('', 'end', text='Listbox', values=(f'Map {window_counter}', entry))
 

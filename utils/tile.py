@@ -50,7 +50,9 @@ class Tile:
         Returns:
             bool: Whether occupation of the tile succeeded.
         """
-        if self.icon == Icon.ZERG:
+        if not self.discovered:
+            raise RuntimeError("An undiscovered tile cannot be occupied")
+        if self.icon in [Icon.ZERG, Icon.WALL, Icon.MINERAL]:
             return False
         self._old_icon = self.icon
         self._icon = Icon.ZERG
@@ -71,6 +73,8 @@ class Tile:
         Returns:
             bool: Whether the tile was able to be unoccupied.
         """
+        if not self.discovered:
+            raise RuntimeError("An undiscovered tile cannot be unoccupied")
         if self.icon != Icon.ZERG:
             return False
         self._icon = self._old_icon

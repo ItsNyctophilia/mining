@@ -48,6 +48,13 @@ class TestTile(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.tile_undiscovered_.unoccupy()
 
+    def test_tile_comparison(self):
+        diff_tile = Tile(self._randomize_coordinate())
+        self.assertTrue(self.tile_ == self.tile_acid_)
+        self.assertFalse(self.tile_ == diff_tile)
+        self.assertFalse(self.tile_ != self.tile_acid_)
+        self.assertTrue(self.tile_ != diff_tile)
+
     def _random_numbers(self) -> Tuple[int, int]:
         return random.randint(-10, 10), random.randint(-10, 10)
 

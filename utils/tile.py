@@ -52,6 +52,7 @@ class Tile:
         """
         if self.icon == Icon.ZERG:
             return False
+        self._old_icon = self.icon
         self._icon = Icon.ZERG
         return True
 
@@ -72,5 +73,5 @@ class Tile:
         """
         if self.icon != Icon.ZERG:
             return False
-        self._icon = Icon.EMPTY
+        self._icon = self._old_icon
         return True

@@ -1,24 +1,12 @@
 """Test class for basic drone zerg units."""
 import random
-from typing import List, NamedTuple, Type
+from test.base_drone_tester import BaseDroneTester
 
 from zerg.drones import Drone, MinerDrone, ScoutDrone
-
-from .base_drone_tester import BaseDroneTester
 
 
 class TestDrone(BaseDroneTester):
     """Test class for basic drone zerg units."""
-
-    CustomDroneStat = NamedTuple(
-        "CustomDroneStat",
-        [
-            ("health", int),
-            ("capacity", int),
-            ("moves", int),
-            ("init", Type[Drone]),
-        ],
-    )
 
     DRONE_TYPES = [Drone, MinerDrone, ScoutDrone]
 
@@ -26,19 +14,12 @@ class TestDrone(BaseDroneTester):
         self.base_drone_ = Drone()
         self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()
-        self.custom_drones_: List[Drone] = []
-        self.custom_drone_stats_: List[TestDrone.CustomDroneStat] = []
-        for _ in range(self.RANDOM_TEST_RUNS):
-            health = random.randrange(10, 101, 10)
-            capacity = random.randrange(5, 51, 5)
-            moves = random.randrange(1, 11, 5)
-            Blueprint: Type[Drone] = Drone.drone_blueprint(
-                health, capacity, moves, random.choice(self.DRONE_TYPES)
-            )
-            self.custom_drones_.append(Blueprint())
-            self.custom_drone_stats_.append(
-                self.CustomDroneStat(health, capacity, moves, Blueprint)
-            )
+        (
+            self.custom_drones_,
+            self.custom_drone_stats_,
+        ) = self._build_dynamic_units(
+            random.choice(self.DRONE_TYPES)  # type: ignore
+        )
 
     def test_drone_init(self):
         self.assertIsInstance(self.base_drone_, Drone)

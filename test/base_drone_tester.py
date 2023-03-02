@@ -1,7 +1,7 @@
 """Base class for all zerg drone testing."""
 import random
 import unittest
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple, Type
 
 from utils import Context, Coordinate, Directions, Icon
 from zerg.drones import Drone
@@ -10,9 +10,41 @@ from zerg.drones import Drone
 class BaseDroneTester(unittest.TestCase):
     """Base class for all zerg drone testing."""
 
+    CustomDroneStat = NamedTuple(
+        "CustomDroneStat",
+        [
+            ("health", int),
+            ("capacity", int),
+            ("moves", int),
+            ("init", Type[Drone]),
+        ],
+    )
+
     RANDOM_TEST_RUNS = 50
     DIRECTIONS = [d.name for d in Directions]
     phony_context_ = Context()
+
+    def _randomize_stats(self) -> Tuple[int, int, int]:
+        health = random.randrange(10, 101, 10)
+        capacity = random.randrange(5, 51, 5)
+        moves = random.randrange(1, 11, 5)
+        return health, capacity, moves
+
+    def _build_dynamic_units(
+        self, drone_type: Drone
+    ) -> Tuple[List[Drone], List[CustomDroneStat]]:
+        custom_drones_: List[Drone] = []
+        custom_drone_stats_: List[BaseDroneTester.CustomDroneStat] = []
+        for _ in range(self.RANDOM_TEST_RUNS):
+            health, capacity, moves = self._randomize_stats()
+            Blueprint: Type[Drone] = drone_type.drone_blueprint(
+                health, capacity, moves, drone_type  # type: ignore
+            )
+            custom_drones_.append(Blueprint())
+            custom_drone_stats_.append(
+                self.CustomDroneStat(health, capacity, moves, Blueprint)
+            )
+        return custom_drones_, custom_drone_stats_
 
     def _init_start_dest(
         self,

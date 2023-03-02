@@ -67,4 +67,7 @@ class Tile:
         Returns:
             bool: Whether the tile was able to be unoccupied.
         """
-        return False
+        if self.icon != Icon.ZERG:
+            return False
+        self._icon = Icon.EMPTY
+        return True

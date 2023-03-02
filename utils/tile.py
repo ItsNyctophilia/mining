@@ -50,7 +50,10 @@ class Tile:
         Returns:
             bool: Whether occupation of the tile succeeded.
         """
-        return False
+        if self.icon == Icon.ZERG:
+            return False
+        self._icon = Icon.ZERG
+        return True
 
     def unoccupy(self) -> bool:
         """Unoccupy this tile with a zerg drone.

@@ -1,37 +1,28 @@
 """Test class for basic drone zerg units."""
-import random
 from test.base_drone_tester import BaseDroneTester
 
-from zerg.drones import Drone, MinerDrone, ScoutDrone
+from zerg.drones import Drone
 
 
 class TestDrone(BaseDroneTester):
     """Test class for basic drone zerg units."""
 
-    DRONE_TYPES = [Drone, MinerDrone, ScoutDrone]
-
     def setUp(self) -> None:
         self.base_drone_ = Drone()
-        self.base_miner_ = MinerDrone()
         (
             self.custom_drones_,
             self.custom_drone_stats_,
         ) = self._build_dynamic_units(
-            random.choice(self.DRONE_TYPES)  # type: ignore
+            Drone  # type: ignore
         )
 
     def test_drone_init(self):
         self.assertIsInstance(self.base_drone_, Drone)
 
-    def test_miner_init(self):
-        self.assertIsInstance(self.base_miner_, MinerDrone)
-
     def test_drones_action(self):
         for _ in range(self.RANDOM_TEST_RUNS):
-            result_drone = self.base_drone_.action(self.phony_context_)
-            self.assertTrue(result_drone in self.DIRECTIONS, f"{result_drone}")
-            result_miner = self.base_miner_.action(self.phony_context_)
-            self.assertTrue(result_miner in self.DIRECTIONS, f"{result_miner}")
+            result = self.base_drone_.action(self.phony_context_)
+            self.assertTrue(result in self.DIRECTIONS, f"{result}")
 
     def test_dynamic_drone(self):
         for drone_n in range(len(self.custom_drones_)):

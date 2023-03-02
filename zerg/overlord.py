@@ -1,5 +1,5 @@
 """Overlord, who oversees zerg drones and assigns tasks to them"""
-from utils import Coordinate
+from utils import Coordinate, Context, Map
 
 from zerg.zerg import Zerg
 from zerg.drones.drone import Drone
@@ -16,8 +16,8 @@ class Overlord(Zerg):
         self.drones = {}  # a drone id as key and drone as value
         self._minerals = {}  # a set of the coords of minerals and maps
         self._deployed = {}  # a drone id as key and map id as value
-        # TODO: Implement terrain map dict with map id as key
-        # TODO: Implement function to create default map objects
+        self._update_queue = []  # a
+        self._tile_maps = {}  # a map id as key and Map as value
 
         for value in range(3):
             # Create three MinerDrones and three ScoutDrones
@@ -38,6 +38,7 @@ class Overlord(Zerg):
     def add_map(self, map_id: int, summary: float) -> None:
         """Registers ID for map and summary of mineral density"""
         self.maps[map_id] = summary
+        self._tile_maps.update({map_id: None})
 
     def add_mineral(self, coord: Coordinate, drone_id: int) -> None:
         """Adds a mineral to the set of known minerals"""
@@ -66,6 +67,18 @@ class Overlord(Zerg):
             zerg_per_map[current_map] += 1
         return min(zerg_per_map, key=zerg_per_map.get)
 
+    def enqueue_map_update(self, drone: Drone, context: Context) -> None:
+        """Enqueue a map update of the drone's location and its context.
+
+        This method will register the update information to a queue that will
+        be processed at a later time.
+        Args:
+            drone (Drone): The drone giving updates.
+            context (Context): The update information.
+        """
+        map_id = self._deployed[id(drone)]
+        self._update_queue.append((map_id, context))
+
     def _set_drone_path(self, drone_id: int):
         """Gives a drone a path based on their role and context"""
         # TODO: find path using Dijkstra's
@@ -89,6 +102,14 @@ class Overlord(Zerg):
                     continue
                 action = f"DEPLOY {id(drone)} {self._select_map()}"
                 break
+
+        # Drone map updates
+        for map_id, drone_context in self._update_queue:
+            if not self._tile_maps[map_id]:
+                self._tile_maps[map_id] = Map(drone_context)
+                self._tile_maps[map_id].update_context(drone_context, True)
+
+            self._tile_maps[map_id].update_context(drone_context)
 
         for drone in self.drones.values():
             if not self._deployed[id(drone)] or drone.path:

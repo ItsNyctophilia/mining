@@ -1,7 +1,7 @@
 """Parent class for all drone zerg units."""
 from __future__ import annotations
 
-from typing import List, Optional, Type
+from typing import List, Optional, Type, TypeVar
 
 from utils import Context, Coordinate, Directions
 from zerg.zerg import Zerg
@@ -13,13 +13,15 @@ class Drone(Zerg):
     max_health = 40
     max_capacity = 10
     max_moves = 1
+    T = TypeVar("T", bound="Drone")
 
     def __init__(self) -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
-        self._path: Optional[List[Coordinate]] = None
+        self._path_to_goal: Optional[List[Coordinate]] = None
+        self._path_traveled: Optional[List[Coordinate]] = None
         self._steps = 0
 
     @property
@@ -47,11 +49,12 @@ class Drone(Zerg):
         The destination of this drone will always be the final element of this
         list. Setting the path implicitly sets the destination.
         """
-        return self._path
+        return self._path_to_goal
 
     @path.setter
     def path(self, new_path: List[Coordinate]) -> None:
-        self._path = new_path
+        self._path_to_goal = new_path
+        self._path_traveled = []
 
     @property
     def dest(self) -> Optional[Coordinate]:
@@ -59,14 +62,16 @@ class Drone(Zerg):
 
         This value will automatically be set when the path is updated.
         """
-        if self._path:
-            return self._path[-1]
-        return None
+        return self._path_to_goal[-1] if self._path_to_goal else None
 
     @classmethod
     def drone_blueprint(
-        cls, health: int, capacity: int, moves: int
-    ) -> Type[Drone]:
+        cls,
+        health: int,
+        capacity: int,
+        moves: int,
+        drone_class: Optional[Type[T]] = None,  # type: ignore
+    ) -> Type[T]:
         """Create a custom drone class, with given stats.
 
         This method can be used to dynamically create a class with arbitrary
@@ -76,19 +81,32 @@ class Drone(Zerg):
             health (int): The drone's maximum health.
             capacity (int): The drone's maximum mineral capacity.
             moves (int): The drone's maximum move's per tick.
+            drone_class (Type[T]): The type the custom class will extend from.
 
         Returns:
-            Type[Drone]: A custome drone class.
+            Type[T]: A custom drone class.
         """
-        return type(
+        # TODO: research type hinting more. code works, but mypy is complaining
+        if not drone_class:
+            drone_class = cls  # type: ignore
+        new_drone_type: Type[Drone] = type(
             "CustomDrone",
-            (Drone,),
+            (drone_class,),  # type: ignore
             {
                 "max_health": health,
                 "max_capacity": capacity,
                 "max_moves": moves,
             },
+        )  # type: ignore
+        cost = new_drone_type.get_init_cost()
+        msg = (
+            "Invalid parameters; "
+            "total drone cost must result in a whole number: "
+            f"{health=}, {capacity=}, {moves=}, {cost=}"
         )
+        if cost != int(cost):
+            raise ValueError(msg)
+        return new_drone_type  # type: ignore
 
     @classmethod
     def get_init_cost(cls) -> float:
@@ -112,24 +130,63 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
-        # do not move if at current destination or no destination set
-        if not self.dest or (
-            self.dest.x == context.x and self.dest.y == context.y
-        ):
-            return Directions.CENTER.value
-        if context.x < self.dest.x:
+        result = Directions.CENTER.name
+        # do not move if no path set
+        if self.path:
+            current_location = Coordinate(context.x, context.y)
+            dest = self._update_path(current_location, self.path)
+            result = self._choose_direction(current_location, dest)
+        return result
+
+    def _update_path(
+        self, curr: Coordinate, path: List[Coordinate]
+    ) -> Coordinate:
+        """Check if the currecnt location is on the path, and remove if so.
+
+        Args:
+            curr (Coordinate): The drone's current location.
+            path (List[Coordinate]): The path the drone should follow.
+
+        Returns:
+            Coordinate: The intended next destination of the drone.
+        """
+        dest = path[0]
+        if curr.x == path[0].x and curr.y == path[0].y:
+            path.pop(0)
+            # may have popped off the last item in the path, which is the
+            # final destination
+            if path:
+                dest = path[0]
+        return dest
+
+    def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
+        """Choose which cardinal direction the drone should head.
+
+        Args:
+            curr (Coordinate): The drone's current location.
+            dest (Coordinate): The destination of the drone.
+
+        Returns:
+            str: The direction the drone should head to reach the destination.
+        """
+        x_diff, y_diff = curr.difference(dest)
+
+        # choose direction to move in
+        if x_diff > 0:
             self._steps += 1
-            return Directions.EAST.value
-        elif context.x > self.dest.x:
+            return Directions.EAST.name
+        elif x_diff < 0:
             self._steps += 1
-            return Directions.WEST.value
-        elif context.y < self.dest.y:
+            return Directions.WEST.name
+        elif y_diff > 0:
             self._steps += 1
-            return Directions.NORTH.value
-        elif context.y > self.dest.y:
+            return Directions.NORTH.name
+        elif y_diff < 0:
             self._steps += 1
-            return Directions.SOUTH.value
-        return Directions.CENTER.value
+            return Directions.SOUTH.name
+        else:  # x_diff == 0 and y_diff == 0
+            # do not move if at current destination
+            return Directions.CENTER.name
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.

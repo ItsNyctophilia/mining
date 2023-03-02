@@ -20,4 +20,4 @@ class Zerg(ABC):
         return self._health
 
     def action(self, context: Context) -> str:
-        return Directions.NORTH.value
+        return Directions.NORTH.name

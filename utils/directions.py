@@ -1,10 +1,10 @@
 """Directional constants."""
-from enum import Enum
+from enum import Enum, auto
 
 
 class Directions(Enum):
-    NORTH = "NORTH"
-    SOUTH = "SOUTH"
-    EAST = "EAST"
-    WEST = "WEST"
-    CENTER = "CENTER"
+    NORTH = auto()
+    SOUTH = auto()
+    EAST = auto()
+    WEST = auto()
+    CENTER = auto()

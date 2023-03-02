@@ -12,7 +12,6 @@ class TestDrone(BaseDroneTester):
 
     def setUp(self) -> None:
         self.base_drone_ = Drone()
-        self.base_scout_ = ScoutDrone()
         self.base_miner_ = MinerDrone()
         (
             self.custom_drones_,
@@ -24,9 +23,6 @@ class TestDrone(BaseDroneTester):
     def test_drone_init(self):
         self.assertIsInstance(self.base_drone_, Drone)
 
-    def test_scout_init(self):
-        self.assertIsInstance(self.base_scout_, ScoutDrone)
-
     def test_miner_init(self):
         self.assertIsInstance(self.base_miner_, MinerDrone)
 
@@ -34,8 +30,6 @@ class TestDrone(BaseDroneTester):
         for _ in range(self.RANDOM_TEST_RUNS):
             result_drone = self.base_drone_.action(self.phony_context_)
             self.assertTrue(result_drone in self.DIRECTIONS, f"{result_drone}")
-            result_scout = self.base_scout_.action(self.phony_context_)
-            self.assertTrue(result_scout in self.DIRECTIONS, f"{result_scout}")
             result_miner = self.base_miner_.action(self.phony_context_)
             self.assertTrue(result_miner in self.DIRECTIONS, f"{result_miner}")
 
@@ -54,13 +48,13 @@ class TestDrone(BaseDroneTester):
     def test_drone_steps_taken(self):
         steps = 0
         for _ in range(self.RANDOM_TEST_RUNS):
-            _, curr_steps, _, _, _, _ = self._travel(self.base_scout_)
+            _, curr_steps, _, _, _, _ = self._travel(self.base_drone_)
             steps += curr_steps
-        self.assertEqual(self.base_scout_.steps(), steps)
+        self.assertEqual(self.base_drone_.steps(), steps)
 
     def test_drone_reach_dest(self):
         for _ in range(self.RANDOM_TEST_RUNS):
-            ticks, _, _, dest, curr, path = self._travel(self.base_scout_)
+            ticks, _, _, dest, curr, path = self._travel(self.base_drone_)
             path_len = len(path)
             msg = (
                 f"It took {'more' if ticks > path_len else 'less'} time "

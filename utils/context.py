@@ -1,5 +1,5 @@
 """A context object, used to describe the surrounding's of a drone."""
-from utils import Icon
+from .icon import Icon
 
 
 class Context:

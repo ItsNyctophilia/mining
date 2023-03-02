@@ -9,6 +9,10 @@ the methods that it uses.
 import random
 import tkinter
 from tkinter import ttk
+from zerg.drones.drone import Drone
+from zerg.drones.scout import ScoutDrone
+from zerg.drones.miner import MinerDrone
+
 
 
 class Dashboard(tkinter.Toplevel):
@@ -33,7 +37,7 @@ class Dashboard(tkinter.Toplevel):
         self.turn_tree.grid(row=0, column=1,padx=(20, 20), pady=(20, 20))
         self.drone_tree = self.make_drone_tree()
         self.drone_tree.grid(row=1,column = 0, columnspan = 2,padx=(20, 20), pady=(20, 20))
-        # self.map_tree.insert('', 'end', text='Listbox', values=('15KB', 'Yesterday'))
+        # 
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def make_tree(self, column1, column2):
@@ -72,7 +76,7 @@ class Dashboard(tkinter.Toplevel):
         # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def make_drone_tree(self):
         """
-        Builds trees for the dasboard to use, dashboards typically serve spreadhsheets in the gui.
+        Builds drone tree for dashboard to keep track of drones, This will ensure the user knows about each drone
         """
 
         s = ttk.Style()
@@ -106,3 +110,18 @@ class Dashboard(tkinter.Toplevel):
         treev.heading("4", text="Moves")
         return treev
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
+    def add_drone_to_tree(self, new_drone):
+        """
+        Adds a drone to the drone tree in the gui
+        """
+        typeofdrone = type(new_drone).__name__
+        self.drone_tree.insert('', 'end', text='Listbox', values=(typeofdrone, new_drone.health, new_drone.capacity, new_drone.moves))
+
+
+    def clear_tree(self, tree):
+        """
+        Adds a drone to the drone tree in the gui
+        """
+        for tree in treeview.get_children()
+    
+

@@ -33,3 +33,38 @@ class Tile:
     def discovered(self) -> bool:
         """True if the tile has been discovered and has an icon, else False."""
         return bool(self.icon)
+
+    def occupy(self) -> bool:
+        """Occupy this tile with a zerg drone.
+
+        An occupied tile will return a zerg icon for the icon property. An
+        occupied tile will remember the icon that was on it before the zerg
+        occupied it. Trying to occupy a tile that is already occupied, or has
+        a wall or mineral icon will fail. An undiscovered tile cannot be
+        occupied. Trying to occupy an undiscovered tile will raise an exception
+
+        Raises:
+            RuntimeError: If the tile is undiscovered, and therefore cannot
+                be occupied.
+
+        Returns:
+            bool: Whether occupation of the tile succeeded.
+        """
+        return False
+
+    def unoccupy(self) -> bool:
+        """Unoccupy this tile with a zerg drone.
+
+        Unoccupying a tile will cause the original icon on the tile to returned
+        by the icon property. Trying to unoccupy a tile that was not unoccupied
+        will fail with no operation happening. Trying to unoccupy an
+        undiscovered tile will raise an exception.
+
+        Raised:
+            RuntimeError: If the tile is undiscovered, and therefor cannot be
+                unoccupied.
+
+        Returns:
+            bool: Whether the tile was able to be unoccupied.
+        """
+        return False

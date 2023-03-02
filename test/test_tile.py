@@ -1,12 +1,14 @@
 """Test class for map tiles."""
+import random
 import unittest
+from typing import Optional, Tuple
 
 from utils import Coordinate, Icon, Tile
 
 
 class TestTile(unittest.TestCase):
     def setUp(self) -> None:
-        self.default_coord_ = Coordinate(5, 9)
+        self.default_coord_ = self._randomize_coordinate()
         self.tile_ = Tile(self.default_coord_, Icon.EMPTY)
         self.tile_acid_ = Tile(self.default_coord_, Icon.ACID)
         self.tile_wall_ = Tile(self.default_coord_, Icon.WALL)
@@ -45,3 +47,16 @@ class TestTile(unittest.TestCase):
             self.tile_undiscovered_.occupy()
         with self.assertRaises(RuntimeError):
             self.tile_undiscovered_.unoccupy()
+
+    def _random_numbers(self) -> Tuple[int, int]:
+        return random.randint(-10, 10), random.randint(-10, 10)
+
+    def _randomize_coordinate(
+        self, avoid: Optional[Coordinate] = None
+    ) -> Coordinate:
+        x, y = self._random_numbers()
+        if not avoid:
+            return Coordinate(x, y)
+        while (coord := Coordinate(x, y)) == avoid:
+            x, y = self._random_numbers()
+        return coord

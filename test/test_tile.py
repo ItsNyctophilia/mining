@@ -8,6 +8,7 @@ class TestTile(unittest.TestCase):
     def setUp(self) -> None:
         self.default_coord_ = Coordinate(5, 9)
         self.tile_ = Tile(self.default_coord_, Icon.EMPTY)
+        self.tile_acid_ = Tile(self.default_coord_, Icon.ACID)
         self.tile_wall_ = Tile(self.default_coord_, Icon.WALL)
         self.tile_undiscovered_ = Tile(self.default_coord_, None)
 
@@ -26,7 +27,6 @@ class TestTile(unittest.TestCase):
         self.assertFalse(self.tile_undiscovered_.discovered)
 
     def test_tile_occupation(self):
-        self.tile_acid_ = Tile(self.default_coord_, Icon.ACID)
         self.assertFalse(self.tile_acid_.unoccupy())
         self.assertEqual(self.tile_acid_.icon, Icon.ACID)
         self.assertNotEqual(self.tile_acid_.icon, Icon.ZERG)

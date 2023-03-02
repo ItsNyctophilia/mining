@@ -24,5 +24,24 @@ class TestTile(unittest.TestCase):
         self.assertTrue(self.tile_wall_.discovered)
         self.assertIsNone(self.tile_undiscovered_.icon)
         self.assertFalse(self.tile_undiscovered_.discovered)
-        self.assertIsNone(undiscovered_tile.icon)
-        self.assertFalse(undiscovered_tile.discovered)
+
+    def test_tile_occupation(self):
+        self.tile_acid_ = Tile(self.default_coord_, Icon.ACID)
+        self.assertFalse(self.tile_acid_.unoccupy())
+        self.assertEqual(self.tile_acid_.icon, Icon.ACID)
+        self.assertNotEqual(self.tile_acid_.icon, Icon.ZERG)
+
+        self.assertTrue(self.tile_acid_.occupy())
+        self.assertNotEqual(self.tile_acid_.icon, Icon.ACID)
+        self.assertEqual(self.tile_acid_.icon, Icon.ZERG)
+        self.assertFalse(self.tile_acid_.occupy())
+
+        self.assertTrue(self.tile_acid_.unoccupy())
+        self.assertNotEqual(self.tile_acid_.icon, Icon.ZERG)
+        self.assertEqual(self.tile_acid_.icon, Icon.ACID)
+        self.assertFalse(self.tile_acid_.unoccupy())
+
+        with self.assertRaises(RuntimeError):
+            self.tile_undiscovered_.occupy()
+        with self.assertRaises(RuntimeError):
+            self.tile_undiscovered_.unoccupy()

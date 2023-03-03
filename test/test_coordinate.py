@@ -1,7 +1,7 @@
 """Test class for coordinates"""
 import unittest
 
-from utils.coordinate import Coordinate
+from utils import Coordinate
 
 
 class TestCoordinate(unittest.TestCase):

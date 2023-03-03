@@ -1,5 +1,5 @@
 """Miner drone, whose primary purpose is to mine minerals."""
-from zerg.drones.drone import Drone
+from .drone import Drone
 
 
 class MinerDrone(Drone):

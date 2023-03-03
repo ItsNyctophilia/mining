@@ -1,7 +1,7 @@
 """Abstract base class for all zerg units"""
-from abc import ABC
+from abc import ABC, abstractmethod
 
-from utils import Context, Directions
+from utils import Context
 
 
 class Zerg(ABC):
@@ -19,5 +19,6 @@ class Zerg(ABC):
         """
         return self._health
 
+    @abstractmethod
     def action(self, context: Context) -> str:
-        return Directions.NORTH.name
+        raise NotImplementedError("Zerg subtypes must implement action")

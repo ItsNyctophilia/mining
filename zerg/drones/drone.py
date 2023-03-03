@@ -1,10 +1,10 @@
 """Parent class for all drone zerg units."""
 from __future__ import annotations
 
-from typing import List, Optional, Type, TypeVar
+from typing import List, Optional, Type
 
 from utils import Context, Coordinate, Directions
-from zerg.zerg import Zerg
+from zerg import Zerg
 
 
 class Drone(Zerg):
@@ -13,7 +13,6 @@ class Drone(Zerg):
     max_health = 40
     max_capacity = 10
     max_moves = 1
-    T = TypeVar("T", bound="Drone")
 
     def __init__(self) -> None:
         """Initialize a Drone."""
@@ -70,8 +69,8 @@ class Drone(Zerg):
         health: int,
         capacity: int,
         moves: int,
-        drone_class: Optional[Type[T]] = None,  # type: ignore
-    ) -> Type[T]:
+        drone_class: Optional[Drone] = None,
+    ) -> Type[Drone]:
         """Create a custom drone class, with given stats.
 
         This method can be used to dynamically create a class with arbitrary
@@ -81,10 +80,11 @@ class Drone(Zerg):
             health (int): The drone's maximum health.
             capacity (int): The drone's maximum mineral capacity.
             moves (int): The drone's maximum move's per tick.
-            drone_class (Type[T]): The type the custom class will extend from.
+            drone_class (Type[Drone]): The type the custom class will
+                extend from.
 
         Returns:
-            Type[T]: A custom drone class.
+            Type[Drone]: A custom drone class.
         """
         # TODO: research type hinting more. code works, but mypy is complaining
         if not drone_class:
@@ -97,7 +97,7 @@ class Drone(Zerg):
                 "max_capacity": capacity,
                 "max_moves": moves,
             },
-        )  # type: ignore
+        )
         cost = new_drone_type.get_init_cost()
         msg = (
             "Invalid parameters; "
@@ -106,7 +106,7 @@ class Drone(Zerg):
         )
         if cost != int(cost):
             raise ValueError(msg)
-        return new_drone_type  # type: ignore
+        return new_drone_type
 
     @classmethod
     def get_init_cost(cls) -> float:

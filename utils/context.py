@@ -1,21 +1,33 @@
 """A context object, used to describe the surrounding's of a drone."""
+from .icon import Icon
 
 
 class Context:
     """A context object, used to describe the surrounding's of a drone."""
 
     def __init__(
-        self, x: int, y: int, north: str, south: str, east: str, west: str
+        self,
+        x: int = 0,
+        y: int = 0,
+        *,
+        north: str = Icon.EMPTY.value,
+        south: str = Icon.EMPTY.value,
+        east: str = Icon.EMPTY.value,
+        west: str = Icon.EMPTY.value,
     ) -> None:
         """Initialize a context object.
 
         Args:
-            x (int): The X coordinate of the drone.
-            y (int): The Y coordinate of the drone.
-            north (str): The tile to the north of the drone.
-            south (str): The tile to the south of the drone.
-            east (str): The tile to the east of the drone.
-            west (str): The tile to the west of the drone.
+            x (int, optional): The X coordinate of the drone. Defaults to 0.
+            y (int, optional): The Y coordinate of the drone. Defaults to 0.
+            north (str, optional): The tile to the north of the drone.
+                Defaults to Icon.EMPTY.value.
+            south (str, optional): The tile to the south of the drone.
+                Defaults to Icon.EMPTY.value.
+            east (str, optional): The tile to the east of the drone.
+                Defaults to Icon.EMPTY.value.
+            west (str, optional): The tile to the west of the drone.
+                Defaults to Icon.EMPTY.value.
         """
         self._x = x
         self._y = y

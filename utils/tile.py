@@ -86,3 +86,13 @@ class Tile:
             if isinstance(__o, Tile)
             else NotImplemented
         )
+
+    def __str__(self) -> str:
+        icon_msg = f"Icon: {self.icon.value}" if self.icon else "Undiscovered"
+        return f"Tile({self.coordinate}, {icon_msg})"
+
+    def __repr__(self) -> str:
+        return f"Tile({self.coordinate}, {self.icon})"
+
+    def __hash__(self) -> int:
+        return hash(self.coordinate)

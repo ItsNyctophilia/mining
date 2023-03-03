@@ -51,6 +51,12 @@ class BaseDroneTester(unittest.TestCase):
             )
         return custom_drones_, custom_drone_stats_
 
+    def _construct_context(self, drone_loc: Coordinate, dest: Tile):
+        direction_offset = drone_loc.difference(dest.coordinate)
+        direction = self.OFFSET_TO_DIRECTION[direction_offset]  # type: ignore
+        new_mapping = {direction: dest.icon.value if dest.icon else " "}
+        return Context(*drone_loc)._replace(**new_mapping)  # type: ignore
+
     def _init_start_dest(
         self,
         start: Optional[Tile] = None,

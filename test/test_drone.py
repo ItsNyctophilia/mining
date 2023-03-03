@@ -51,5 +51,5 @@ class TestDrone(BaseDroneTester):
                 f"It took {'more' if ticks > path_len else 'less'} time "
                 "to get to the goal than expected"
             )
-            self.assertEqual(curr, dest)
+            self.assertEqual(curr, dest.coordinate)
             self.assertEqual(ticks, path_len, msg)

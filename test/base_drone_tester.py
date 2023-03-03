@@ -1,9 +1,10 @@
 """Base class for all zerg drone testing."""
 import random
 import unittest
+from test.testing_utils import TestingUtils
 from typing import Dict, List, NamedTuple, Optional, Tuple, Type
 
-from utils import Context, Coordinate, Directions, Icon
+from utils import Context, Coordinate, Directions, Icon, Tile
 from zerg.drones import Drone
 
 
@@ -23,6 +24,10 @@ class BaseDroneTester(unittest.TestCase):
     RANDOM_TEST_RUNS = 50
     DIRECTIONS = [d.name for d in Directions]
     phony_context_ = Context()
+
+    offsets = ((0, 1), (0, -1), (1, 0), (-1, 0))
+    directions = Context._fields[2:]
+    OFFSET_TO_DIRECTION = dict(zip(offsets, directions))
 
     def _randomize_stats(self) -> Tuple[int, int, int]:
         health = random.randrange(10, 101, 10)
@@ -48,15 +53,14 @@ class BaseDroneTester(unittest.TestCase):
 
     def _init_start_dest(
         self,
-        start: Optional[Coordinate] = None,
-        dest: Optional[Coordinate] = None,
-    ) -> Tuple[Coordinate, Coordinate]:
+        start: Optional[Tile] = None,
+        dest: Optional[Tile] = None,
+    ) -> Tuple[Tile, Tile]:
         if not dest:
-            x = random.randint(-100, 100)
-            y = random.randint(-100, 100)
-            dest = Coordinate(x, y)
+            coord = TestingUtils._randomize_coordinate(-100, 100)
+            dest = Tile(coord, Icon.EMPTY)
         if not start:
-            start = Coordinate(0, 0)
+            start = Tile(Coordinate(0, 0), Icon.EMPTY)
         return start, dest
 
     def _update_axis(self, curr_axis: int, dest_axis: int) -> int:
@@ -70,22 +74,22 @@ class BaseDroneTester(unittest.TestCase):
     def _generate_path(
         self,
         *,
-        start: Optional[Coordinate] = None,
-        dest: Optional[Coordinate] = None,
-    ) -> List[Coordinate]:
+        start: Optional[Tile] = None,
+        dest: Optional[Tile] = None,
+    ) -> List[Tile]:
         start, dest = self._init_start_dest(start, dest)
-        path: List[Coordinate] = [dest]
-        x, y = dest
-        while x != start.x or y != start.y:
-            if update := self._update_axis(x, start.x):
+        path = [dest]
+        x, y = dest.coordinate
+        start_x, start_y = start.coordinate
+        while x != start_x or y != start_y:
+            if update := self._update_axis(x, start_x):
                 x += update
             else:
-                y += self._update_axis(y, start.y)
-            path.insert(0, Coordinate(x, y))
+                y += self._update_axis(y, start_y)
+            path.insert(0, Tile(Coordinate(x, y), Icon.EMPTY))
         return path
 
     def _drone_act(self, travel_info: Dict[str, int], drone: Drone) -> bool:
-        space = Icon.EMPTY.value
         context = Context(travel_info["x"], travel_info["y"])
         direction = drone.action(context)
         if direction == Directions.EAST.name:
@@ -116,14 +120,19 @@ class BaseDroneTester(unittest.TestCase):
     def _travel(
         self,
         drone: Drone,
-        start: Optional[Coordinate] = None,
-        dest: Optional[Coordinate] = None,
-    ) -> Tuple[int, int, Coordinate, Coordinate, Coordinate, List[Coordinate]]:
+        *,
+        start: Optional[Tile] = None,
+        dest: Optional[Tile] = None,
+    ) -> Tuple[int, int, Tile, Tile, Coordinate, List[Tile]]:
         path = self._generate_path(start=start, dest=dest)
         start = path[0]
-        travel_info = {"x": start.x, "y": start.y, "steps": 0}
+        travel_info = {
+            "x": start.coordinate.x,
+            "y": start.coordinate.y,
+            "steps": 0,
+        }
         # duplicate path, drone will modify its internal copy
-        drone.path = list(path)
+        drone.path = [cur.coordinate for cur in path]
         ticks = 1
         max_ticks = len(path) * 2
 

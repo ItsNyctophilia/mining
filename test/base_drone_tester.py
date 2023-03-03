@@ -57,6 +57,22 @@ class BaseDroneTester(unittest.TestCase):
         new_mapping = {direction: dest.icon.value if dest.icon else " "}
         return Context(*drone_loc)._replace(**new_mapping)  # type: ignore
 
+    def _safely_construct_context(
+        self,
+        path: List[Tile],
+        cur_step: int,
+    ) -> Tuple[Context, int]:
+        drone_loc = path[cur_step].coordinate
+        if cur_step + 1 >= len(path):
+            dest = Tile(Coordinate(drone_loc.x, drone_loc.y + 1))
+        else:
+            dest = path[cur_step + 1]
+            cur_step += 1
+        return (
+            self._construct_context(drone_loc, dest),
+            cur_step,
+        )
+
     def _init_start_dest(
         self,
         start: Optional[Tile] = None,
@@ -95,8 +111,9 @@ class BaseDroneTester(unittest.TestCase):
             path.insert(0, Tile(Coordinate(x, y), Icon.EMPTY))
         return path
 
-    def _drone_act(self, travel_info: Dict[str, int], drone: Drone) -> bool:
-        context = Context(travel_info["x"], travel_info["y"])
+    def _drone_act(
+        self, travel_info: Dict[str, int], drone: Drone, context: Context
+    ) -> bool:
         direction = drone.action(context)
         if direction == Directions.EAST.name:
             return self._move_up_or_right(travel_info, "x")
@@ -141,10 +158,14 @@ class BaseDroneTester(unittest.TestCase):
         drone.path = [cur.coordinate for cur in path]
         ticks = 1
         max_ticks = len(path) * 2
+        context, step_idx = self._safely_construct_context(path, 0)
 
         # handle infinite loops
-        while ticks < max_ticks and self._drone_act(travel_info, drone):
+        while ticks < max_ticks and self._drone_act(
+            travel_info, drone, context
+        ):
             ticks += 1
+            context, step_idx = self._safely_construct_context(path, step_idx)
         return (
             ticks,
             travel_info["steps"],

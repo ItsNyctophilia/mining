@@ -24,6 +24,8 @@ class BaseDroneTester(unittest.TestCase):
     RANDOM_TEST_RUNS = 50
     DIRECTIONS = [d.name for d in Directions]
     phony_context_ = Context()
+    stored_tiles_: Dict[Coordinate, Tile] = {}
+    minerals_: Dict[Tile, int] = {}
 
     offsets = ((0, 1), (0, -1), (1, 0), (-1, 0))
     directions = Context._fields[2:]
@@ -108,12 +110,26 @@ class BaseDroneTester(unittest.TestCase):
                 x += update
             else:
                 y += self._update_axis(y, start_y)
-            path.insert(0, Tile(Coordinate(x, y), Icon.EMPTY))
+            new_tile = Tile(Coordinate(x, y), Icon.EMPTY)
+            self._register_tile(new_tile)
+            path.insert(0, new_tile)
         return path
 
     def _drone_act(
         self, travel_info: Dict[str, int], drone: Drone, context: Context
     ) -> bool:
+        """Allow the drone to act.
+
+        Return True if the drone requests to continue moving, else False.
+
+        Args:
+            travel_info (Dict[str, int]): Information on the drone's travel.
+            drone (Drone): The drone traveling.
+            context (Context): The context surrounding the drone.
+
+        Returns:
+            bool: True if the drones wants to move, else False.
+        """
         direction = drone.action(context)
         if direction == Directions.EAST.name:
             return self._move_up_or_right(travel_info, "x")
@@ -126,18 +142,51 @@ class BaseDroneTester(unittest.TestCase):
         else:
             return False
 
+    def _register_tile(self, tile: Tile) -> None:
+        self.stored_tiles_[tile.coordinate] = tile
+        if tile.icon == Icon.MINERAL:
+            self.minerals_[tile] = random.randint(1, 9)
+
+    def _update_tile(self, coord: Coordinate) -> bool:
+        """Updates the tile if the testing class is tracking it.
+
+        If the tile at the coordinate is tracked and is a mineral, decrement
+        its health and possibly remove it. Will also return whether a drone
+        can move into this tile on the tick it was possibly updated.
+
+        Args:
+            coord (Coordinate): The coordinate of the tile to update.
+
+        Returns:
+            bool: True if a drone can move into this tile, else False.
+        """
+        if tile := self.stored_tiles_.get(coord, None):
+            if tile in self.minerals_:
+                self.minerals_[tile] -= 1
+                if not self.minerals_[tile]:
+                    del self.minerals_[tile]
+                    tile.icon = Icon.EMPTY
+                return False
+        return True
+
     def _move_down_or_left(
         self, travel_info: Dict[str, int], axis: str
     ) -> bool:
-        travel_info[axis] -= 1
-        travel_info["steps"] += 1
+        coord = Coordinate(travel_info["x"], travel_info["y"])
+        dest = coord._replace(**{axis: travel_info[axis] - 1})
+        if self._update_tile(dest):
+            travel_info[axis] -= 1
+            travel_info["steps"] += 1
         return True
 
     def _move_up_or_right(
         self, travel_info: Dict[str, int], axis: str
     ) -> bool:
-        travel_info[axis] += 1
-        travel_info["steps"] += 1
+        coord = Coordinate(travel_info["x"], travel_info["y"])
+        dest = coord._replace(**{axis: travel_info[axis] + 1})
+        if self._update_tile(dest):
+            travel_info[axis] += 1
+            travel_info["steps"] += 1
         return True
 
     def _travel(

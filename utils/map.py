@@ -42,7 +42,7 @@ class Map:
         for symbol, offset in zip(symbols, coordinate_offsets):
             x_offset, y_offset = offset
             current_coord = Coordinate(x + x_offset, y + y_offset)
-            current_tile = Tile(current_coord, Icon[symbol])
+            current_tile = Tile(current_coord, Icon(symbol))
             neighbors.append(current_tile)
             if current_tile not in self.adjacency_list:
                 self.adjacency_list.update({current_tile: None})

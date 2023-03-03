@@ -86,3 +86,6 @@ class Tile:
             if isinstance(__o, Tile)
             else NotImplemented
         )
+
+    def __hash__(self) -> int:
+        return hash(self.coordinate)

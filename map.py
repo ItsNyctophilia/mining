@@ -13,9 +13,12 @@ class Map(tkinter.Toplevel):
 
     def __init__(self, parent, title):
         super().__init__(parent)
-        self.geometry("300x200+300+0")
+        self.photo = tkinter.PhotoImage(file='icon.png')
+        self.wm_iconphoto(False, self.photo)
+        self.geometry("300x300+0+0")
+        self.minsize(600, 600)
         self.title(title)
-        self.log = tkinter.Text(self, width=30, height=30)
+        self.log = tkinter.Text(self, width=100, height=100)
         self.log.pack()
 
     def write_up(self, string, x, y):

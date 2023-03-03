@@ -8,7 +8,7 @@ from map import *
 from tkinter import *
 root = Tk()
 
-example = Dashboard(root)
+example = Map(root, "Potato")
 cocopebbles = ScoutDrone()
 cocopebbles1 = Drone()
 cocopebbles2 = MinerDrone()
@@ -24,9 +24,9 @@ Map_dict =  {1: "Waffle House",
 
 
 
-example.add_drone_to_tree(cocopebbles)
-example.fill_map_table(Map_dict)
-example.update_drone_table(Dict)
+#example.add_drone_to_tree(cocopebbles)
+#example.fill_map_table(Map_dict)
+#example.update_drone_table(Dict)
 
 
 mainloop()

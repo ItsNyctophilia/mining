@@ -1,5 +1,8 @@
 """Miner drone, whose primary purpose is to mine minerals."""
+from typing import List, Optional
+
 from utils.context import Context
+from utils.coordinate import Coordinate
 from utils.directions import Directions
 
 from .drone import Drone
@@ -11,6 +14,18 @@ class MinerDrone(Drone):
     max_health = 30
     max_capacity = 10
     max_moves = 2
+
+    def __init__(self) -> None:
+        """Initialize a Miner."""
+        super().__init__()
+        self._mineral_location: Optional[Coordinate] = None
+
+    @Drone.path.setter
+    def path(self, new_path: List[Coordinate]) -> None:
+        """Set the path this drone will take towards the tasked mineral."""
+        # separate mineral tile as new attribute
+        self._mineral_location = new_path.pop()
+        Drone.path.fset(self, new_path)
 
     def action(self, context: Context) -> str:
         # sourcery skip: assign-if-exp, reintroduce-else

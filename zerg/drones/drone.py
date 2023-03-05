@@ -19,8 +19,8 @@ class Drone(Zerg):
         super().__init__(self.max_health)
         self._capacity = self.max_capacity
         self._moves = self.max_moves
-        self._path_to_goal: Optional[List[Coordinate]] = None
-        self._path_traveled: Optional[List[Coordinate]] = None
+        self._path_to_goal: List[Coordinate] = []
+        self._path_traveled: List[Coordinate] = []
         self._steps = 0
         self._traveling = False
 
@@ -43,7 +43,7 @@ class Drone(Zerg):
         return self._moves
 
     @property
-    def path(self) -> Optional[List[Coordinate]]:
+    def path(self) -> List[Coordinate]:
         """The path this drone will take to its destination.
 
         The destination of this drone will always be the final element of this

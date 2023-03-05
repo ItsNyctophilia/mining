@@ -22,10 +22,11 @@ class Drone(Zerg):
         self._path_to_goal: Optional[List[Coordinate]] = None
         self._path_traveled: Optional[List[Coordinate]] = None
         self._steps = 0
+        self._traveling = False
 
     @property
     def capacity(self) -> int:
-        """The max mineral capacitry for this drone.
+        """The max mineral capacity for this drone.
 
         Returns:
             int: The max capacity.
@@ -54,6 +55,8 @@ class Drone(Zerg):
     def path(self, new_path: List[Coordinate]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
+        # traveling if path length is greater than 2 (start, dest)
+        self._traveling = len(new_path) > 2
 
     @property
     def dest(self) -> Optional[Coordinate]:
@@ -69,7 +72,7 @@ class Drone(Zerg):
         health: int,
         capacity: int,
         moves: int,
-        drone_class: Optional[Drone] = None,
+        drone_class: Optional[Type[Drone]] = None,
     ) -> Type[Drone]:
         """Create a custom drone class, with given stats.
 
@@ -86,12 +89,11 @@ class Drone(Zerg):
         Returns:
             Type[Drone]: A custom drone class.
         """
-        # TODO: research type hinting more. code works, but mypy is complaining
         if not drone_class:
-            drone_class = cls  # type: ignore
+            drone_class = cls
         new_drone_type: Type[Drone] = type(
             "CustomDrone",
-            (drone_class,),  # type: ignore
+            (drone_class,),
             {
                 "max_health": health,
                 "max_capacity": capacity,
@@ -104,6 +106,7 @@ class Drone(Zerg):
             "total drone cost must result in a whole number: "
             f"{health=}, {capacity=}, {moves=}, {cost=}"
         )
+        # check if cost is a whole number
         if cost != int(cost):
             raise ValueError(msg)
         return new_drone_type
@@ -136,12 +139,14 @@ class Drone(Zerg):
             current_location = Coordinate(context.x, context.y)
             dest = self._update_path(current_location, self.path)
             result = self._choose_direction(current_location, dest)
+        else:
+            self._finish_traveling()
         return result
 
     def _update_path(
         self, curr: Coordinate, path: List[Coordinate]
     ) -> Coordinate:
-        """Check if the currecnt location is on the path, and remove if so.
+        """Check if the current location is on the path, and remove if so.
 
         Args:
             curr (Coordinate): The drone's current location.
@@ -150,14 +155,10 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        dest = path[0]
-        if curr.x == path[0].x and curr.y == path[0].y:
+        # only pop if last action caused movement
+        if curr == path[0] and len(path) > 1:
             path.pop(0)
-            # may have popped off the last item in the path, which is the
-            # final destination
-            if path:
-                dest = path[0]
-        return dest
+        return path[0]
 
     def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
         """Choose which cardinal direction the drone should head.
@@ -186,7 +187,17 @@ class Drone(Zerg):
             return Directions.SOUTH.name
         else:  # x_diff == 0 and y_diff == 0
             # do not move if at current destination
+            self._finish_traveling()
             return Directions.CENTER.name
+
+    def _finish_traveling(self):
+        """Perform some operations to signify traveling is done.
+
+        This method is mostly for subtypes to create a hook and modify behavior
+        during travel. The drone base class will call this method whenever it
+        reaches it's intended destination.
+        """
+        self._traveling = False
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.

@@ -7,6 +7,8 @@ from .coordinate import Coordinate
 from .icon import Icon
 from .tile import Tile
 
+import heapq as heap
+
 
 class Map:
     """A map object, used to describe the tile layout of an area"""
@@ -16,6 +18,30 @@ class Map:
         self.adjacency_list: Dict[Tile, Optional[List[Tile]]] = {}
 
         # dict{Tile: [Tile, Tile, Tile, Tile]}
+    
+    def dijkstra(self, start: Coordinate, end: Coordinate) -> None:
+        node_weights = {
+                        " ": 1,
+                        "~": 10,
+                        "*": 9999,
+                        "#": 9999
+                        }
+        # TODO: dynamically assign acid weight
+        visited = set()
+        parents_map = {}
+        pq = []
+        heap.heappush(pq, (0, start))
+
+        while pq:
+            _, node = heap.heappop(pq)
+            visited.add(node)
+
+            for neighbor in self.adjacency_list[Tile(node)]:
+                if neighbor in visited:
+                    continue
+                parents_map[neighbor] = node
+                heap.heappush(pq, (node_weights[neighbor.icon], neighbor))
+        return parents_map
 
     def update_context(self, context: Context, origin: bool = False):
         """Updates the adjacency list for the Map with a context object

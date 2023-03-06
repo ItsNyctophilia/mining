@@ -36,4 +36,8 @@ class TestMiner(BaseDroneTester):
             )
             self._register_tile(mineral_tile)
             self._travel(self.base_miner_, dest=mineral_tile)
-            self.assertEqual(mineral_tile.icon, Icon.EMPTY)
+            self.assertEqual(
+                mineral_tile.icon,
+                Icon.EMPTY,
+                f"Mineral at {mineral_tile}",
+            )

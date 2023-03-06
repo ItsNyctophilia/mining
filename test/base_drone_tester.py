@@ -27,10 +27,6 @@ class BaseDroneTester(unittest.TestCase):
     stored_tiles_: Dict[Coordinate, Tile] = {}
     minerals_: Dict[Tile, int] = {}
 
-    offsets = ((0, 1), (0, -1), (1, 0), (-1, 0))
-    directions = Context._fields[2:]
-    OFFSET_TO_DIRECTION = dict(zip(offsets, directions))
-
     def _randomize_stats(self) -> Tuple[int, int, int]:
         health = random.randrange(10, 101, 10)
         capacity = random.randrange(5, 51, 5)
@@ -54,8 +50,7 @@ class BaseDroneTester(unittest.TestCase):
         return custom_drones_, custom_drone_stats_
 
     def _construct_context(self, drone_loc: Coordinate, dest: Tile):
-        direction_offset = drone_loc.difference(dest.coordinate)
-        direction = self.OFFSET_TO_DIRECTION[direction_offset]  # type: ignore
+        direction = drone_loc.direction(dest.coordinate)
         new_mapping = {direction: dest.icon.value if dest.icon else " "}
         return Context(*drone_loc)._replace(**new_mapping)  # type: ignore
 

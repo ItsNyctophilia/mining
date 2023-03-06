@@ -170,25 +170,13 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone should head to reach the destination.
         """
-        x_diff, y_diff = curr.difference(dest)
-
         # choose direction to move in
-        if x_diff > 0:
-            self._steps += 1
-            return Directions.EAST.name
-        elif x_diff < 0:
-            self._steps += 1
-            return Directions.WEST.name
-        elif y_diff > 0:
-            self._steps += 1
-            return Directions.NORTH.name
-        elif y_diff < 0:
-            self._steps += 1
-            return Directions.SOUTH.name
-        else:  # x_diff == 0 and y_diff == 0
-            # do not move if at current destination
+        direction = curr.direction(dest).upper()
+        if direction == Directions.CENTER.name:
             self._finish_traveling()
-            return Directions.CENTER.name
+        else:
+            self._steps += 1
+        return direction
 
     def _finish_traveling(self):
         """Perform some operations to signify traveling is done.

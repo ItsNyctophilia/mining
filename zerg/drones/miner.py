@@ -23,6 +23,9 @@ class MinerDrone(Drone):
         """Set the path this drone will take towards the tasked mineral."""
         # separate mineral tile as new attribute
         self._mineral_location = new_path.pop()
+        self._mineral_direction = new_path[-1].direction(
+            self._mineral_location
+        )
         Drone.path.fset(self, new_path)
 
     def action(self, context: Context) -> str:
@@ -48,7 +51,17 @@ class MinerDrone(Drone):
             return result
 
     def _mine(self, context: Context) -> str:
-        # TODO: Actually mine the mineral
+        """Mine the miner's tasked mineral until it is depleted.
+
+        Args:
+            context (Context): The surrounding context of the miner.
+
+        Returns:
+            str: The direction the miner wants to move.
+        """
+        dest_icon = getattr(context, self._mineral_direction)
+        if dest_icon == Icon.MINERAL.value:
+            return self._mineral_direction.upper()
         return Directions.CENTER.name
 
     def _finish_traveling(self):

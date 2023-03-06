@@ -58,7 +58,9 @@ class TestTile(unittest.TestCase):
     def _random_numbers(self) -> Tuple[int, int]:
         return random.randint(-10, 10), random.randint(-10, 10)
 
-    def _randomize_coordinate(self, avoid: Optional[Coordinate] = None) -> Coordinate:
+    def _randomize_coordinate(
+        self, avoid: Optional[Coordinate] = None
+    ) -> Coordinate:
         x, y = self._random_numbers()
         if not avoid:
             return Coordinate(x, y)

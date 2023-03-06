@@ -8,7 +8,7 @@ class TestDrone(BaseDroneTester):
     """Test class for basic drone zerg units."""
 
     def setUp(self) -> None:
-        self.base_drone_ = Drone()
+        self.base_drone_ = Drone(self.overlord)
         (
             self.custom_drones_,
             self.custom_drone_stats_,

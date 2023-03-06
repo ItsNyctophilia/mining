@@ -6,7 +6,7 @@ from zerg.drones import ScoutDrone
 
 class TestDrone(BaseDroneTester):
     def setUp(self) -> None:
-        self.base_scout_ = ScoutDrone()
+        self.base_scout_ = ScoutDrone(self.overlord)
         (
             self.custom_drones_,
             self.custom_drone_stats_,

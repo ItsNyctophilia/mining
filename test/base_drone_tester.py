@@ -5,6 +5,7 @@ from test.testing_utils import TestingUtils
 from typing import Dict, List, NamedTuple, Optional, Tuple, Type, TypeVar
 
 from utils import Context, Coordinate, Directions, Icon, Tile
+from zerg import Overlord
 from zerg.drones import Drone
 
 T = TypeVar("T", bound=Drone)
@@ -13,6 +14,9 @@ T = TypeVar("T", bound=Drone)
 class BaseDroneTester(unittest.TestCase):
     """Base class for all zerg drone testing."""
 
+    total_ticks = random.randint(10, 100)
+    refined_minerals = random.randint(100, 1000)
+    overlord = Overlord(total_ticks, refined_minerals)
     CustomDroneStat = NamedTuple(
         "CustomDroneStat",
         [

@@ -13,9 +13,9 @@ class MinerDrone(Drone):
     max_capacity = 10
     max_moves = 2
 
-    def __init__(self) -> None:
+    def __init__(self, overlord) -> None:
         """Initialize a Miner."""
-        super().__init__()
+        super().__init__(overlord)
         self._mineral_location: Optional[Coordinate] = None
 
     @Drone.path.setter

@@ -35,10 +35,13 @@ class Overlord(Zerg):
             self._deployed[id(self.drones[drone])] = 0
 
     def _create_drone(self, type: str) -> None:
-        """Creates a new zerg drone of the specified drone type"""
-        drone_types = {"Drone": Drone(),
-                       "Miner": MinerDrone(),
-                       "Scout": ScoutDrone()}
+        """Create a new zerg drone of the specified drone type."""
+        # TODO: create custom drones based on available resources
+        drone_types = {
+            "Drone": Drone(self),
+            "Miner": MinerDrone(self),
+            "Scout": ScoutDrone(self),
+        }
         new_drone = drone_types[type]
         self.drones[id(new_drone)] = new_drone
 

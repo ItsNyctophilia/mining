@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import List, Optional, Type
+from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
 from utils import Context, Coordinate, Directions
-from zerg import Zerg
+from zerg.zerg import Zerg
+
+if TYPE_CHECKING:
+    from zerg import Overlord
 
 
 class Drone(Zerg):
@@ -15,9 +18,10 @@ class Drone(Zerg):
     max_capacity = 10
     max_moves = 1
 
-    def __init__(self) -> None:
+    def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
+        self._overlord = overlord
         self._capacity = self.max_capacity
         self._moves = self.max_moves
         self._path_to_goal: List[Coordinate] = []
@@ -135,6 +139,7 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
+        # TODO: gives map updates to overlord
         result = Directions.CENTER.name
         # do not move if no path set
         if self.path:

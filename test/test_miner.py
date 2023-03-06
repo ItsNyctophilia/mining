@@ -8,7 +8,7 @@ from zerg.drones import MinerDrone
 
 class TestMiner(BaseDroneTester):
     def setUp(self) -> None:
-        self.base_miner_ = MinerDrone()
+        self.base_miner_ = MinerDrone(self.overlord)
         (
             self.custom_drones_,
             self.custom_drone_stats_,

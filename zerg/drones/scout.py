@@ -9,6 +9,6 @@ class ScoutDrone(Drone):
     max_capacity = 5
     max_moves = 1
 
-    def __init__(self) -> None:
+    def __init__(self, overlord) -> None:
         """Initialize a ScoutDrone."""
-        super().__init__()
+        super().__init__(overlord)

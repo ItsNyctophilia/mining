@@ -4,6 +4,8 @@ from enum import Enum
 
 
 class Icon(Enum):
+    """An icon on the map."""
+
     ZERG = "Z"
     WALL = "#"
     DEPLOY_ZONE = "_"

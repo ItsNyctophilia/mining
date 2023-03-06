@@ -1,4 +1,4 @@
-"""A map made up of tiles"""
+"""A map made up of tiles."""
 
 import heapq as heap
 from typing import Dict, List, Set, Tuple
@@ -10,7 +10,7 @@ from .tile import Tile
 
 
 class Map:
-    """A map object, used to describe the tile layout of an area"""
+    """A map object, used to describe the tile layout of an area."""
 
     def __init__(self, context: Context):
         self.origin = Coordinate(context.x, context.y)
@@ -22,11 +22,11 @@ class Map:
         self, start: Coordinate, end: Coordinate
     ) -> Dict[Coordinate, Coordinate]:
         node_weights = {
-                        " ": 1,
-                        "~": 10,
-                        "*": 9999,
-                        "#": 9999
-                        }
+            Icon.EMPTY.value: 1,
+            Icon.ACID.value: 10,
+            Icon.MINERAL.value: 9999,
+            Icon.WALL.value: 9999,
+        }
         # TODO: dynamically assign acid weight
         visited: Set[Coordinate] = set()
         parents_map: Dict[Coordinate, Coordinate] = {}
@@ -40,18 +40,23 @@ class Map:
             for neighbor in self.adjacency_list[Tile(node)]:
                 if neighbor in visited:
                     continue
-                parents_map[neighbor] = node
-                heap.heappush(pq, (node_weights[neighbor.icon], neighbor))
+                parents_map[neighbor.coordinate] = node
+                # TODO: handle when neighbor has no icon
+                heap.heappush(
+                    pq,
+                    (node_weights[neighbor.icon.value], neighbor.coordinate),
+                )
         return parents_map
 
     def update_context(self, context: Context, origin: bool = False):
-        """Updates the adjacency list for the Map with a context object
+        """Update the adjacency list for the Map with a context object.
 
         Arguments:
             context (Context): The context object to use to update
                 the Map.
             origin (bool): Whether or not the passed context object
-                is the origin of the map."""
+                is the origin of the map.
+        """
         x = context.x
         y = context.y
         zerg_position = Coordinate(x, y)

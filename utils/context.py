@@ -17,7 +17,8 @@ class Context(NamedTuple):
         east (str, optional): The tile to the east of the drone as a string.
             Defaults to Icon.EMPTY.value.
         west (str, optional): The tile to the west of the drone as a string.
-            Defaults to Icon.EMPTY.value."""
+            Defaults to Icon.EMPTY.value.
+    """
 
     x: int = 0
     y: int = 0

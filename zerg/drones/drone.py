@@ -157,7 +157,7 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        # only pop if last action caused movement
+        # only pop if last action caused movement and not at destination
         if curr == path[0] and len(path) > 1:
             path.pop(0)
         return path[0]

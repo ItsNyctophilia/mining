@@ -6,7 +6,16 @@ from .icon import Icon
 
 
 class Tile:
+    """A single tile on the map."""
+
     def __init__(self, coordinate: Coordinate, icon: Optional[Icon] = None):
+        """Initialize the tile.
+
+        Args:
+            coordinate (Coordinate): The coordinate of this tile.
+            icon (Optional[Icon], optional): The icon on this tile, if
+                discovered. Defaults to None.
+        """
         self._coordinate = coordinate
         self._icon = icon
 
@@ -20,7 +29,8 @@ class Tile:
         """The icon for this tile.
 
         Setting the icon for a tile implicitly makes it discovered. If a tile
-        is not discovered, the icon will always be None."""
+        is not discovered, the icon will always be None.
+        """
         return self._icon or None
 
     @icon.setter

@@ -1,13 +1,12 @@
 """A map made up of tiles"""
 
-from typing import Dict, List, Optional
+import heapq as heap
+from typing import Dict, List, Set, Tuple
 
 from .context import Context
 from .coordinate import Coordinate
 from .icon import Icon
 from .tile import Tile
-
-import heapq as heap
 
 
 class Map:
@@ -15,11 +14,13 @@ class Map:
 
     def __init__(self, context: Context):
         self.origin = Coordinate(context.x, context.y)
-        self.adjacency_list: Dict[Tile, Optional[List[Tile]]] = {}
+        self.adjacency_list: Dict[Tile, List[Tile]] = {}
 
         # dict{Tile: [Tile, Tile, Tile, Tile]}
-    
-    def dijkstra(self, start: Coordinate, end: Coordinate) -> None:
+
+    def dijkstra(
+        self, start: Coordinate, end: Coordinate
+    ) -> Dict[Coordinate, Coordinate]:
         node_weights = {
                         " ": 1,
                         "~": 10,
@@ -27,9 +28,9 @@ class Map:
                         "#": 9999
                         }
         # TODO: dynamically assign acid weight
-        visited = set()
-        parents_map = {}
-        pq = []
+        visited: Set[Coordinate] = set()
+        parents_map: Dict[Coordinate, Coordinate] = {}
+        pq: List[Tuple[int, Coordinate]] = []
         heap.heappush(pq, (0, start))
 
         while pq:

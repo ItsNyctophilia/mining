@@ -12,9 +12,7 @@ class TestMiner(BaseDroneTester):
         (
             self.custom_drones_,
             self.custom_drone_stats_,
-        ) = self._build_dynamic_units(
-            MinerDrone  # type: ignore
-        )
+        ) = self._build_dynamic_units(MinerDrone)
 
     def test_miner_init(self):
         self.assertIsInstance(self.base_miner_, MinerDrone)

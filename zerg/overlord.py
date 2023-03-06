@@ -1,23 +1,30 @@
-"""Overlord, who oversees zerg drones and assigns tasks to them"""
-from utils import Coordinate, Context, Map
+"""Overlord, who oversees zerg drones and assigns tasks to them."""
+from typing import Dict, List, Set, Tuple
 
-from zerg.zerg import Zerg
-from zerg.drones.drone import Drone
-from zerg.drones.miner import MinerDrone
-from zerg.drones.scout import ScoutDrone
+from utils import Context, Coordinate, Map
+from zerg.drones import Drone, MinerDrone, ScoutDrone
+
+from .zerg import Zerg
 
 
 class Overlord(Zerg):
-    """Overlord, who oversees zerg drones and assigns tasks to them"""
-    def __init__(self, total_ticks: int,
-                 refined_minerals: int, dashboard=None):
+    """Overlord, who oversees zerg drones and assigns tasks to them."""
+
+    def __init__(
+        self, total_ticks: int, refined_minerals: int, dashboard=None
+    ):
         self.dashboard = dashboard
-        self.maps = {}    # a map id as key and summary as value
-        self.drones = {}  # a drone id as key and drone as value
-        self._minerals = {}  # a set of the coords of minerals and maps
-        self._deployed = {}  # a drone id as key and map id as value
-        self._update_queue = []  # a
-        self._tile_maps = {}  # a map id as key and Map as value
+        # a map id as key and summary as value
+        self.maps: Dict[int, float] = {}
+        # a drone id as key and drone as value
+        self.drones: Dict[int, Drone] = {}
+        # a set of the coords of minerals and maps
+        self._minerals: Set[Tuple[Coordinate, int]] = set()
+        # a drone id as key and map id as value
+        self._deployed: Dict[int, int] = {}
+        self._update_queue: List[Tuple[int, Context]] = []  # a
+        # a map id as key and Map as value
+        self._tile_maps: Dict[int, Map] = {}
 
         for value in range(3):
             # Create three MinerDrones and three ScoutDrones

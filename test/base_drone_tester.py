@@ -2,10 +2,12 @@
 import random
 import unittest
 from test.testing_utils import TestingUtils
-from typing import Dict, List, NamedTuple, Optional, Tuple, Type
+from typing import Dict, List, NamedTuple, Optional, Tuple, Type, TypeVar
 
 from utils import Context, Coordinate, Directions, Icon, Tile
 from zerg.drones import Drone
+
+T = TypeVar("T", bound=Drone)
 
 
 class BaseDroneTester(unittest.TestCase):
@@ -17,7 +19,7 @@ class BaseDroneTester(unittest.TestCase):
             ("health", int),
             ("capacity", int),
             ("moves", int),
-            ("init", Type[Drone]),
+            ("init", Type[T]),
         ],
     )
 
@@ -34,18 +36,18 @@ class BaseDroneTester(unittest.TestCase):
         return health, capacity, moves
 
     def _build_dynamic_units(
-        self, drone_type: Drone
-    ) -> Tuple[List[Drone], List[CustomDroneStat]]:
-        custom_drones_: List[Drone] = []
+        self, drone_type: Type[T]
+    ) -> Tuple[List[T], List[CustomDroneStat]]:
+        custom_drones_: List[T] = []
         custom_drone_stats_: List[BaseDroneTester.CustomDroneStat] = []
         for _ in range(self.RANDOM_TEST_RUNS):
             health, capacity, moves = self._randomize_stats()
-            Blueprint: Type[Drone] = drone_type.drone_blueprint(
-                health, capacity, moves, drone_type  # type: ignore
+            blueprint: Type[T] = Drone.drone_blueprint(
+                health, capacity, moves, drone_type
             )
-            custom_drones_.append(Blueprint())
+            custom_drones_.append(blueprint(self.overlord))
             custom_drone_stats_.append(
-                self.CustomDroneStat(health, capacity, moves, Blueprint)
+                self.CustomDroneStat(health, capacity, moves, blueprint)
             )
         return custom_drones_, custom_drone_stats_
 

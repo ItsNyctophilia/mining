@@ -202,6 +202,25 @@ class Drone(Zerg):
         """
         return self._steps
 
+
+    def log_creation(self):
+        """
+        This logs the creation of a drone into a special file in the current directory.
+        https://www.geeksforgeeks.org/logging-in-python/
+        """
+        # Create and configure logger
+        logging.basicConfig(filename="drone.log",
+                            format='%(asctime)s %(message)s',
+                            filemode='w')
+         
+        # Creating an object
+        logger = logging.getLogger()
+         
+        # Setting the threshold of logger to DEBUG
+        logger.setLevel(logging.DEBUG)
+        drone_id = id(self)
+        drone_type = type(self).__name__
+        logger.info(f'{drone_type} {drone_id} has been created')
 class State(Enum):
     """Drone states."""
 

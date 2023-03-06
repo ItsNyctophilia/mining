@@ -39,3 +39,19 @@ class TestMiner(BaseDroneTester):
                 Icon.EMPTY,
                 f"Mineral at {mineral_tile}",
             )
+
+    def test_miner_return_home(self):
+        for _ in range(self.RANDOM_TEST_RUNS):
+            mineral_tile = Tile(
+                TestingUtils._randomize_coordinate(), Icon.MINERAL
+            )
+            self._register_tile(mineral_tile)
+            mineral_health = self.minerals_[mineral_tile]
+            ticks, steps, start, _, curr, path = self._travel(
+                self.base_miner_, dest=mineral_tile
+            )
+            expected_steps = len(path) * 2
+            expected_ticks = expected_steps + mineral_health
+            self.assertEqual(start, curr)
+            self.assertEqual(ticks, expected_ticks)
+            self.assertEqual(steps, expected_steps)

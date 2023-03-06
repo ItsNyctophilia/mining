@@ -18,6 +18,7 @@ class Drone(Zerg):
     def __init__(self) -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
+        self.overlord = None
         self._capacity = self.max_capacity
         self._moves = self.max_moves
         self._path_to_goal: Optional[List[Coordinate]] = None
@@ -131,6 +132,7 @@ class Drone(Zerg):
             str: The direction the drone would like to move.
         """
         result = Directions.CENTER.name
+        self.overlord.enqueue_map_update(self, context)
         # do not move if no path set
         if self.path:
             current_location = Coordinate(context.x, context.y)

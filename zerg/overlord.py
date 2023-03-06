@@ -16,7 +16,7 @@ class Overlord(Zerg):
         self.drones = {}  # a drone id as key and drone as value
         self._minerals = {}  # a set of the coords of minerals and maps
         self._deployed = {}  # a drone id as key and map id as value
-        self._update_queue = []  # a
+        self._update_queue = []  # a list of map updates from zerg drones
         self._tile_maps = {}  # a map id as key and Map as value
 
         for value in range(3):
@@ -24,8 +24,8 @@ class Overlord(Zerg):
             self._create_drone("Miner")
             self._create_drone("Scout")
         for drone in self.drones:
-            # Set 'map deployed to' for all drones to 0
-            self._deployed[id(self.drones[drone])] = 0
+            # Set 'map deployed to' for all drones to None
+            self._deployed[id(self.drones[drone])] = None
 
     def _create_drone(self, type: str) -> None:
         """Creates a new zerg drone of the specified drone type"""
@@ -33,6 +33,7 @@ class Overlord(Zerg):
                        "Miner": MinerDrone(),
                        "Scout": ScoutDrone()}
         new_drone = drone_types[type]
+        new_drone.overlord = self
         self.drones[id(new_drone)] = new_drone
 
     def add_map(self, map_id: int, summary: float) -> None:
@@ -58,11 +59,11 @@ class Overlord(Zerg):
             """
         # TODO: Only count DroneScouts to avoid conflicts with miners
         zerg_per_map = {}
-        for map in self.maps.keys():
+        for map in self.maps:
             zerg_per_map.update({map: 0})
-        for drone in self._deployed.keys():
+        for drone in self._deployed:
             current_map = self._deployed[drone]
-            if not current_map:
+            if current_map is None:
                 continue
             zerg_per_map[current_map] += 1
         return min(zerg_per_map, key=zerg_per_map.get)
@@ -77,11 +78,12 @@ class Overlord(Zerg):
             context (Context): The update information.
         """
         map_id = self._deployed[id(drone)]
-        self._update_queue.append((map_id, context))
+        self._update_queue.append((map_id, drone, context))
 
     def _set_drone_path(self, drone_id: int):
         """Gives a drone a path based on their role and context"""
-        # TODO: find path using Dijkstra's
+        # TODO: Replace with functional drone pathing logic
+        self.drones[drone_id].path = self._tile_maps[self._deployed[drone_id]].dijkstra(Coordinate(2, 1), Coordinate(1, 0))
         pass
 
     def action(self, context=None) -> str:
@@ -94,25 +96,34 @@ class Overlord(Zerg):
         Returns:
             str: The action for the overlord to perform
         """
-        action = None
+        action = "None"
         # Deploy all scouts at start
         for drone in self.drones.values():
             if isinstance(drone, ScoutDrone):
-                if not self._deployed[id(drone)]:
+                if self._deployed[id(drone)] is not None:
                     continue
-                action = f"DEPLOY {id(drone)} {self._select_map()}"
+                selected_map = self._select_map()
+                action = f"DEPLOY {id(drone)} {selected_map}"
+                self._deployed[id(drone)] = selected_map
                 break
 
         # Drone map updates
-        for map_id, drone_context in self._update_queue:
-            if not self._tile_maps[map_id]:
+        seen_drones = []
+        for _, drone, _ in self._update_queue:
+            seen_drones.append(drone)
+        for drone in self.drones:
+            if drone not in seen_drones:
+                self._deployed[id(drone)] = None
+        for map_id, drone, drone_context in self._update_queue:
+            self._update_queue.pop(0)
+            if self._tile_maps.get(map_id) is None:
                 self._tile_maps[map_id] = Map(drone_context)
                 self._tile_maps[map_id].update_context(drone_context, True)
-
             self._tile_maps[map_id].update_context(drone_context)
 
-        for drone in self.drones.values():
-            if not self._deployed[id(drone)] or drone.path:
+        for drone in self._deployed:
+            current_map = self._deployed[drone]
+            if current_map is None or self._tile_maps.get(current_map) is None:
                 continue
-            self.set_drone_path()
+            self._set_drone_path(drone)
         return action

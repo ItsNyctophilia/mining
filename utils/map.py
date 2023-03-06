@@ -7,7 +7,7 @@ from .coordinate import Coordinate
 from .icon import Icon
 from .tile import Tile
 
-import heapq as heap
+from queue import PriorityQueue as Queue
 
 
 class Map:
@@ -18,30 +18,50 @@ class Map:
         self.adjacency_list: Dict[Tile, Optional[List[Tile]]] = {}
 
         # dict{Tile: [Tile, Tile, Tile, Tile]}
-    
+
     def dijkstra(self, start: Coordinate, end: Coordinate) -> None:
         node_weights = {
                         " ": 1,
+                        "_": 2,
                         "~": 10,
-                        "*": 9999,
+                        "*": 9998,
                         "#": 9999
                         }
         # TODO: dynamically assign acid weight
-        visited = set()
+        visited = []
         parents_map = {}
-        pq = []
-        heap.heappush(pq, (0, start))
+        final_path = []
+        pqueue = Queue()
+        pqueue.put((0, start))
 
-        while pq:
-            _, node = heap.heappop(pq)
-            visited.add(node)
+        while pqueue.empty() is False:
+            _, node = pqueue.get()
+            visited.append(node)
+            tile_neighbors = self.adjacency_list[Tile(node)]
+            if tile_neighbors is None:
+                if (node.x == end.x
+                    or node.x + 1 == end.x
+                    or node.x - 1 == end.x) and (node.y == end.y
+                                                 or node.y + 1 == end.y
+                                                 or node.y - 1 == end.y):
+                    # TODO: is_adjacent() method in coordinate?
+                    parents_map[Tile(end)] = node
+                    break
 
-            for neighbor in self.adjacency_list[Tile(node)]:
+            for neighbor in tile_neighbors:
                 if neighbor in visited:
                     continue
                 parents_map[neighbor] = node
-                heap.heappush(pq, (node_weights[neighbor.icon], neighbor))
-        return parents_map
+                pqueue.put((node_weights[neighbor.icon.value],
+                            neighbor.coordinate))
+
+        tile = end
+        while tile != start:
+            coord = parents_map[Tile(tile)]
+            final_path.append(coord)
+            tile = coord
+        print(final_path)
+        return final_path
 
     def update_context(self, context: Context, origin: bool = False):
         """Updates the adjacency list for the Map with a context object

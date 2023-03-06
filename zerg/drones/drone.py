@@ -1,6 +1,7 @@
 """Parent class for all drone zerg units."""
 from __future__ import annotations
 
+from enum import Enum, auto
 from typing import List, Optional, Type
 
 from utils import Context, Coordinate, Directions
@@ -22,7 +23,7 @@ class Drone(Zerg):
         self._path_to_goal: List[Coordinate] = []
         self._path_traveled: List[Coordinate] = []
         self._steps = 0
-        self._traveling = False
+        self._state = State.WAITING
 
     @property
     def capacity(self) -> int:
@@ -56,7 +57,7 @@ class Drone(Zerg):
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)
-        self._traveling = len(new_path) > 2
+        self._state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
     @property
     def dest(self) -> Optional[Coordinate]:
@@ -185,7 +186,7 @@ class Drone(Zerg):
         during travel. The drone base class will call this method whenever it
         reaches it's intended destination.
         """
-        self._traveling = False
+        self._state = State.WAITING
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.
@@ -194,3 +195,13 @@ class Drone(Zerg):
             int: The total number of steps.
         """
         return self._steps
+
+class State(Enum):
+    """Drone states."""
+
+    TRAVELING = auto()
+    WORKING = auto()
+    WAITING = auto()
+
+
+T = TypeVar("T", bound=Drone)

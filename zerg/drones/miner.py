@@ -1,11 +1,11 @@
 """Miner drone, whose primary purpose is to mine minerals."""
-from typing import List, Optional
+from typing import List
 
 from utils.context import Context
 from utils.coordinate import Coordinate
 from utils.directions import Directions
 
-from .drone import Drone
+from .drone import Drone, State
 
 
 class MinerDrone(Drone):
@@ -43,9 +43,11 @@ class MinerDrone(Drone):
         Returns:
             str: The intended next destination of the drone.
         """
-        if self._traveling:
-            return super().action(context)
-        return self._mine(context)
+        result = super().action(context)
+        if self._state == State.WORKING:
+            return self._mine(context)
+        else:
+            return result
 
     def _mine(self, context: Context) -> str:
         # TODO: Actually mine the mineral

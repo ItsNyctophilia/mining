@@ -28,22 +28,16 @@ class Dashboard(tkinter.Toplevel):
         self.configure(bg='#2C292C')
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
+        self.prep_dashboard_trees()
         self.title("Overlord's Dashboard")
-        self.map_tree = self.make_tree("Window Title", "Map ID")
-        self.map_tree.grid(row=0, column=0, padx=(20, 20), pady=(20, 20))
-        self.turn_tree = self.make_tree("Tick", "Action")
-        self.turn_tree.grid(row=0, column=1, padx=(20, 20), pady=(20, 20))
-        self.drone_tree = self.make_drone_tree()
-        self.drone_tree.grid(row=1, column=0, columnspan=2, padx=(20, 20), pady=(20, 20))
-        # 
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_tree(self, column1: str, column2: str) -> None:
+    def make_tree(self, column_dictionary: dict) -> None:
         """
         Builds trees for the dashboard to use, dashboards typically serve spreadsheets in the gui.
         Arguments:
-            column1 (string) : the name for this first column in the table
-            column2 (string) : the name for the second column in the table
+            column_dictionary: Contains dictionaries and width values for 
+            each column.
         """
 
         s = ttk.Style()
@@ -56,64 +50,51 @@ class Dashboard(tkinter.Toplevel):
         treev = ttk.Treeview(self, selectmode='browse')
 
         # Defining number of columns
-        treev["columns"] = ("1", "2")
+        treev["columns"] = tuple(column_dictionary)
 
         # Defining heading
         treev['show'] = 'headings'
 
-        # Assigning the width and anchor to  the
-        # respective columns
-        treev.column("1", width=180, anchor='c')
-        treev.column("2", width=180, anchor='se')
+        column_count = 0
+        for column, width in column_dictionary.items():
+            string_column = str(column_count)
+            treev.column(string_column, width=width, anchor='se')
+            treev.heading(string_column, text=column)
+            column_count += 1
 
-        # Assigning the heading names to the
-        # respective columns
-        treev.heading("1", text=column1)
-        treev.heading("2", text=column2)
         return treev
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_drone_tree(self) -> None:
+    def prep_dashboard_trees(self):
         """
-        Builds drone tree for dashboard to best keep track of drones, This will ensure the user knows about each drone
+        prepares the three treeviews in the dashboard
         """
+        map_dict = {
+                'Window Title': 180,
+                'Map ID': 180
+                }
 
-        s = ttk.Style()
-        s.theme_use('clam')
+        action_tree = {
+                'Action' : 180,
+                'Tick' : 180
+                }
 
-        # Configure the style of Heading in Treeview widget
-        s.configure('Treeview.Heading', background="#ad73ac")
+        drone_tree = {
+                'Drone ID' : 180,
+                'Drone Type' : 180,
+                'Health' : 120,
+                'Capacity' : 120,
+                'Moves' : 120
+                }
+        padding = (20, 20)
+        self.map_tree = self.make_tree(map_dict)
+        self.map_tree.grid(row=0, column=0, padx= padding, pady=padding)
+        self.turn_tree = self.make_tree(action_tree)
+        self.turn_tree.grid(row=0, column=1, padx=padding, pady=padding)
+        self.drone_tree = self.make_tree(drone_tree)
+        self.drone_tree.grid(row=1, column=0, columnspan=2,padx=padding, pady=padding)
 
-        # Using treeview widget
-        treev = ttk.Treeview(self, selectmode='browse')
-
-        # Defining number of columns
-        treev["columns"] = ("1", "2", "3", "4", "5")
-
-        # Defining heading
-        treev['show'] = 'headings'
-
-        # Assigning the width and anchor to  the
-        # respective columns
-        treev.column("1", width=180, anchor='c')
-        treev.column("2", width=180, anchor='se')
-        treev.column("3", width=120, anchor='se')
-        treev.column("4", width=120, anchor='se')
-        treev.column("5", width=120, anchor='se')
-
-        # Assigning the heading names to the
-        # respective columns
-        treev.heading("1", text="Drone ID")
-        treev.heading("2", text="Drone Type")
-        treev.heading("3", text="Health")
-        treev.heading("4", text="Capacity")
-        treev.heading("5", text="Moves")
-        return treev
-
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def add_drone_to_tree(self, new_drone: drone) -> None:
+    def add_drone_to_tree(self, new_drone: Drone) -> None:
         """
         Adds a drone to the drone tree in the gui
         Arguments:

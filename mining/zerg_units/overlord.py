@@ -3,9 +3,9 @@
 import itertools
 from typing import Dict, List, Optional, Set, Tuple
 
-from utils import Context, Coordinate, Map, Tile
-from zerg.drones import Drone, MinerDrone, ScoutDrone
+from mining.utils import Context, Coordinate, Map, Tile
 
+from .drones import Drone, MinerDrone, ScoutDrone
 from .zerg import Zerg
 
 

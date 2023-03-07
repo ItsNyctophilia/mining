@@ -1,9 +1,9 @@
 """Test class for miner drone zerg units."""
-from test.base_drone_tester import BaseDroneTester
-from test.testing_utils import TestingUtils
+from mining.utils import Icon, Tile
+from mining.zerg_units.drones import MinerDrone
 
-from utils import Icon, Tile
-from zerg.drones import MinerDrone
+from .base_drone_tester import BaseDroneTester
+from .testing_utils import TestingUtils
 
 
 class TestMiner(BaseDroneTester):
@@ -30,7 +30,7 @@ class TestMiner(BaseDroneTester):
     def test_miner_mine_mineral(self):
         for _ in range(self.RANDOM_TEST_RUNS):
             mineral_tile = Tile(
-                TestingUtils._randomize_coordinate(), Icon.MINERAL
+                TestingUtils.randomize_coordinate(), Icon.MINERAL
             )
             self._register_tile(mineral_tile)
             mineral_health_max = self.minerals_[mineral_tile]
@@ -47,7 +47,7 @@ class TestMiner(BaseDroneTester):
     def test_miner_return_home(self):
         for _ in range(self.RANDOM_TEST_RUNS):
             mineral_tile = Tile(
-                TestingUtils._randomize_coordinate(), Icon.MINERAL
+                TestingUtils.randomize_coordinate(), Icon.MINERAL
             )
             self._register_tile(mineral_tile)
             mineral_health = self.minerals_[mineral_tile]

@@ -1,7 +1,7 @@
 """Miner drone, whose primary purpose is to mine minerals."""
 from typing import List, Optional
 
-from utils import Context, Coordinate, Directions, Icon
+from mining.utils import Context, Coordinate, Icon
 
 from .drone import Drone, State
 

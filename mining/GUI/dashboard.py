@@ -6,7 +6,7 @@ import tkinter
 from tkinter import ttk
 from typing import Dict
 
-from zerg.drones import Drone
+from mining.zerg_units.drones import Drone
 
 
 class Dashboard(tkinter.Toplevel):

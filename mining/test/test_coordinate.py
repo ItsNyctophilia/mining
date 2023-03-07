@@ -1,7 +1,7 @@
 """Test class for coordinates"""
 import unittest
 
-from utils import Coordinate
+from mining.utils import Coordinate
 
 
 class TestCoordinate(unittest.TestCase):

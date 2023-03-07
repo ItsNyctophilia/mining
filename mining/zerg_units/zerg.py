@@ -1,7 +1,7 @@
 """Abstract base class for all zerg units."""
 from abc import ABC, abstractmethod
 
-from utils import Context
+from mining.utils import Context
 
 
 class Zerg(ABC):

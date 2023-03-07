@@ -1,7 +1,7 @@
 """Defines Map class along with the methods and attributes that it uses."""
 import tkinter
 
-from utils import Icon, Tile
+from mining.utils import Icon, Tile
 
 
 class Map(tkinter.Toplevel):

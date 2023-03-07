@@ -2,7 +2,7 @@
 """Test main."""
 from tkinter import Tk, mainloop
 
-from GUI.dashboard import Dashboard
+from mining.GUI.dashboard import Dashboard
 
 root = Tk()
 

@@ -3,7 +3,7 @@ import random
 import unittest
 from typing import Optional, Tuple
 
-from utils import Coordinate, Icon, Tile
+from mining.utils import Coordinate, Icon, Tile
 
 
 class TestTile(unittest.TestCase):

@@ -1,12 +1,13 @@
 """Base class for all zerg drone testing."""
 import random
 import unittest
-from test.testing_utils import TestingUtils
 from typing import Dict, List, NamedTuple, Optional, Tuple, Type, TypeVar
 
-from utils import Context, Coordinate, Directions, Icon, Map, Tile
-from zerg import Overlord
-from zerg.drones import Drone
+from mining.utils import Context, Coordinate, Directions, Icon, Map, Tile
+from mining.zerg_units import Overlord
+from mining.zerg_units.drones import Drone
+
+from .testing_utils import TestingUtils
 
 T = TypeVar("T", bound=Drone)
 
@@ -63,7 +64,7 @@ class BaseDroneTester(unittest.TestCase):
         if not start:
             start = Tile(Coordinate(0, 0), Icon.EMPTY)
         if not dest:
-            coord = TestingUtils._randomize_coordinate(
+            coord = TestingUtils.randomize_coordinate(
                 -100, 100, avoid=start.coordinate
             )
             dest = Tile(coord, Icon.EMPTY)

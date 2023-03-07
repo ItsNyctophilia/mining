@@ -5,11 +5,11 @@ import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
-from utils import Context, Coordinate, Directions
-from zerg.zerg import Zerg
+from mining.utils import Context, Coordinate, Directions
+from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
-    from zerg import Overlord
+    from mining.zerg_units import Overlord
 
 
 class Drone(Zerg):

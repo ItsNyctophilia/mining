@@ -1,7 +1,7 @@
 """Test class for basic drone zerg units."""
-from test.base_drone_tester import BaseDroneTester
+from mining.zerg_units.drones import Drone
 
-from zerg.drones import Drone
+from .base_drone_tester import BaseDroneTester
 
 
 class TestDrone(BaseDroneTester):

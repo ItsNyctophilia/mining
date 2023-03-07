@@ -1,5 +1,5 @@
 """Scout drone, whose primary purpose is revealing the map."""
-from zerg.drones.drone import Drone
+from .drone import Drone
 
 
 class ScoutDrone(Drone):
@@ -9,6 +9,6 @@ class ScoutDrone(Drone):
     max_capacity = 5
     max_moves = 1
 
-    def __init__(self) -> None:
+    def __init__(self, overlord) -> None:
         """Initialize a ScoutDrone."""
-        super().__init__()
+        super().__init__(overlord)

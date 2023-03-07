@@ -1,8 +1,7 @@
 """Defines Map class along with the methods and attributes that it uses."""
 import tkinter
 
-from utils.icon import Icon
-from utils.tile import Tile
+from utils import Icon, Tile
 
 
 class Map(tkinter.Toplevel):
@@ -24,27 +23,6 @@ class Map(tkinter.Toplevel):
             self, width=100, height=100, state="normal", wrap="none"
         )
         self.log.pack()
-
-    def write_up(self, object_at_place: str, x: int, y: int) -> None:
-        """Write certain characters to a specific place in the map.
-
-        Arguments:
-            object_at_place (str) : defines what specific character should be
-                placed at the coordinate.
-            x (int) : Specifies what column the character should be placed in.
-            y (int) : Specifies what row the character should be placed in.
-        """
-        unicode_dict = {
-            "wall": "\u2589",
-            "acid": "\u2600",
-            "minerals": "\u2662",
-            "drone": "\u26DF",
-            "deployment": "\u25BD",
-            "unknown": "\u26F6",
-        }
-        unicode_character = unicode_dict[object_at_place]
-        coordinates = f"{y}.{x}"
-        self.log.insert(coordinates, unicode_character)
 
     def prepare_map(self) -> None:
         """Prepare map by filling it with unknown characters."""

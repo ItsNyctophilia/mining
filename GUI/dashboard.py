@@ -24,26 +24,18 @@ class Dashboard(tkinter.Toplevel):
         self.configure(bg="#2C292C")
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
+        self.prep_dashboard_trees()
         self.title("Overlord's Dashboard")
-        self.map_tree = self.make_tree("Window Title", "Map ID")
-        self.map_tree.grid(row=0, column=0, padx=(20, 20), pady=(20, 20))
-        self.turn_tree = self.make_tree("Tick", "Action")
-        self.turn_tree.grid(row=0, column=1, padx=(20, 20), pady=(20, 20))
-        self.drone_tree = self.make_drone_tree()
-        self.drone_tree.grid(
-            row=1, column=0, columnspan=2, padx=(20, 20), pady=(20, 20)
-        )
-        #
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_tree(self, column1: str, column2: str) -> ttk.Treeview:
+    def make_tree(self, column_dictionary: dict) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
         Dashboards typically serve spreadsheets in the gui.
 
         Arguments:
-            column1 (string) : the name for this first column in the table
-            column2 (string) : the name for the second column in the table
+            column_dictionary: Contains dictionaries and width values for
+            each column.
         """
         style = ttk.Style()
         style.theme_use("clam")
@@ -55,63 +47,43 @@ class Dashboard(tkinter.Toplevel):
         tree_view = ttk.Treeview(self, selectmode="browse")
 
         # Defining number of columns
-        tree_view["columns"] = ("1", "2")
+        tree_view["columns"] = tuple(column_dictionary)
 
         # Defining heading
         tree_view["show"] = "headings"
 
-        # Assigning the width and anchor to  the
-        # respective columns
-        tree_view.column("1", width=180, anchor="center")
-        tree_view.column("2", width=180, anchor="se")
-
-        # Assigning the heading names to the
-        # respective columns
-        tree_view.heading("1", text=column1)
-        tree_view.heading("2", text=column2)
+        for column_count, (column, width) in enumerate(
+            column_dictionary.items()
+        ):
+            string_column = str(column_count)
+            tree_view.column(string_column, width=width, anchor="se")
+            tree_view.heading(string_column, text=column)
         return tree_view
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
+    def prep_dashboard_trees(self):
+        """Prepare the three tree views in the dashboard."""
+        map_dict = {"Window Title": 180, "Map ID": 180}
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_drone_tree(self) -> ttk.Treeview:
-        """Build drone tree for dashboard to best keep track of drones.
+        action_tree = {"Action": 180, "Tick": 180}
 
-        This will ensure the user knows about each drone
-        """
-        s = ttk.Style()
-        s.theme_use("clam")
+        drone_tree = {
+            "Drone ID": 180,
+            "Drone Type": 180,
+            "Health": 120,
+            "Capacity": 120,
+            "Moves": 120,
+        }
+        padding = (20, 20)
+        self.map_tree = self.make_tree(map_dict)
+        self.map_tree.grid(row=0, column=0, padx=padding, pady=padding)
+        self.turn_tree = self.make_tree(action_tree)
+        self.turn_tree.grid(row=0, column=1, padx=padding, pady=padding)
+        self.drone_tree = self.make_tree(drone_tree)
+        self.drone_tree.grid(
+            row=1, column=0, columnspan=2, padx=padding, pady=padding
+        )
 
-        # Configure the style of Heading in Treeview widget
-        s.configure("Treeview.Heading", background="#ad73ac")
-
-        # Using treeview widget
-        tree_view = ttk.Treeview(self, selectmode="browse")
-
-        # Defining number of columns
-        tree_view["columns"] = ("1", "2", "3", "4", "5")
-
-        # Defining heading
-        tree_view["show"] = "headings"
-
-        # Assigning the width and anchor to  the
-        # respective columns
-        tree_view.column("1", width=180, anchor="center")
-        tree_view.column("2", width=180, anchor="se")
-        tree_view.column("3", width=120, anchor="se")
-        tree_view.column("4", width=120, anchor="se")
-        tree_view.column("5", width=120, anchor="se")
-
-        # Assigning the heading names to the
-        # respective columns
-        tree_view.heading("1", text="Drone ID")
-        tree_view.heading("2", text="Drone Type")
-        tree_view.heading("3", text="Health")
-        tree_view.heading("4", text="Capacity")
-        tree_view.heading("5", text="Moves")
-        return tree_view
-
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def add_drone_to_tree(self, new_drone: Drone) -> None:
         """Add a drone to the drone tree in the gui.
 
@@ -160,10 +132,8 @@ class Dashboard(tkinter.Toplevel):
             map_dict (dict) : This dictionary should contain all the maps that
                 will be added to the table.
         """
-        window_counter = 0
         self.clear_table(self.map_tree)
-        for entry in map_dict.values():
-            window_counter += 1
+        for window_counter, entry in enumerate(map_dict.values(), start=1):
             self.map_tree.insert(
                 "",
                 "end",

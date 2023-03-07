@@ -38,7 +38,7 @@ class Dashboard(tkinter.Toplevel):
         # 
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_tree(self, column1, column2):
+    def make_tree(self, column1: str, column2: str) -> None:
         """
         Builds trees for the dashboard to use, dashboards typically serve spreadsheets in the gui.
         Arguments:
@@ -75,7 +75,7 @@ class Dashboard(tkinter.Toplevel):
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_drone_tree(self):
+    def make_drone_tree(self) -> None:
         """
         Builds drone tree for dashboard to best keep track of drones, This will ensure the user knows about each drone
         """
@@ -113,7 +113,7 @@ class Dashboard(tkinter.Toplevel):
         return treev
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def add_drone_to_tree(self, new_drone):
+    def add_drone_to_tree(self, new_drone: drone) -> None:
         """
         Adds a drone to the drone tree in the gui
         Arguments:
@@ -132,7 +132,7 @@ class Dashboard(tkinter.Toplevel):
         for entry in tree.get_children():
             tree.delete(entry)
 
-    def update_drone_table(self, drone_dict):
+    def update_drone_table(self, drone_dict: dict) -> None:
         """
         clears drone table and adds a new dictionary of drones to the table
         Arguments:
@@ -143,7 +143,7 @@ class Dashboard(tkinter.Toplevel):
         for entry in drone_dict.values():
             self.add_drone_to_tree(entry)
 
-    def fill_map_table(self, map_dict):
+    def fill_map_table(self, map_dict: dict) -> None:
         """
         fills map table with new maps that come from a dictionary
         Arguments:

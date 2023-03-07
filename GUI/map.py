@@ -12,7 +12,7 @@ class Map(tkinter.Toplevel):
         parent (tktinker.Toplevel): Takes in a tkinter top level window
     """
 
-    def __init__(self, parent, title):
+    def __init__(self, parent, title: str):
         super().__init__(parent)
         self.photo = tkinter.PhotoImage(file='icon.png')
         self.wm_iconphoto(False, self.photo)
@@ -22,7 +22,7 @@ class Map(tkinter.Toplevel):
         self.log = tkinter.Text(self, width=100, height=100, state='normal', wrap='none')
         self.log.pack()
 
-    def write_up(self, objectatplace, x, y):
+    def write_up(self, objectatplace: str, x: int, y: int) -> None:
         """writes certain characters to a specific place in the map
 
         Arguments:
@@ -42,7 +42,7 @@ class Map(tkinter.Toplevel):
         coordinates = f'{y}.{x}'
         self.log.insert(coordinates, unicode_character)
 
-    def prepare_map(self):
+    def prepare_map(self) -> None:
         """
         This prepares a map in the beginning by filling it with unknown characters
         """
@@ -53,7 +53,7 @@ class Map(tkinter.Toplevel):
             self.log.insert(f'{x}.200', '\n')
         self.log.config(state='disabled')
 
-    def translate_tile(self, new_tile):
+    def translate_tile(self, new_tile: tile) -> None:
         """
         This writes a tile object to the map
         new_tile (tile) : Specifies the tile that should be written into the map

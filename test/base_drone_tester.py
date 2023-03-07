@@ -4,7 +4,7 @@ import unittest
 from test.testing_utils import TestingUtils
 from typing import Dict, List, NamedTuple, Optional, Tuple, Type, TypeVar
 
-from utils import Context, Coordinate, Directions, Icon, Tile
+from utils import Context, Coordinate, Directions, Icon, Map, Tile
 from zerg import Overlord
 from zerg.drones import Drone
 
@@ -30,7 +30,7 @@ class BaseDroneTester(unittest.TestCase):
     RANDOM_TEST_RUNS = 50
     DIRECTIONS = [d.name for d in Directions]
     phony_context_ = Context()
-    stored_tiles_: Dict[Coordinate, Tile] = {}
+    map_ = Map()
     minerals_: Dict[Tile, int] = {}
 
     def _randomize_stats(self) -> Tuple[int, int, int]:
@@ -54,27 +54,6 @@ class BaseDroneTester(unittest.TestCase):
                 self.CustomDroneStat(health, capacity, moves, blueprint)
             )
         return custom_drones_, custom_drone_stats_
-
-    def _construct_context(self, drone_loc: Coordinate, dest: Tile):
-        direction = drone_loc.direction(dest.coordinate)
-        new_mapping = {direction: dest.icon.value if dest.icon else " "}
-        return Context(*drone_loc)._replace(**new_mapping)  # type: ignore
-
-    def _safely_construct_context(
-        self,
-        path: List[Tile],
-        cur_step: int,
-    ) -> Tuple[Context, int]:
-        drone_loc = path[cur_step].coordinate
-        if cur_step + 1 >= len(path):
-            dest = Tile(Coordinate(drone_loc.x, drone_loc.y + 1))
-        else:
-            dest = path[cur_step + 1]
-            cur_step += 1
-        return (
-            self._construct_context(drone_loc, dest),
-            cur_step,
-        )
 
     def _init_start_dest(
         self,
@@ -118,9 +97,7 @@ class BaseDroneTester(unittest.TestCase):
             path.insert(0, new_tile)
         return path
 
-    def _drone_act(
-        self, travel_info: Dict[str, int], drone: Drone, context: Context
-    ) -> bool:
+    def _drone_act(self, travel_info: Dict[str, int], drone: Drone) -> bool:
         """Allow the drone to act.
 
         Return True if the drone requests to continue moving, else False.
@@ -133,6 +110,9 @@ class BaseDroneTester(unittest.TestCase):
         Returns:
             bool: True if the drones wants to move, else False.
         """
+        context = self._get_context_from_map(
+            Coordinate(travel_info["x"], travel_info["y"])
+        )
         direction = drone.action(context)
         if direction == Directions.EAST.name:
             return self._move_up_or_right(travel_info, "x")
@@ -145,8 +125,29 @@ class BaseDroneTester(unittest.TestCase):
         else:
             return False
 
+    def _get_context_from_map(self, coord: Coordinate) -> Context:
+        cardinals = dict(
+            zip(["north", "south", "east", "west"], coord.cardinals())
+        )
+        icons: Dict[str, str] = {
+            "north": self.map_.get(
+                cardinals["north"], Tile(cardinals["north"], Icon.EMPTY)
+            ).icon.value,
+            "south": self.map_.get(
+                cardinals["south"], Tile(cardinals["south"], Icon.EMPTY)
+            ).icon.value,
+            "east": self.map_.get(
+                cardinals["east"], Tile(cardinals["east"], Icon.EMPTY)
+            ).icon.value,
+            "west": self.map_.get(
+                cardinals["west"], Tile(cardinals["west"], Icon.EMPTY)
+            ).icon.value,
+        }
+        return Context(*coord, **icons)
+
     def _register_tile(self, tile: Tile) -> None:
-        self.stored_tiles_[tile.coordinate] = tile
+        context = self._get_context_from_map(tile.coordinate)
+        self.map_.update_context(context)
         if tile.icon == Icon.MINERAL:
             self.minerals_[tile] = random.randint(1, 9)
 
@@ -163,7 +164,7 @@ class BaseDroneTester(unittest.TestCase):
         Returns:
             bool: True if a drone can move into this tile, else False.
         """
-        if tile := self.stored_tiles_.get(coord, None):
+        if tile := self.map_.get(coord, None):
             if tile in self.minerals_:
                 self.minerals_[tile] -= 1
                 if self.minerals_[tile] == 0:
@@ -212,16 +213,10 @@ class BaseDroneTester(unittest.TestCase):
         ticks = 1
         mineral_offset = self.minerals_.get(dest, 0)
         max_ticks = len(path) * 2 + mineral_offset
-        context, step_idx = self._safely_construct_context(path, 0)
 
         # handle infinite loops
-        while ticks < max_ticks and self._drone_act(
-            travel_info, drone, context
-        ):
+        while ticks < max_ticks and self._drone_act(travel_info, drone):
             ticks += 1
-            context, step_idx = self._safely_construct_context(
-                path, travel_info["steps"]
-            )
         return (
             ticks,
             travel_info["steps"],

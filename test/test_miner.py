@@ -33,11 +33,15 @@ class TestMiner(BaseDroneTester):
                 TestingUtils._randomize_coordinate(), Icon.MINERAL
             )
             self._register_tile(mineral_tile)
+            mineral_health_max = self.minerals_[mineral_tile]
             self._travel(self.base_miner_, dest=mineral_tile)
+            mineral_health_left = self.minerals_[mineral_tile]
             self.assertEqual(
                 mineral_tile.icon,
                 Icon.EMPTY,
-                f"Mineral at {mineral_tile}",
+                f"Mineral at {mineral_tile} with health "
+                f"{mineral_health_left}/{mineral_health_max}"
+                f"{self.map_}",
             )
 
     def test_miner_return_home(self):

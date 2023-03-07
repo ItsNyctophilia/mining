@@ -202,6 +202,36 @@ class Drone(Zerg):
         """
         return self._steps
 
+    def __str__(self):
+        """Return the string representation of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        # TODO: Finish pretty printing
+        base = super().__str__()
+        return (
+            f"{base} current health = {self.health}, "
+            f"max capacity = {self.capacity}, moves per turn = {self.moves}, "
+            f"current destination = {self.dest}, "
+            f"Drone is {'' if self._state else 'not '}traveling"
+        )
+
+    def __repr__(self) -> str:
+        """Return a representation of this object.
+
+        The string returned by this method is not valid for a call to eval.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        # TODO: Finish string representation
+        return (
+            f"Drone({self.health=}, {self.capacity=}, {self.moves=}, "
+            f"{self.path=})"
+        )
+
+
 class State(Enum):
     """Drone states."""
 

@@ -42,3 +42,12 @@ class Zerg(ABC):
             str: The action the zerg wants to take.
         """
         raise NotImplementedError("Zerg subtypes must implement action")
+
+    def __str__(self):
+        """Return the string representation of this object.
+
+        Returns:
+            _type_: The string representation of this object.
+        """
+        # TODO: Finish pretty printing
+        return f"{self.__class__}"

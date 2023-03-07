@@ -1,6 +1,7 @@
 """Parent class for all drone zerg units."""
 from __future__ import annotations
 
+import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
@@ -230,6 +231,28 @@ class Drone(Zerg):
             f"Drone({self.health=}, {self.capacity=}, {self.moves=}, "
             f"{self.path=})"
         )
+
+    def log_creation(self):
+        """Log the creation of a drone.
+
+        Logging is stored in a special file in the current directory.
+        https://www.geeksforgeeks.org/logging-in-python/
+        """
+        # Create and configure logger
+        logging.basicConfig(
+            filename="drone.log",
+            format="%(asctime)s %(message)s",
+            filemode="w",
+        )
+
+        # Creating an object
+        logger = logging.getLogger()
+
+        # Setting the threshold of logger to DEBUG
+        logger.setLevel(logging.DEBUG)
+        drone_id = id(self)
+        drone_type = type(self).__name__
+        logger.info(f"{drone_type} {drone_id} has been created")
 
 
 class State(Enum):

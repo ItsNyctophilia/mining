@@ -1,5 +1,5 @@
 """Overlord, who oversees zerg drones and assigns tasks to them"""
-from utils import Coordinate, Context, Map
+from utils import Coordinate, Context, Map, Tile
 
 from zerg.zerg import Zerg
 from zerg.drones.drone import Drone
@@ -80,11 +80,35 @@ class Overlord(Zerg):
         map_id = self._deployed[id(drone)]
         self._update_queue.append((map_id, drone, context))
 
-    def _set_drone_path(self, drone_id: int):
+    def _spiral_algorithm(self, start: Coordinate, map_id: int) -> Coordinate:
+        current_map = self._tile_maps[map_id]
+        current_ring = 1
+        while current_ring < 10:
+            adjacent_coords = []
+            for coord_x in range(0 - current_ring, 1 + current_ring):
+                for coord_y in range(0 - current_ring, 1 + current_ring):
+                    current_coord = Coordinate(coord_x, coord_y)
+                    if current_coord != start:
+                        adjacent_coords.append(current_coord)
+            for coord in adjacent_coords:
+                try:
+                    neighbors = current_map.adjacency_list[Tile(coord)]
+                    if neighbors is None:
+                        return coord
+
+                except KeyError:
+                    continue
+            current_ring += 1
+
+    def _set_drone_path(self, drone_id: int, context: Context) -> None:
         """Gives a drone a path based on their role and context"""
-        # TODO: Replace with functional drone pathing logic
-        self.drones[drone_id].path = self._tile_maps[self._deployed[drone_id]].dijkstra(Coordinate(2, 1), Coordinate(1, 0))
-        pass
+        map_id = self._deployed[drone_id]
+        start = Coordinate(context.x, context.y)
+        dest = self._spiral_algorithm(Coordinate(context.x, context.y),
+                                      map_id)
+        print("Start/Dest:", start, dest)
+        self.drones[drone_id].path = self._tile_maps[map_id].dijkstra(start,
+                                                                      dest)
 
     def action(self, context=None) -> str:
         """Performs some action, based on the context of the situation
@@ -115,15 +139,13 @@ class Overlord(Zerg):
             if drone not in seen_drones:
                 self._deployed[id(drone)] = None
         for map_id, drone, drone_context in self._update_queue:
-            self._update_queue.pop(0)
             if self._tile_maps.get(map_id) is None:
                 self._tile_maps[map_id] = Map(drone_context)
                 self._tile_maps[map_id].update_context(drone_context, True)
-            self._tile_maps[map_id].update_context(drone_context)
-
-        for drone in self._deployed:
-            current_map = self._deployed[drone]
-            if current_map is None or self._tile_maps.get(current_map) is None:
                 continue
-            self._set_drone_path(drone)
+            self._tile_maps[map_id].update_context(drone_context)
+            if drone.path is None:
+                self._set_drone_path(id(drone), drone_context)
+        self._update_queue = []
+
         return action

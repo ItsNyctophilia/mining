@@ -33,35 +33,28 @@ class Map:
         final_path = []
         pqueue = Queue()
         pqueue.put((0, start))
-
         while pqueue.empty() is False:
             _, node = pqueue.get()
             visited.append(node)
             tile_neighbors = self.adjacency_list[Tile(node)]
             if tile_neighbors is None:
-                if (node.x == end.x
-                    or node.x + 1 == end.x
-                    or node.x - 1 == end.x) and (node.y == end.y
-                                                 or node.y + 1 == end.y
-                                                 or node.y - 1 == end.y):
-                    # TODO: is_adjacent() method in coordinate?
-                    parents_map[Tile(end)] = node
-                    break
-
+                continue
             for neighbor in tile_neighbors:
-                if neighbor in visited:
+                if neighbor.coordinate in visited:
                     continue
                 parents_map[neighbor] = node
-                pqueue.put((node_weights[neighbor.icon.value],
-                            neighbor.coordinate))
+                try:
+                    pqueue.put((node_weights[neighbor.icon.value],
+                                neighbor.coordinate))
+                except AttributeError:
+                    pqueue.put((1, neighbor.coordinate))
 
         tile = end
         while tile != start:
             coord = parents_map[Tile(tile)]
             final_path.append(coord)
             tile = coord
-        print(final_path)
-        return final_path
+        return final_path[::-1]
 
     def update_context(self, context: Context, origin: bool = False):
         """Updates the adjacency list for the Map with a context object
@@ -91,6 +84,15 @@ class Map:
             current_tile = Tile(current_coord, Icon(symbol))
             neighbors.append(current_tile)
             if current_tile not in self.adjacency_list:
-                self.adjacency_list.update({current_tile: None})
+                neighbors_nbrs = []
+                for offset in coordinate_offsets:
+                    x_offset2, y_offset2 = offset
+                    neighbor_coord = Coordinate(current_coord.x + x_offset2,
+                                                current_coord.y + y_offset2)
+                    neighbor_tile = Tile(neighbor_coord)
+                    neighbors_nbrs.append(neighbor_tile)
+                    if self.adjacency_list.get(neighbor_tile) is None:
+                        self.adjacency_list.update({neighbor_tile: None})
+                self.adjacency_list.update({current_tile: neighbors_nbrs})
 
         self.adjacency_list.update({start_tile: neighbors})

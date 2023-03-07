@@ -131,9 +131,7 @@ class Map:
         """
         if isinstance(key, Tile):
             key = key.coordinate
-        if not (tile := self._stored_tiles_.get(key, None)):
-            raise KeyError(repr(key))
-        return tile
+        return self._stored_tiles_[key]
 
     def __iter__(self):
         yield from self.adjacency_list

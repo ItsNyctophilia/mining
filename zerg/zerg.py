@@ -31,6 +31,12 @@ class Zerg(ABC):
         """
         return self._health
 
+    def take_damage(self) -> None:
+        """Take a single point of damage."""
+        # TODO: Mark zerg as dead with overlord if health hits 0
+        if self._health:
+            self._health -= 1
+
     @abstractmethod
     def action(self, context: Context) -> str:
         """Perform some action, based on the type of zerg.

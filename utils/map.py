@@ -1,7 +1,7 @@
 """A map made up of tiles."""
 
 import heapq as heap
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union, overload
 
 from .context import Context
 from .coordinate import Coordinate
@@ -93,9 +93,17 @@ class Map:
 
         self.adjacency_list.update({start_tile: neighbors})
 
+    @overload
     def get(
-        self, key: Union[Tile, Coordinate], default: Optional[Tile] = None
+        self, key: Union[Tile, Coordinate], default: None
     ) -> Optional[Tile]:
+        pass
+
+    @overload
+    def get(self, key: Union[Tile, Coordinate], default: Tile) -> Tile:
+        pass
+
+    def get(self, key, default):
         """Get the tile with the specified coordinates from the map.
 
         A Tile or Coordinate object may be passed in as the key; if a Tile is
@@ -131,9 +139,7 @@ class Map:
         """
         if isinstance(key, Tile):
             key = key.coordinate
-        if not (tile := self._stored_tiles_.get(key, None)):
-            raise KeyError(repr(key))
-        return tile
+        return self._stored_tiles_[key]
 
     def __iter__(self):
         yield from self.adjacency_list

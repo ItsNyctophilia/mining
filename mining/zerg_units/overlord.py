@@ -3,7 +3,7 @@
 import itertools
 from typing import Dict, List, Optional, Set, Tuple
 
-from mining.utils import Context, Coordinate, Map, Tile
+from mining.utils import Context, Coordinate, Map, Tile, Icon
 
 from .drones import Drone, MinerDrone, ScoutDrone
 from .zerg import Zerg
@@ -89,51 +89,85 @@ class Overlord(Zerg):
         map_id = self._deployed[id(drone)]
         self._update_queue.append((map_id, drone, context))
 
-    def _spiral_algorithm(self, start: Coordinate, map_id: int) -> Coordinate:
+    def _spiral(
+            self,
+            ring: int,
+            map: Map,
+            start: Coordinate
+            ) -> List[Coordinate]:
+        """Implement the spiral search for a given radius around start
+
+        Args:
+            ring (int): The radius around the start value in which
+                to check for valid tiles
+            map (Map): Map object to search on
+            start (Coordinate): Coordinate to start search from
+        Returns:
+            list(Coordinate)
+        """
+        adjacent_coords = []
+        # TODO: Use itertools.product(range(*), repeat=2)?
+        for coord_x, coord_y in itertools.product(
+            range(-ring, 1 + ring),
+            range(-ring, 1 + ring),
+        ):
+            current_coord = Coordinate(coord_x, coord_y)
+            if current_coord != start:
+                adjacent_coords.append(current_coord)
+        for coord in adjacent_coords:
+
+            try:
+                neighbors = map.adjacency_list[Tile(coord)]
+                tile = map.get(coord, None)
+                if tile is None:
+                    continue
+                if not neighbors and (tile.icon is not Icon.UNREACHABLE):
+                    path = map.dijkstra(start, coord)
+                    if not path:
+                        tile = Icon.UNREACHABLE
+                        continue
+                    return path
+
+            except KeyError:
+                continue
+
+        return None
+
+    def _spiral_search(
+            self,
+            start: Coordinate,
+            map_id: int
+            ) -> List[Coordinate]:
         """Attempt to give a ScoutDrone a new path
-        
+
         This method searches for the first unexplored tile in a ring
         around a given start tile, incrementally expanding the ring
         in the case that a valid tile is not found, stopping after
         all tiles within a 10-tile radius have been checked.
-        
+
         Args:
             start (Coordinate): Start position of the search
             map_id (int): map_id of the map to search on
         Returns:
-            Coordinate: The tile for the ScoutDrone to explore next
+            list(Coordinate): The path for the ScoutDrone to explore
+                to next
         """
         current_map = self._tile_maps[map_id]
         for current_ring in range(1, 10):
-            adjacent_coords = []
-            # TODO: Use itertools.product(range(*), repeat=2)?
-            for coord_x, coord_y in itertools.product(
-                range(-current_ring, 1 + current_ring),
-                range(-current_ring, 1 + current_ring),
-            ):
-                current_coord = Coordinate(coord_x, coord_y)
-                if current_coord != start:
-                    adjacent_coords.append(current_coord)
-            for coord in adjacent_coords:
-                try:
-                    neighbors = current_map.adjacency_list[Tile(coord)]
-                    if not neighbors:
-                        return coord
-                except KeyError:
-                    continue
-        return None
+            path = self._spiral(current_ring, current_map, start)
+            if path is not None:
+                break
+
+        return path
 
     def _set_drone_path(self, drone_id: int, context: Context) -> None:
         """Give a drone a path based on their role and context."""
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
-        dest = self._spiral_algorithm(Coordinate(context.x, context.y), map_id)
+        dest = self._spiral_search(start, map_id)
         if dest is None:
             return
-        print("Start/Dest:", start, dest)
-        self.drones[drone_id].path = self._tile_maps[map_id].dijkstra(
-            start, dest
-        )
+        self.drones[drone_id].path = dest
 
     def action(self, context=None) -> str:
         """Perform some action, based on the context of the situation.
@@ -161,8 +195,7 @@ class Overlord(Zerg):
         seen_drones = [drone for _, drone, _ in self._update_queue]
         for drone in self.drones.values():
             if drone not in seen_drones:
-                #self._deployed[id(drone)] = None
-                pass
+                self._deployed[id(drone)] = None
         for map_id, drone, drone_context in self._update_queue:
             if not self._tile_maps.get(map_id):
                 self._tile_maps[map_id] = Map(drone_context)

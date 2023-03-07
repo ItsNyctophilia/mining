@@ -12,6 +12,7 @@ class Icon(Enum):
     MINERAL = "*"
     ACID = "~"
     EMPTY = " "
+    UNREACHABLE = "X"
 
     def traversable(self) -> bool:
         """Whether a tile with this icon is traversable by a drone.

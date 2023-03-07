@@ -1,7 +1,9 @@
 """Overlord, who oversees zerg drones and assigns tasks to them."""
-from typing import Dict, List, Set, Tuple
 
-from utils import Context, Coordinate, Map
+import itertools
+from typing import Dict, List, Optional, Set, Tuple
+
+from utils import Context, Coordinate, Map, Tile
 from zerg.drones import Drone, MinerDrone, ScoutDrone
 
 from .zerg import Zerg
@@ -13,6 +15,7 @@ class Overlord(Zerg):
     def __init__(
         self, total_ticks: int, refined_minerals: int, dashboard=None
     ):
+        # TODO: Add docstring
         self.dashboard = dashboard
         # a map id as key and summary as value
         self.maps: Dict[int, float] = {}
@@ -21,8 +24,9 @@ class Overlord(Zerg):
         # a set of the coords of minerals and maps
         self._minerals: Set[Tuple[Coordinate, int]] = set()
         # a drone id as key and map id as value
-        self._deployed: Dict[int, int] = {}
-        self._update_queue: List[Tuple[int, Context]] = []  # a
+        self._deployed: Dict[int, Optional[int]] = {}
+        # a list of map updates from zerg drones
+        self._update_queue: List[Tuple[int, Drone, Context]] = []
         # a map id as key and Map as value
         self._tile_maps: Dict[int, Map] = {}
 
@@ -30,26 +34,25 @@ class Overlord(Zerg):
             # Create three MinerDrones and three ScoutDrones
             self._create_drone("Miner")
             self._create_drone("Scout")
-        for drone in self.drones:
-            # Set 'map deployed to' for all drones to 0
-            self._deployed[id(self.drones[drone])] = 0
+        for drone_id in self.drones:
+            # Set 'map deployed to' for all drones to None
+            self._deployed[drone_id] = None
 
     def _create_drone(self, type: str) -> None:
         """Create a new zerg drone of the specified drone type."""
         # TODO: create custom drones based on available resources
         drone_types = {
-            "Drone": Drone(self),
-            "Miner": MinerDrone(self),
-            "Scout": ScoutDrone(self),
+            "Drone": Drone,
+            "Miner": MinerDrone,
+            "Scout": ScoutDrone,
         }
-        new_drone = drone_types[type]
+        new_drone = drone_types[type](self)
         self.drones[id(new_drone)] = new_drone
 
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density."""
         self.maps[map_id] = summary
-        # TODO: allow maps to be initialized with no context
-        self._tile_maps.update({map_id: None})
+        self._tile_maps.update({map_id: Map()})
 
     def add_mineral(self, coord: Coordinate, drone_id: int) -> None:
         """Add a mineral to the set of known minerals."""
@@ -84,12 +87,39 @@ class Overlord(Zerg):
             context (Context): The update information.
         """
         map_id = self._deployed[id(drone)]
-        self._update_queue.append((map_id, context))
+        self._update_queue.append((map_id, drone, context))
 
-    def _set_drone_path(self, drone_id: int):
+    def _spiral_algorithm(self, start: Coordinate, map_id: int) -> Coordinate:
+        # TODO: Add docstring
+        current_map = self._tile_maps[map_id]
+        for current_ring in range(1, 10):
+            adjacent_coords = []
+            # TODO: Use itertools.product(range(*), repeat=2)?
+            for coord_x, coord_y in itertools.product(
+                range(-current_ring, 1 + current_ring),
+                range(-current_ring, 1 + current_ring),
+            ):
+                current_coord = Coordinate(coord_x, coord_y)
+                if current_coord != start:
+                    adjacent_coords.append(current_coord)
+            for coord in adjacent_coords:
+                try:
+                    neighbors = current_map.adjacency_list[Tile(coord)]
+                    # TODO: method might not always return a Coordinate
+                    if not neighbors:
+                        return coord
+                except KeyError:
+                    continue
+
+    def _set_drone_path(self, drone_id: int, context: Context) -> None:
         """Give a drone a path based on their role and context."""
-        # TODO: find path using Dijkstra's
-        pass
+        map_id = self._deployed[drone_id]
+        start = Coordinate(context.x, context.y)
+        dest = self._spiral_algorithm(Coordinate(context.x, context.y), map_id)
+        print("Start/Dest:", start, dest)
+        self.drones[drone_id].path = self._tile_maps[map_id].dijkstra(
+            start, dest
+        )
 
     def action(self, context=None) -> str:
         """Perform some action, based on the context of the situation.
@@ -101,25 +131,32 @@ class Overlord(Zerg):
         Returns:
             str: The action for the overlord to perform
         """
-        action = None
+        action = "None"
         # Deploy all scouts at start
         for drone in self.drones.values():
             if isinstance(drone, ScoutDrone):
-                if not self._deployed[id(drone)]:
+                if self._deployed[id(drone)] is not None:
                     continue
-                action = f"DEPLOY {id(drone)} {self._select_map()}"
+                selected_map = self._select_map()
+                action = f"DEPLOY {id(drone)} {selected_map}"
+                self._deployed[id(drone)] = selected_map
                 break
 
         # Drone map updates
-        for map_id, drone_context in self._update_queue:
-            if not self._tile_maps[map_id]:
-                self._tile_maps[map_id] = Map(drone_context)
-                self._tile_maps[map_id].update_context(drone_context, True)
-
-            self._tile_maps[map_id].update_context(drone_context)
-
+        # TODO: iterating over _update_queue twice. maybe combine loops?
+        seen_drones = [drone for _, drone, _ in self._update_queue]
         for drone in self.drones.values():
-            if not self._deployed[id(drone)] or drone.path:
+            if drone not in seen_drones:
+                self._deployed[id(drone)] = None
+        for map_id, drone, drone_context in self._update_queue:
+            if not self._tile_maps.get(map_id):
+                self._tile_maps[map_id] = Map(drone_context)
+                # Map initialize already calls update_context()
+                # self._tile_maps[map_id].update_context(drone_context, True)
                 continue
-            self.set_drone_path()
+            self._tile_maps[map_id].update_context(drone_context)
+            if not drone.path:
+                self._set_drone_path(id(drone), drone_context)
+        self._update_queue = []
+
         return action

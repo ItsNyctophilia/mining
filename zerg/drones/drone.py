@@ -140,7 +140,7 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
-        # TODO: gives map updates to overlord
+        self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set
         if self.path:

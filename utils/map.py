@@ -1,7 +1,7 @@
 """A map made up of tiles."""
 
-import heapq as heap
-from typing import Dict, List, Optional, Set, Tuple, Union, overload
+from queue import PriorityQueue as Queue
+from typing import Dict, List, Optional, Tuple, Union, overload
 
 from .context import Context
 from .coordinate import Coordinate
@@ -11,6 +11,18 @@ from .tile import Tile
 
 class Map:
     """A map object, used to describe the tile layout of an area."""
+
+    COORDINATE_OFFSETS = Coordinate(0, 0).cardinals()
+
+    NON_TRAVERSABLE = 9999
+    NODE_WEIGHTS = {
+        Icon.EMPTY: 1,
+        Icon.DEPLOY_ZONE: 2,
+        Icon.ACID: 10,
+        Icon.MINERAL: NON_TRAVERSABLE,
+        Icon.WALL: NON_TRAVERSABLE,
+        None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
+    }
 
     def __init__(self, context: Optional[Context] = None):
         """Initialize a Map.
@@ -22,45 +34,45 @@ class Map:
             context (Optional[Context], optional): The origin of the map.
                 Defaults to None.
         """
+        # dict{Tile: [Tile, Tile, Tile, Tile]}
         self.adjacency_list: Dict[Tile, List[Tile]] = {}
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
         if context:
+            # TODO: Use of self.origin?
             self.origin = Coordinate(context.x, context.y)
             self.update_context(context, True)
 
-        # dict{Tile: [Tile, Tile, Tile, Tile]}
+    def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
+        # TODO: Add docstring
 
-    def dijkstra(
-        self, start: Coordinate, end: Coordinate
-    ) -> Dict[Coordinate, Coordinate]:
-        node_weights = {
-            Icon.EMPTY.value: 1,
-            Icon.ACID.value: 10,
-            Icon.MINERAL.value: 9999,
-            Icon.WALL.value: 9999,
-        }
         # TODO: dynamically assign acid weight
-        visited: Set[Coordinate] = set()
+        visited: List[Coordinate] = []  # TODO: should this be a set?
         parents_map: Dict[Coordinate, Coordinate] = {}
-        pq: List[Tuple[int, Coordinate]] = []
-        heap.heappush(pq, (0, start))
-
-        while pq:
-            _, node = heap.heappop(pq)
-            visited.add(node)
-
-            for neighbor in self.adjacency_list[Tile(node)]:
-                if neighbor in visited:
+        final_path: List[Coordinate] = []
+        pqueue: Queue[Tuple[int, Coordinate]] = Queue()
+        pqueue.put((0, start))
+        while not pqueue.empty():
+            _, node = pqueue.get()
+            visited.append(node)
+            tile_neighbors = self.adjacency_list[Tile(node)]
+            if not tile_neighbors:
+                continue
+            for neighbor in tile_neighbors:
+                neigh_coord = neighbor.coordinate
+                if neigh_coord in visited:
                     continue
-                parents_map[neighbor.coordinate] = node
-                # TODO: handle when neighbor has no icon
-                heap.heappush(
-                    pq,
-                    (node_weights[neighbor.icon.value], neighbor.coordinate),
-                )
-        return parents_map
+                parents_map[neigh_coord] = node
+                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neigh_coord))
 
-    def update_context(self, context: Context, origin: bool = False):
+        curr = end
+        while curr != start:
+            coord = parents_map[curr]
+            final_path.append(coord)
+            curr = coord
+        # TODO: would prepending be better than appending and reversing?
+        return final_path[::-1]
+
+    def update_context(self, context: Context, origin: bool = False) -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -78,18 +90,28 @@ class Map:
         else:
             start_tile = Tile(zerg_position)
 
-        coordinate_offsets = ((0, 1), (0, -1), (1, 0), (-1, 0))
         neighbors = []
 
-        for symbol, offset in zip(symbols, coordinate_offsets):
+        # TODO: use zerg_position.cardinals() instead of static offsets
+        for symbol, offset in zip(symbols, self.COORDINATE_OFFSETS):
             x_offset, y_offset = offset
             current_coord = Coordinate(x + x_offset, y + y_offset)
             current_tile = Tile(current_coord, Icon(symbol))
             neighbors.append(current_tile)
             if current_tile not in self.adjacency_list:
-                # TODO: update this new tile neighbor to reference start tile
-                self.adjacency_list.update({current_tile: []})
+                neighbors_nbrs = []
                 self._stored_tiles_[current_coord] = current_tile
+                for offset in self.COORDINATE_OFFSETS:
+                    x_offset2, y_offset2 = offset
+                    neighbor_coord = Coordinate(
+                        current_coord.x + x_offset2,
+                        current_coord.y + y_offset2,
+                    )
+                    neighbor_tile = Tile(neighbor_coord)
+                    neighbors_nbrs.append(neighbor_tile)
+                    if self.adjacency_list.get(neighbor_tile) is None:
+                        self.adjacency_list.update({neighbor_tile: []})
+                self.adjacency_list.update({current_tile: neighbors_nbrs})
 
         self.adjacency_list.update({start_tile: neighbors})
 
@@ -142,6 +164,11 @@ class Map:
         return self._stored_tiles_[key]
 
     def __iter__(self):
+        """Iterate over this map.
+
+        Yields:
+            _type_: The iterator.
+        """
         yield from self.adjacency_list
 
     def __repr__(self) -> str:

@@ -163,10 +163,15 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        # only pop if last action caused movement and not at destination
-        if curr == path[0] and len(path) > 1:
+        dest = path[0]
+        # only pop if last action caused movement
+        if curr == dest:
             self._path_traveled.insert(0, path.pop(0))
-        return path[0]
+            # if false, currently at destination
+            if path:
+                dest = path[0]
+
+        return dest
 
     def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
         """Choose which cardinal direction the drone should head.

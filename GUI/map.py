@@ -1,14 +1,15 @@
-#!/usr/local/bin/python
 """
-Defines Map class along with the methods and attributs that it uses.
+Defines Map class along with the methods and attributes that it uses.
 """
 import random
 import tkinter
 
 
 class Map(tkinter.Toplevel):
-    """
-    Serves as a blueprint for a map object
+    """serves as the constructor for the Map object
+
+    Arguments:
+        parent (tktinker.Toplevel): Takes in a tkinter top level window
     """
 
     def __init__(self, parent, title):
@@ -18,12 +19,16 @@ class Map(tkinter.Toplevel):
         self.geometry("300x300+0+0")
         self.minsize(600, 600)
         self.title(title)
-        self.log = tkinter.Text(self, width=100, height=100,state='normal',wrap='none')
+        self.log = tkinter.Text(self, width=100, height=100, state='normal', wrap='none')
         self.log.pack()
 
-    def write_up(self, string, x, y):
-        """
-        This writes to the map in certain unicode characters
+    def write_up(self, objectatplace, x, y):
+        """writes certain characters to a specific place in the map
+
+        Arguments:
+            objectatplace (string) : defines what specific character should be placed at the coordinate.
+            x (int) : Specifies what column the character should be placed in.
+            y (int) : Specifies what row the character should be placed in.
         """
         unicode_dict = {
             'wall': u'\u2589',
@@ -33,11 +38,11 @@ class Map(tkinter.Toplevel):
             'deployment': u'\u25BD',
             'unknown': u'\u26F6'
         }
-        unicode_character = unicode_dict[string]
+        unicode_character = unicode_dict[objectatplace]
         coordinates = f'{y}.{x}'
         self.log.insert(coordinates, unicode_character)
 
-    def prepare_map(self):    
+    def prepare_map(self):
         """
         This prepares a map in the beginning by filling it with unknown characters
         """
@@ -47,9 +52,11 @@ class Map(tkinter.Toplevel):
                 self.log.insert(f'{x}.{y}', u'\u26F6')
             self.log.insert(f'{x}.200', '\n')
         self.log.config(state='disabled')
-    def translate_tile(self, tile):
+
+    def translate_tile(self, new_tile):
         """
-        This writes to the map in certain unicode characters
+        This writes a tile object to the map
+        new_tile (tile) : Specifies the tile that should be written into the map
         """
         self.log.config(state='normal')
         unicode_dict = {
@@ -60,8 +67,8 @@ class Map(tkinter.Toplevel):
             '_': u'\u25BD',
             'unknown': u'\u26F6'
         }
-        unicode_character = unicode_dict[tile.icon]
+        unicode_character = unicode_dict[new_tile.icon]
         print(unicode_character)
-        coordinates = f'{tile.coordinate.x}.{tile.coordinate.y}'
+        coordinates = f'{new_tile.coordinate.x}.{new_tile.coordinate.y}'
         self.log.insert(coordinates, unicode_character)
         self.log.config(state='disabled')

@@ -21,6 +21,7 @@ class Map:
         Icon.ACID: 10,
         Icon.MINERAL: NON_TRAVERSABLE,
         Icon.WALL: NON_TRAVERSABLE,
+        Icon.ZERG: NON_TRAVERSABLE,
         None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
     }
 
@@ -43,17 +44,28 @@ class Map:
             self.update_context(context, True)
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
-        # TODO: Add docstring
+        """Apply Dijkstra's Algorithm to find path between points
+        
+        Args:
+            start (Coordinate): The start point for the search
+            end (Coordinate): The end point for the search
+        Returns:
+            list(Coordinate): Path in the form of a Coordinate list
+        """
 
         # TODO: dynamically assign acid weight
-        visited: List[Coordinate] = []  # TODO: should this be a set?
+        visited: List[Coordinate] = set()  # TODO: should this be a set?
         parents_map: Dict[Coordinate, Coordinate] = {}
         final_path: List[Coordinate] = []
+        path_found = False
         pqueue: Queue[Tuple[int, Coordinate]] = Queue()
         pqueue.put((0, start))
         while not pqueue.empty():
             _, node = pqueue.get()
-            visited.append(node)
+            if node == end:
+                path_found = True
+                break
+            visited.add(node)
             tile_neighbors = self.adjacency_list[Tile(node)]
             if not tile_neighbors:
                 continue
@@ -63,13 +75,14 @@ class Map:
                     continue
                 parents_map[neigh_coord] = node
                 pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neigh_coord))
+        if not path_found:
+            return []
 
         curr = end
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
-        # TODO: would prepending be better than appending and reversing?
         return final_path[::-1]
 
     def update_context(self, context: Context, origin: bool = False) -> None:
@@ -81,7 +94,14 @@ class Map:
             origin (bool): Whether or not the passed context object
                 is the origin of the map.
         """
-        x, y, *symbols = context
+        x = context.x
+        y = context.y
+        symbols = []
+        symbols.append(context.north)
+        symbols.append(context.south)
+        symbols.append(context.east)
+        symbols.append(context.west)
+
         zerg_position = Coordinate(x, y)
 
         if origin:

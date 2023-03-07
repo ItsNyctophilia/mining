@@ -73,7 +73,7 @@ class Overlord(Zerg):
         # TODO: Only count DroneScouts to avoid conflicts with miners
         zerg_per_map = {map_id: 0 for map_id in self.maps}
         for drone_id in self._deployed:
-            if current_map_id := self._deployed[drone_id]:
+            if (current_map_id := self._deployed[drone_id]) is not None:
                 zerg_per_map[current_map_id] += 1
         return min(zerg_per_map, key=zerg_per_map.get)
 
@@ -90,7 +90,19 @@ class Overlord(Zerg):
         self._update_queue.append((map_id, drone, context))
 
     def _spiral_algorithm(self, start: Coordinate, map_id: int) -> Coordinate:
-        # TODO: Add docstring
+        """Attempt to give a ScoutDrone a new path
+        
+        This method searches for the first unexplored tile in a ring
+        around a given start tile, incrementally expanding the ring
+        in the case that a valid tile is not found, stopping after
+        all tiles within a 10-tile radius have been checked.
+        
+        Args:
+            start (Coordinate): Start position of the search
+            map_id (int): map_id of the map to search on
+        Returns:
+            Coordinate: The tile for the ScoutDrone to explore next
+        """
         current_map = self._tile_maps[map_id]
         for current_ring in range(1, 10):
             adjacent_coords = []
@@ -147,7 +159,8 @@ class Overlord(Zerg):
         seen_drones = [drone for _, drone, _ in self._update_queue]
         for drone in self.drones.values():
             if drone not in seen_drones:
-                self._deployed[id(drone)] = None
+                #self._deployed[id(drone)] = None
+                pass
         for map_id, drone, drone_context in self._update_queue:
             if not self._tile_maps.get(map_id):
                 self._tile_maps[map_id] = Map(drone_context)

@@ -164,7 +164,7 @@ class Drone(Zerg):
         """
         # only pop if last action caused movement and not at destination
         if curr == path[0] and len(path) > 1:
-            path.pop(0)
+            self._path_traveled.insert(0, path.pop(0))
         return path[0]
 
     def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:

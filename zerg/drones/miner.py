@@ -26,7 +26,7 @@ class MinerDrone(Drone):
         self._mineral_direction = new_path[-1].direction(
             self._mineral_location
         )
-        Drone.path.fset(self, new_path)
+        super(type(self), type(self)).path.fset(self, new_path)
 
     def action(self, context: Context) -> str:
         # sourcery skip: assign-if-exp, reintroduce-else
@@ -62,7 +62,9 @@ class MinerDrone(Drone):
         dest_icon = getattr(context, self._mineral_direction)
         if dest_icon == Icon.MINERAL.value:
             return self._mineral_direction.upper()
-        return Directions.CENTER.name
+        super(type(self), type(self)).path.fset(self, self._path_traveled)
+        self._state = State.TRAVELING
+        return super().action(context)
 
     def _finish_traveling(self):
         # set state to working if miner tasked with a mineral

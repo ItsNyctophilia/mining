@@ -113,6 +113,7 @@ class Map:
         neighbors = []
 
         # TODO: use zerg_position.cardinals() instead of static offsets
+        # TODO: Fix the 'overlapping coordinates' bug
         for symbol, offset in zip(symbols, self.COORDINATE_OFFSETS):
             x_offset, y_offset = offset
             current_coord = Coordinate(x + x_offset, y + y_offset)

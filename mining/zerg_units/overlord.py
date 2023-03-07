@@ -117,17 +117,19 @@ class Overlord(Zerg):
             for coord in adjacent_coords:
                 try:
                     neighbors = current_map.adjacency_list[Tile(coord)]
-                    # TODO: method might not always return a Coordinate
                     if not neighbors:
                         return coord
                 except KeyError:
                     continue
+        return None
 
     def _set_drone_path(self, drone_id: int, context: Context) -> None:
         """Give a drone a path based on their role and context."""
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
         dest = self._spiral_algorithm(Coordinate(context.x, context.y), map_id)
+        if dest is None:
+            return
         print("Start/Dest:", start, dest)
         self.drones[drone_id].path = self._tile_maps[map_id].dijkstra(
             start, dest

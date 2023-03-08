@@ -188,23 +188,32 @@ class Overlord(Zerg):
 
         Args:
             context (Context): Context surrounding the overlord;
-                               currently unused
+                currently unused
 
         Returns:
             str: The action for the overlord to perform
         """
         action = "None"
         # Deploy all scouts at start
+        action = self._deploy_scouts()
+
+        # Drone map updates
+        self._update_map()
+
+        return action
+
+    def _deploy_scouts(self) -> str:
         for drone in self.drones.values():
             if isinstance(drone, ScoutDrone):
-                if self._deployed[id(drone)] is not None:
+                if self._deployed[id(drone)]:
                     continue
                 selected_map = self._select_map()
                 action = f"DEPLOY {id(drone)} {selected_map}"
                 self._deployed[id(drone)] = selected_map
                 break
+        return action
 
-        # Drone map updates
+    def _update_map(self) -> None:
         # TODO: iterating over _update_queue twice. maybe combine loops?
         # seen_drones = [drone for _, drone, _ in self._update_queue]
         # for drone in self.drones.values():
@@ -221,5 +230,3 @@ class Overlord(Zerg):
             if not len(drone.path):
                 self._set_drone_path(id(drone), drone_context)
         self._update_queue.clear()
-
-        return action

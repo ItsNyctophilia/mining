@@ -99,6 +99,7 @@ class Map:
             curr = coord
             if start in coord.cardinals():
                 break
+        final_path.append(start)
         print(final_path)
         return final_path[::-1]
 

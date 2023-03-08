@@ -112,12 +112,11 @@ class Overlord(Zerg):
             list(Coordinate)
         """
         adjacent_coords: List[Coordinate] = []
-        # TODO: Use itertools.product(range(*), repeat=2)?
         # TODO: Only take the outermost ring of coords to avoid repeating
-        for coord_x, coord_y in itertools.product(
+        for x_offset, y_offset in itertools.product(
             range(-ring, 1 + ring), repeat=2
         ):
-            current_coord = Coordinate(start.x + coord_x, start.y + coord_y)
+            current_coord = start.translate(x_offset, y_offset)
             if current_coord != start:
                 adjacent_coords.append(current_coord)
         for coord in adjacent_coords:

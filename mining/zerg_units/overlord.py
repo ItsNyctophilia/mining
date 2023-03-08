@@ -4,6 +4,7 @@ import itertools
 from queue import SimpleQueue
 from typing import Dict, List, Optional, Set, Tuple, Type
 
+from mining.GUI.dashboard import Dashboard
 from mining.utils import Context, Coordinate, Icon, Map, Tile
 
 from .drones import Drone, MinerDrone, ScoutDrone
@@ -14,7 +15,10 @@ class Overlord(Zerg):
     """Overlord, who oversees zerg drones and assigns tasks to them."""
 
     def __init__(
-        self, total_ticks: int, refined_minerals: int, dashboard=None
+        self,
+        total_ticks: int,
+        refined_minerals: int,
+        dashboard: Dashboard,
     ) -> None:
         """Initialize the Overlord.
 

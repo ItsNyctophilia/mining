@@ -148,15 +148,13 @@ class Drone(Zerg):
         # do not move if no path set
         if self.path:
             current_location = Coordinate(context.x, context.y)
-            dest = self._update_path(current_location, self.path)
+            dest = self._update_path(current_location)
             result = self._choose_direction(current_location, dest)
         else:
             self._finish_traveling()
         return result
 
-    def _update_path(
-        self, curr: Coordinate, path: List[Coordinate]
-    ) -> Coordinate:
+    def _update_path(self, curr: Coordinate) -> Coordinate:
         """Check if the current location is on the path, and remove if so.
 
         Args:
@@ -166,13 +164,13 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        dest = path[0]
+        dest = self.path[0]
         # only pop if last action caused movement
         if curr == dest:
-            self._path_traveled.insert(0, path.pop(0))
+            self._path_traveled.insert(0, self.path.pop(0))
             # if false, currently at destination
-            if path:
-                dest = path[0]
+            if self.path:
+                dest = self.path[0]
 
         return dest
 

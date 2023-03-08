@@ -90,13 +90,13 @@ class Overlord(Zerg):
         self._update_queue.append((map_id, drone, context))
 
     def _spiral_algorithm(self, start: Coordinate, map_id: int) -> Coordinate:
-        """Attempt to give a ScoutDrone a new path
-        
+        """Attempt to give a ScoutDrone a new path.
+
         This method searches for the first unexplored tile in a ring
         around a given start tile, incrementally expanding the ring
         in the case that a valid tile is not found, stopping after
         all tiles within a 10-tile radius have been checked.
-        
+
         Args:
             start (Coordinate): Start position of the search
             map_id (int): map_id of the map to search on
@@ -127,7 +127,7 @@ class Overlord(Zerg):
         """Give a drone a path based on their role and context."""
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
-        dest = self._spiral_algorithm(Coordinate(context.x, context.y), map_id)
+        dest = self._spiral_algorithm(start, map_id)
         if dest is None:
             return
         print("Start/Dest:", start, dest)
@@ -161,7 +161,7 @@ class Overlord(Zerg):
         seen_drones = [drone for _, drone, _ in self._update_queue]
         for drone in self.drones.values():
             if drone not in seen_drones:
-                #self._deployed[id(drone)] = None
+                # self._deployed[id(drone)] = None
                 pass
         for map_id, drone, drone_context in self._update_queue:
             if not self._tile_maps.get(map_id):

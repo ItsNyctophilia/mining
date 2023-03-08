@@ -20,7 +20,7 @@ class Coordinate(NamedTuple):
         In relation to this coordinate, a positive/negative return value will
         indicate direction; a positive  x means the other coordinate is to the
         right of this one, while a positive y means the other coordinate is
-        above this one, and reversed for negative values.
+        below this one, and reversed for negative values.
 
         Args:
             other_coord (Coordinate): The other coordinate.
@@ -38,7 +38,7 @@ class Coordinate(NamedTuple):
         In relation to this coordinate, a positive/negative return value will
         indicate direction; a positive  x means the other coordinate is to the
         right of this one, while a positive y means the other coordinate is
-        above this one, and reversed for negative values.
+        below this one, and reversed for negative values.
 
         Args:
             x (int): The x value of the other coordinate.
@@ -88,9 +88,9 @@ class Coordinate(NamedTuple):
             return "east"
         elif x_offset < 0:
             return "west"
-        elif y_offset > 0:
-            return "north"
         elif y_offset < 0:
+            return "north"
+        elif y_offset > 0:
             return "south"
         else:  # x_offset == 0 and y_offset == 0
             return "center"
@@ -132,9 +132,9 @@ class Coordinate(NamedTuple):
             except KeyError:
                 raise ValueError(f"Unknown  direction: {direction}") from None
         if direction == Directions.NORTH:
-            return self._replace(y=self.y+1)
-        elif direction == Directions.SOUTH:
             return self._replace(y=self.y-1)
+        elif direction == Directions.SOUTH:
+            return self._replace(y=self.y+1)
         elif direction == Directions.EAST:
             return self._replace(x=self.x+1)
         elif direction == Directions.WEST:

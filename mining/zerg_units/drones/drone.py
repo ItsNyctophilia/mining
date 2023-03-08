@@ -27,6 +27,7 @@ class Drone(Zerg):
         self._moves = self.max_moves
         self._path_to_goal: List[Coordinate] = []
         self._path_traveled: List[Coordinate] = []
+        self._path_idx = 0
         self._steps = 0
         self._state = State.WAITING
 
@@ -61,6 +62,7 @@ class Drone(Zerg):
     def path(self, new_path: List[Coordinate]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
+        self._path_idx = 0
         # traveling if path length is greater than 2 (start, dest)
         self._state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
@@ -164,13 +166,14 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        dest = self.path[0]
+        dest = self.path[self._path_idx]
         # only pop if last action caused movement
         if curr == dest:
-            self._path_traveled.insert(0, self.path.pop(0))
+            self._path_traveled.insert(0, dest)
             # if false, currently at destination
-            if self.path:
-                dest = self.path[0]
+            if self._path_idx < len(self.path):
+                self._path_idx += 1
+                dest = self.path[self._path_idx]
             else:
                 print(f"Path clear! {self.path}")
 
@@ -202,6 +205,8 @@ class Drone(Zerg):
         during travel. The drone base class will call this method whenever it
         reaches it's intended destination.
         """
+        self._path_to_goal.clear()
+        self._path_idx = 0
         self._state = State.WAITING
 
     def steps(self) -> int:

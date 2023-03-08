@@ -1,10 +1,13 @@
 """Parent class for all drone zerg units."""
+
 from __future__ import annotations
 
+import contextlib
 import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
+# TODO: Remove Icon import once better implementation added
 from mining.utils import Context, Coordinate, Directions, Icon
 from mining.zerg_units.zerg import Zerg
 
@@ -165,11 +168,23 @@ class Drone(Zerg):
         result = Directions.CENTER.name
         # do not move if no path set
         if self.path:
-            current_location = Coordinate(context.x, context.y)
-            dest = self._update_path(current_location)
-            result = self._choose_direction(current_location, dest, context)
+            result = self._travel(context)
         else:
             self._finish_traveling()
+        return result
+
+    def _travel(self, context):
+        current_location = Coordinate(context.x, context.y)
+        dest = self._update_path(current_location)
+        result = self._choose_direction(current_location, dest, context)
+        # TODO: Remove this code and the Icon import when
+        # better implementation is created
+        map_id = self._overlord._deployed[id(self)]
+        map_object = self._overlord._tile_maps[map_id]
+        with contextlib.suppress(AttributeError):
+            if map_object.get(dest, None).icon == Icon.WALL:
+                self.path = []
+                self._finish_traveling()
         return result
 
     def _update_path(self, curr: Coordinate) -> Coordinate:

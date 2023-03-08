@@ -61,7 +61,7 @@ class Overlord(Zerg):
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density."""
         self.maps[map_id] = summary
-        self._tile_maps.update({map_id: Map()})
+        self._tile_maps.update({map_id: None})
 
     def add_mineral(self, coord: Coordinate, drone_id: int) -> None:
         """Add a mineral to the set of known minerals."""
@@ -113,28 +113,40 @@ class Overlord(Zerg):
         """
         adjacent_coords: List[Coordinate] = []
         # TODO: Use itertools.product(range(*), repeat=2)?
+        # TODO: Only take the outermost ring of coords to avoid repeating
         for coord_x, coord_y in itertools.product(
             range(-ring, 1 + ring), repeat=2
         ):
-            current_coord = Coordinate(coord_x, coord_y)
+            current_coord = Coordinate(start.x + coord_x, start.y + coord_y)
             if current_coord != start:
                 adjacent_coords.append(current_coord)
         for coord in adjacent_coords:
-            try:
-                neighbors = map.adjacency_list[Tile(coord)]
-                tile = map.get(coord, None)
-                if tile is None:
-                    continue
-                if not neighbors and (tile.icon is not Icon.UNREACHABLE):
-                    path = map.dijkstra(start, coord)
-                    if not path:
-                        tile = Icon.UNREACHABLE
-                        continue
-                    return path
-            except KeyError:
+            tile = map.get(coord, None)
+            if tile is not None:
                 continue
+            path = None
+            default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
+            neighbor_icons = [
+                map.get(coord, default_tile).icon
+                for coord in coord.cardinals()
+            ]
+            if not any(
+                True
+                for icon in neighbor_icons
+                if icon
+                in [Icon.MINERAL, Icon.EMPTY, Icon.DEPLOY_ZONE, Icon.ACID]
+            ):
+                continue
+            print(neighbor_icons)
+            print(f"call for {coord}")
+            path = map.dijkstra(start, coord)
+            if not len(path):
+                # print(f"{coord} marked unreachable")
+                # map.add_tile(coord, Tile(coord, Icon.UNREACHABLE))
+                continue
+            return path
 
-        return None
+        return []
 
     def _spiral_search(
         self, start: Coordinate, map_id: int
@@ -155,7 +167,8 @@ class Overlord(Zerg):
         """
         path = None
         current_map = self._tile_maps[map_id]
-        for current_ring in range(1, 10):
+        for current_ring in range(1, 5):
+            print(current_ring)
             path = self._spiral(current_ring, current_map, start)
             if path:
                 break
@@ -166,7 +179,6 @@ class Overlord(Zerg):
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
         dest = self._spiral_search(start, map_id)
-        print(drone_id, dest, sep=": ")
         if dest is None:
             return
         print(f"Setting path for drone {drone_id} to {dest}")
@@ -195,20 +207,20 @@ class Overlord(Zerg):
 
         # Drone map updates
         # TODO: iterating over _update_queue twice. maybe combine loops?
-        seen_drones = [drone for _, drone, _ in self._update_queue]
-        for drone in self.drones.values():
-            if drone not in seen_drones:
-                self._deployed[id(drone)] = None
+        # seen_drones = [drone for _, drone, _ in self._update_queue]
+        # for drone in self.drones.values():
+        #     if drone not in seen_drones:
+        #         self._deployed[id(drone)] = None
         for map_id, drone, drone_context in self._update_queue:
             if not self._tile_maps.get(map_id):
                 self._tile_maps[map_id] = Map(drone_context)
                 # Map initialize already calls update_context()
                 # self._tile_maps[map_id].update_context(drone_context, True)
                 continue
-            self._tile_maps[map_id].update_context(drone_context)
+            current_map = self._tile_maps[map_id]
+            current_map.update_context(drone_context)
             if not len(drone.path):
                 self._set_drone_path(id(drone), drone_context)
-            print("PATH/CONTEXT:", drone.path, drone_context)
-        self._update_queue = []
+        self._update_queue.clear()
 
         return action

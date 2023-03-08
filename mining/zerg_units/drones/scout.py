@@ -1,5 +1,5 @@
 """Scout drone, whose primary purpose is revealing the map."""
-from typing import List, Optional
+from typing import Optional
 
 from mining.utils import Coordinate
 

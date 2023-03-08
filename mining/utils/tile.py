@@ -96,6 +96,13 @@ class Tile:
             if isinstance(__o, Tile)
             else NotImplemented
         )
+    
+    def __lt__(self, __o):
+        # it isn't actually sensible to ever see if a tile is 'less
+        # than' another tile, but the built-in pqueue requires it
+        # in the case that two priority values in the queue are the 
+        # same upon insertion.
+        return __o
 
     def __str__(self) -> str:
         icon_msg = f"Icon: {self.icon.value}" if self.icon else "Undiscovered"

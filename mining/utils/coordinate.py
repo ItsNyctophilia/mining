@@ -96,7 +96,7 @@ class Coordinate(NamedTuple):
             return "center"
 
     def cardinals(
-        self
+        self,
     ) -> Tuple[Coordinate, Coordinate, Coordinate, Coordinate]:
         """Return translated coordinate objects in the 4 cardinal directions.
 
@@ -107,13 +107,13 @@ class Coordinate(NamedTuple):
                 The translated coordinates.
         """
         return (
-            self.translate(Directions.NORTH),
-            self.translate(Directions.SOUTH),
-            self.translate(Directions.EAST),
-            self.translate(Directions.WEST)
-            )
+            self.translate_one(Directions.NORTH),
+            self.translate_one(Directions.SOUTH),
+            self.translate_one(Directions.EAST),
+            self.translate_one(Directions.WEST),
+        )
 
-    def translate(self, direction: Union[str, Directions]) -> Coordinate:
+    def translate_one(self, direction: Union[str, Directions]) -> Coordinate:
         """Translate this coordinate in the given direction.
 
         Translation moves the coordinate by 1 space in the given direction.
@@ -132,12 +132,28 @@ class Coordinate(NamedTuple):
             except KeyError:
                 raise ValueError(f"Unknown  direction: {direction}") from None
         if direction == Directions.NORTH:
-            return self._replace(y=self.y-1)
+            return self._replace(y=self.y - 1)
         elif direction == Directions.SOUTH:
-            return self._replace(y=self.y+1)
+            return self._replace(y=self.y + 1)
         elif direction == Directions.EAST:
-            return self._replace(x=self.x+1)
+            return self._replace(x=self.x + 1)
         elif direction == Directions.WEST:
-            return self._replace(x=self.x-1)
+            return self._replace(x=self.x - 1)
         else:
             return Coordinate(*self)
+
+    def translate(self, x_offset: int, y_offset: int) -> Coordinate:
+        """Translate this coordinate in the given direction.
+
+        Translation moves the coordinate by the given direction offset.
+        This method will always return a new object. If both x_offset and
+        y_offset are 0, this coordinate is copied and returned.
+
+        Args:
+            x_offset (int): The offset to move in the x direction.
+            y_offset (int): The offset to move in the y direction.
+
+        Returns:
+            Coordinate: The translated coordinate object
+        """
+        return self._replace(x=self.x + x_offset, y=self.y + y_offset)

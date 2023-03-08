@@ -19,7 +19,6 @@ class Map:
         Icon.ZERG: 1,
         Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
-        Icon.MINERAL: 20,
     }
 
     def __init__(self, context: Context):

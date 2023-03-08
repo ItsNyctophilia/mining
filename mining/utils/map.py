@@ -14,7 +14,6 @@ class Map:
 
     COORDINATE_OFFSETS = Coordinate(0, 0).cardinals()
 
-    NON_TRAVERSABLE = 9999
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
         Icon.ZERG: 1,
@@ -52,42 +51,43 @@ class Map:
         path_found = False
         pqueue: Queue[Tuple[int, Coordinate]] = Queue()
         pqueue.put((0, Tile(start)))
-        counter = 1000
+        counter = 100
         while not pqueue.empty() and counter:
             _, node = pqueue.get()
-            if node.icon == Icon.WALL:
-                continue
             node = node.coordinate
+            if node in visited:
+                continue
             if node == end:
                 path_found = True
                 break
             node_neighbors = node.cardinals()
 
-            default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
-            tiles = [self.get(neighbor, default_tile).icon
-                     for neighbor in node_neighbors]
-            are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
-            if not are_tiles_valid:
-                continue
-
+            # default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
+            # tiles = [self.get(neighbor, default_tile).icon
+            #          for neighbor in node_neighbors]
+            # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
+            # if not are_tiles_valid:
+            #     continue
+            print(f"Target {end}/{node_neighbors}")
             if end in node_neighbors:
                 path_found = True
                 parents_map[end] = node
                 break
+
             visited.add(node)
             for neighbor in node_neighbors:
                 neighbor = self.get(neighbor, None)
-                if (neighbor is None or neighbor in visited or 
-                    neighbor.icon not in self.NODE_WEIGHTS):
+                if (self.get(neighbor, None) is None or neighbor in visited
+                    or neighbor.icon not in self.NODE_WEIGHTS):
                     continue
                 parents_map[neighbor.coordinate] = node
                 pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
             counter -= 1
         if not path_found:
+            print("Map:", parents_map)
             return []
 
         curr = end
-        final_path.append(curr)
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)
@@ -117,6 +117,10 @@ class Map:
         for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
             current_tile = Tile(coordinate, Icon(symbol))
             self._stored_tiles_[coordinate] = current_tile
+            for neighbor_coordinate in coordinate.cardinals():
+                if self.get(neighbor_coordinate, None) is None:
+                    neighbor_tile = Tile(neighbor_coordinate)
+                    self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
     def add_tile(self, coord: Coordinate, tile: Tile) -> None:
         self._stored_tiles_[coord] = tile

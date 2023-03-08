@@ -24,13 +24,14 @@ class GUI_Map(tkinter.Toplevel):
             self, width=100, height=100, state="normal", wrap="none"
         )
         self.log.pack()
+        self.log.font=("TkFixedFont", 16)
 
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
         for x in range(200):
             for y in range(200):
-                self.log.insert(f"{x}.{y}", "\u26F6")
+                self.log.insert(f"{x}.{y}", "\u02FD")
             self.log.insert(f"{x}.200", "\n")
         self.log.config(state="disabled")
     
@@ -49,11 +50,11 @@ class GUI_Map(tkinter.Toplevel):
         """
         self.log.config(state="normal")
         unicode_dict = {
-            Icon.WALL: "\u2589",
-            Icon.ACID: "\u2600",
-            Icon.MINERAL: "\u2662",
-            Icon.ZERG: "\u26DF",
-            Icon.DEPLOY_ZONE: "\u25BD",
+            Icon.WALL: "\u00A4",
+            Icon.ACID: "\u05e1",
+            Icon.MINERAL: "\u0275",
+            Icon.ZERG: "\u017e",
+            Icon.DEPLOY_ZONE: "\u02c5",
             Icon.EMPTY: " ",
         }
         unicode_character = unicode_dict.get(new_tile.icon, "\u2061")

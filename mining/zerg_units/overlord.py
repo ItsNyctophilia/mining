@@ -30,6 +30,7 @@ class Overlord(Zerg):
             ScoutDrone: {},
             MinerDrone: {},
         }
+        self.drones: Dict[int, Drone] = {}
         # a drone id as key and drone as value
         self._minerals: Set[Tuple[Coordinate, int]] = set()
         # a set of the coords of minerals and maps
@@ -47,20 +48,13 @@ class Overlord(Zerg):
             self._create_drone(MinerDrone)
             self._create_drone(ScoutDrone)
 
-    def drones(self) -> Dict[int, Drone]:
-        # sourcery skip: dict-assign-update-to-union
-        """Return the dictionary of drones this Overlord overseers."""
-        combined: Dict[int, Drone] = {}
-        for drone_dict in self._drones.values():
-            combined.update(drone_dict)
-        return combined
-
     def _create_drone(self, drone_type: Type[Drone]) -> None:
         """Create a new zerg drone of the specified drone type."""
         # TODO: create custom drones based on available resources
         new_drone = drone_type(self)
         drone_id = id(new_drone)
         self._drones[drone_type][drone_id] = new_drone
+        self.drones[drone_id] = new_drone
         # Set 'map deployed to' for all drones to None
         self._deployed[drone_id] = None
 
@@ -73,6 +67,7 @@ class Overlord(Zerg):
         drone_id = id(drone)
         del self._drones[type(drone)][drone_id]
         del self._deployed[drone_id]
+        del self.drones[drone_id]
 
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density.

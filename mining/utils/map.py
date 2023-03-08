@@ -1,7 +1,7 @@
 """A map made up of tiles."""
 
 from queue import PriorityQueue as Queue
-from typing import Dict, List, Optional, Tuple, Union, overload
+from typing import Dict, List, Optional, Set, Tuple, Union, overload
 
 from .context import Context
 from .coordinate import Coordinate
@@ -14,68 +14,78 @@ class Map:
 
     COORDINATE_OFFSETS = Coordinate(0, 0).cardinals()
 
-    NON_TRAVERSABLE = 9999
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
-        Icon.DEPLOY_ZONE: 2,
+        Icon.ZERG: 1,
+        Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
-        Icon.MINERAL: NON_TRAVERSABLE,
-        Icon.WALL: NON_TRAVERSABLE,
-        Icon.ZERG: NON_TRAVERSABLE,
-        None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
     }
+    DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, context: Optional[Context] = None):
-        """Initialize a Map.
-
-        If a starting context is given, it will be treated as the origin of the
-        map and the map will updates itself accordingly.
+    def __init__(self, density: float):
+        """Initialize a Map with a context object.
 
         Args:
-            context (Optional[Context], optional): The origin of the map.
-                Defaults to None.
+            context (Context): The origin of the map.
         """
-        # dict{Tile: [Tile, Tile, Tile, Tile]}
-        self.adjacency_list: Dict[Tile, List[Tile]] = {}
+        self.density = density
+        self.minerals: Dict[Coordinate, Optional[int]] = {}
+        # a set of the coords of minerals and drone id tasked to mining it
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
-        if context:
-            # TODO: Use of self.origin?
-            self.origin = Coordinate(context.x, context.y)
-            self.update_context(context, True)
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
-        """Apply Dijkstra's Algorithm to find path between points
-        
+        """Apply Dijkstra's Algorithm to find path between points.
+
         Args:
             start (Coordinate): The start point for the search
             end (Coordinate): The end point for the search
         Returns:
             list(Coordinate): Path in the form of a Coordinate list
         """
-
         # TODO: dynamically assign acid weight
-        visited: List[Coordinate] = set()  # TODO: should this be a set?
+        visited: Set[Coordinate] = set()
         parents_map: Dict[Coordinate, Coordinate] = {}
         final_path: List[Coordinate] = []
         path_found = False
-        pqueue: Queue[Tuple[int, Coordinate]] = Queue()
-        pqueue.put((0, start))
-        while not pqueue.empty():
-            _, node = pqueue.get()
+        pqueue: Queue[Tuple[int, Tile]] = Queue()
+        pqueue.put((0, Tile(start)))
+        counter = 100
+        while not pqueue.empty() and counter:
+            _, tile = pqueue.get()
+            node = tile.coordinate
+            if node in visited:
+                continue
             if node == end:
                 path_found = True
                 break
+            node_neighbors = node.cardinals()
+
+            # default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
+            # tiles = [self.get(neighbor, default_tile).icon
+            #          for neighbor in node_neighbors]
+            # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
+            # if not are_tiles_valid:
+            #     continue
+            print(f"Target {end}/{node_neighbors}")
+            if end in node_neighbors:
+                path_found = True
+                parents_map[end] = node
+                break
+
             visited.add(node)
-            tile_neighbors = self.adjacency_list[Tile(node)]
-            if not tile_neighbors:
-                continue
-            for neighbor in tile_neighbors:
-                neigh_coord = neighbor.coordinate
-                if neigh_coord in visited:
+            for neighbor_coord in node_neighbors:
+                neighbor = self.get(neighbor_coord, None)
+                if (
+                    not neighbor
+                    or neighbor.coordinate in visited
+                    or neighbor.icon not in self.NODE_WEIGHTS
+                ):
                     continue
-                parents_map[neigh_coord] = node
-                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neigh_coord))
+                parents_map[neighbor.coordinate] = node
+                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
+            counter -= 1
         if not path_found:
+            print("Map:", parents_map)
             return []
 
         curr = end
@@ -83,9 +93,13 @@ class Map:
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
+            if start in coord.cardinals():
+                break
+        final_path.append(start)
+        print(final_path)
         return final_path[::-1]
 
-    def update_context(self, context: Context, origin: bool = False) -> None:
+    def update_context(self, context: Context) -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -96,45 +110,30 @@ class Map:
         """
         x = context.x
         y = context.y
-        symbols = []
-        symbols.append(context.north)
-        symbols.append(context.south)
-        symbols.append(context.east)
-        symbols.append(context.west)
-
+        symbols = [context.north, context.south, context.east, context.west]
         zerg_position = Coordinate(x, y)
+        if len(self._stored_tiles_) == 0:
+            self.origin = zerg_position
+            self.add_tile(Tile(self.origin, Icon.DEPLOY_ZONE))
 
-        if origin:
-            start_tile = Tile(zerg_position, Icon.DEPLOY_ZONE)
-            self.adjacency_list.update({start_tile: []})
-        else:
-            start_tile = Tile(zerg_position)
+        for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
+            icon = Icon(symbol)
+            current_tile = Tile(coordinate, icon)
+            self._stored_tiles_[coordinate] = current_tile
+            if icon == Icon.MINERAL:
+                self.minerals.setdefault(coordinate)
+            for neighbor_coordinate in coordinate.cardinals():
+                if self.get(neighbor_coordinate, None) is None:
+                    neighbor_tile = Tile(neighbor_coordinate)
+                    self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
-        neighbors = []
+    def add_tile(self, tile: Tile) -> None:
+        """Add tile to map.
 
-        # TODO: use zerg_position.cardinals() instead of static offsets
-        # TODO: Fix the 'overlapping coordinates' bug
-        for symbol, offset in zip(symbols, self.COORDINATE_OFFSETS):
-            x_offset, y_offset = offset
-            current_coord = Coordinate(x + x_offset, y + y_offset)
-            current_tile = Tile(current_coord, Icon(symbol))
-            neighbors.append(current_tile)
-            if current_tile not in self.adjacency_list:
-                neighbors_nbrs = []
-                self._stored_tiles_[current_coord] = current_tile
-                for offset in self.COORDINATE_OFFSETS:
-                    x_offset2, y_offset2 = offset
-                    neighbor_coord = Coordinate(
-                        current_coord.x + x_offset2,
-                        current_coord.y + y_offset2,
-                    )
-                    neighbor_tile = Tile(neighbor_coord)
-                    neighbors_nbrs.append(neighbor_tile)
-                    if self.adjacency_list.get(neighbor_tile) is None:
-                        self.adjacency_list.update({neighbor_tile: []})
-                self.adjacency_list.update({current_tile: neighbors_nbrs})
-
-        self.adjacency_list.update({start_tile: neighbors})
+        Args:
+            tile (Tile): The tile to add.
+        """
+        self._stored_tiles_[tile.coordinate] = tile
 
     @overload
     def get(
@@ -190,14 +189,14 @@ class Map:
         Yields:
             _type_: The iterator.
         """
-        yield from self.adjacency_list
+        yield from self._stored_tiles_
 
-    def __repr__(self) -> str:
-        """Return a representation of this object.
+    # def __repr__(self) -> str:
+    #     """Return a representation of this object.
 
-        The string returned by this method is not valid for a call to eval.
+    #     The string returned by this method is not valid for a call to eval.
 
-        Returns:
-            str: The string representation of this object.
-        """
-        return f"Map({list(self.adjacency_list)})"
+    #     Returns:
+    #         str: The string representation of this object.
+    #     """
+    #     return f"Map({list(self.adjacency_list)})"

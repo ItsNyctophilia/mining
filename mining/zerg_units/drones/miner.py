@@ -1,7 +1,7 @@
 """Miner drone, whose primary purpose is to mine minerals."""
 from typing import List, Optional
 
-from mining.utils import Context, Coordinate, Icon
+from mining.utils import Context, Coordinate
 
 from .drone import Drone, State
 
@@ -60,7 +60,7 @@ class MinerDrone(Drone):
             str: The direction the miner wants to move.
         """
         dest_icon = getattr(context, self._mineral_direction)
-        if dest_icon == Icon.MINERAL.value:
+        if self._hit_mineral(dest_icon):
             return self._mineral_direction.upper()
         super(type(self), type(self)).path.fset(self, self._path_traveled)
         self._state = State.TRAVELING

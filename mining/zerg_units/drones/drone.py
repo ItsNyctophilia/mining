@@ -1,11 +1,14 @@
 """Parent class for all drone zerg units."""
+
 from __future__ import annotations
 
+import contextlib
 import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
-from mining.utils import Context, Coordinate, Directions
+# TODO: Remove Icon import once better implementation added
+from mining.utils import Context, Coordinate, Directions, Icon
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
@@ -23,8 +26,7 @@ class Drone(Zerg):
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
-        self._capacity = self.max_capacity
-        self._moves = self.max_moves
+        self._capacity = 0
         self._path_to_goal: List[Coordinate] = []
         self._path_traveled: List[Coordinate] = []
         self._steps = 0
@@ -37,7 +39,7 @@ class Drone(Zerg):
         Returns:
             int: The max capacity.
         """
-        return self._capacity
+        return self.max_capacity
 
     @property
     def moves(self) -> int:
@@ -46,7 +48,7 @@ class Drone(Zerg):
         Returns:
             int: The drone's max moves.
         """
-        return self._moves
+        return self.max_moves
 
     @property
     def path(self) -> List[Coordinate]:
@@ -71,6 +73,24 @@ class Drone(Zerg):
         This value will automatically be set when the path is updated.
         """
         return self._path_to_goal[-1] if self._path_to_goal else None
+
+    def take_damage(self, damage) -> bool:
+        """Take damage.
+
+        If the drone died, the Overlord will be notified.
+
+        Args:
+            damage (int): The damage to take.
+
+        Returns:
+            bool: False if taking damage caused the drone to die.
+        """
+        self._health -= damage
+        if not (alive := self._health > 0):
+            # If the drone times out before the action can be returned, this
+            # may cause an issue
+            self._overlord.mark_drone_dead(self)
+        return alive
 
     @classmethod
     def drone_blueprint(
@@ -140,20 +160,34 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
+        print(
+            f"Acting! context: {context} path: {self.path} traveled: "
+            f"{self._path_traveled}"
+        )
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set
         if self.path:
-            current_location = Coordinate(context.x, context.y)
-            dest = self._update_path(current_location, self.path)
-            result = self._choose_direction(current_location, dest)
+            result = self._travel(context)
         else:
             self._finish_traveling()
         return result
 
-    def _update_path(
-        self, curr: Coordinate, path: List[Coordinate]
-    ) -> Coordinate:
+    def _travel(self, context):
+        current_location = Coordinate(context.x, context.y)
+        dest = self._update_path(current_location)
+        result = self._choose_direction(current_location, dest, context)
+        # TODO: Remove this code and the Icon import when
+        # better implementation is created
+        if map_id := self._overlord._deployed[id(self)]:
+            map_object = self._overlord._maps[map_id]
+            with contextlib.suppress(AttributeError):
+                if map_object[dest].icon == Icon.WALL:
+                    self.path = []
+                    self._finish_traveling()
+        return result
+
+    def _update_path(self, curr: Coordinate) -> Coordinate:
         """Check if the current location is on the path, and remove if so.
 
         Args:
@@ -163,33 +197,60 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        dest = path[0]
+        dest = self.path[0]
         # only pop if last action caused movement
         if curr == dest:
-            self._path_traveled.insert(0, path.pop(0))
+            self._path_traveled.insert(0, self.path.pop(0))
             # if false, currently at destination
-            if path:
-                dest = path[0]
+            if self.path:
+                dest = self.path[0]
+            else:
+                print(f"Path clear! {self.path}")
 
         return dest
 
-    def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
+    def _choose_direction(
+        self, curr: Coordinate, dest: Coordinate, context: Context
+    ) -> str:
         """Choose which cardinal direction the drone should head.
+
+        Health calculations will be made during this call. If the drone dies,
+        the Overlord will be notified.
 
         Args:
             curr (Coordinate): The drone's current location.
             dest (Coordinate): The destination of the drone.
+            context (Context): The context surrounding the drone.
 
         Returns:
             str: The direction the drone should head to reach the destination.
         """
-        # choose direction to move in
-        direction = curr.direction(dest).upper()
-        if direction == Directions.CENTER.name:
+        direction = curr.direction(dest)
+        target = Icon(getattr(context, direction, Icon.EMPTY))
+        if (direction := direction.upper()) == Directions.CENTER.name:
             self._finish_traveling()
         else:
-            self._steps += 1
+            self._handle_moving(target)
+        print(f"Moving {direction}!")
         return direction
+
+    def _handle_moving(self, target: Icon):
+        """Perform any necessary tasks that come with moving the drone.
+
+        Args:
+            target (Icon): The icon of the targeted tile.
+        """
+        self.take_damage(target.health_cost())
+        self._hit_mineral(target)
+        if target.traversable():
+            self._steps += 1
+
+    def _hit_mineral(self, target: Icon):
+        if (
+            is_mineral := (target == Icon.MINERAL)
+        ) and self._capacity <= self.max_capacity:
+            self._capacity += 1
+        return is_mineral
 
     def _finish_traveling(self):
         """Perform some operations to signify traveling is done.

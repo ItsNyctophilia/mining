@@ -6,13 +6,16 @@ import tkinter
 from tkinter import ttk
 from typing import Dict
 
+from mining.utils import Map
 from mining.zerg_units.drones import Drone
+
+from .map import GUI_Map
 
 
 class Dashboard(tkinter.Toplevel):
     """Serves as blueprint for the dashboard class."""
 
-    def __init__(self, parent):
+    def __init__(self, parent: tkinter.Toplevel) -> None:
         """Serve as the constructor for the Dashboard object.
 
         Arguments:
@@ -22,6 +25,8 @@ class Dashboard(tkinter.Toplevel):
         self.photo = tkinter.PhotoImage(file="icon.png")
 
         self.configure(bg="#2C292C")
+        self.map_dict: Dict[GUI_Map, Map] = {}
+        self.map_count = 0
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self.prep_dashboard_trees()
@@ -60,8 +65,19 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
+    def create_map_gui(self, example_map: Map) -> None:
+        """Create a GUI for every map that the overlord has."""
+        new_map = GUI_Map(self, f"Map {self.map_count}", example_map)
+        new_map.prepare_GUI_map()
+        self.map_dict[new_map] = example_map
+
+    def update_maps(self) -> None:
+        """Update the GUI Map with what it's physical map contains."""
+        for gui_map in self.map_dict:
+            gui_map.update()
+
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def prep_dashboard_trees(self):
+    def prep_dashboard_trees(self) -> None:
         """Prepare the three tree views in the dashboard."""
         map_dict = {"Window Title": 180, "Map ID": 180}
 

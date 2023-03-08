@@ -17,11 +17,12 @@ class Map:
     NON_TRAVERSABLE = 9999
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
+        Icon.ZERG: 1,
         Icon.DEPLOY_ZONE: 2,
         Icon.ACID: 10,
         Icon.MINERAL: NON_TRAVERSABLE,
         Icon.WALL: NON_TRAVERSABLE,
-        Icon.ZERG: NON_TRAVERSABLE,
+        Icon.UNREACHABLE: NON_TRAVERSABLE,
         None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
     }
 
@@ -45,7 +46,7 @@ class Map:
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
         """Apply Dijkstra's Algorithm to find path between points
-        
+
         Args:
             start (Coordinate): The start point for the search
             end (Coordinate): The end point for the search
@@ -131,7 +132,8 @@ class Map:
                     neighbor_tile = Tile(neighbor_coord)
                     neighbors_nbrs.append(neighbor_tile)
                     if self.adjacency_list.get(neighbor_tile) is None:
-                        self.adjacency_list.update({neighbor_tile: []})
+                        self._stored_tiles_[neighbor_coord] = neighbor_tile
+                        self.adjacency_list.update({neighbor_tile: None})
                 self.adjacency_list.update({current_tile: neighbors_nbrs})
 
         self.adjacency_list.update({start_tile: neighbors})

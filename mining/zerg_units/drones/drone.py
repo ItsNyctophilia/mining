@@ -171,6 +171,8 @@ class Drone(Zerg):
             # if false, currently at destination
             if self.path:
                 dest = self.path[0]
+            else:
+                print(f"Path clear! {self.path}")
 
         return dest
 

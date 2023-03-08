@@ -92,7 +92,7 @@ class Overlord(Zerg):
     def _spiral(
         self, ring: int, map: Map, start: Coordinate
     ) -> List[Coordinate]:
-        """Implement the spiral search for a given radius around start
+        """Implement the spiral search for a given radius around start.
 
         Args:
             ring (int): The radius around the start value in which
@@ -102,17 +102,15 @@ class Overlord(Zerg):
         Returns:
             list(Coordinate)
         """
-        adjacent_coords = []
+        adjacent_coords: List[Coordinate] = []
         # TODO: Use itertools.product(range(*), repeat=2)?
         for coord_x, coord_y in itertools.product(
-            range(-ring, 1 + ring),
-            range(-ring, 1 + ring),
+            range(-ring, 1 + ring), repeat=2
         ):
             current_coord = Coordinate(coord_x, coord_y)
             if current_coord != start:
                 adjacent_coords.append(current_coord)
         for coord in adjacent_coords:
-
             try:
                 neighbors = map.adjacency_list[Tile(coord)]
                 tile = map.get(coord, None)
@@ -124,7 +122,6 @@ class Overlord(Zerg):
                         tile = Icon.UNREACHABLE
                         continue
                     return path
-
             except KeyError:
                 continue
 
@@ -132,8 +129,8 @@ class Overlord(Zerg):
 
     def _spiral_search(
         self, start: Coordinate, map_id: int
-    ) -> List[Coordinate]:
-        """Attempt to give a ScoutDrone a new path
+    ) -> Optional[List[Coordinate]]:
+        """Attempt to give a ScoutDrone a new path.
 
         This method searches for the first unexplored tile in a ring
         around a given start tile, incrementally expanding the ring
@@ -147,12 +144,12 @@ class Overlord(Zerg):
             list(Coordinate): The path for the ScoutDrone to explore
                 to next
         """
+        path = None
         current_map = self._tile_maps[map_id]
         for current_ring in range(1, 10):
             path = self._spiral(current_ring, current_map, start)
-            if path is not None:
+            if path:
                 break
-
         return path
 
     def _set_drone_path(self, drone_id: int, context: Context) -> None:
@@ -160,8 +157,9 @@ class Overlord(Zerg):
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
         dest = self._spiral_search(start, map_id)
-        if dest is None:
+        if not dest:
             return
+        print(f"Setting path for drone {drone_id} to {dest}")
         self.drones[drone_id].path = dest
 
     def action(self, context=None) -> str:

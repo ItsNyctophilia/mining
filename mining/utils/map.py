@@ -97,12 +97,7 @@ class Map:
         """
         x = context.x
         y = context.y
-        symbols = []
-        symbols.append(context.north)
-        symbols.append(context.south)
-        symbols.append(context.east)
-        symbols.append(context.west)
-
+        symbols = [context.north, context.south, context.east, context.west]
         zerg_position = Coordinate(x, y)
 
         if origin:

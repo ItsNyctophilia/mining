@@ -121,7 +121,7 @@ class Overlord(Zerg):
                 tile = map.get(coord, None)
                 if tile is None:
                     continue
-                if not neighbors and (tile.icon is not Icon.UNREACHABLE):
+                if not neighbors and (tile.icon not in [Icon.WALL, Icon.UNREACHABLE]):
                     path = map.dijkstra(start, coord)
                     if not path:
                         tile = Icon.UNREACHABLE
@@ -206,7 +206,7 @@ class Overlord(Zerg):
             self._tile_maps[map_id].update_context(drone_context)
             if not len(drone.path):
                 self._set_drone_path(id(drone), drone_context)
-            print(drone.path, drone_context)
+            print("PATH/CONTEXT:", drone.path, drone_context)
         self._update_queue = []
 
         return action

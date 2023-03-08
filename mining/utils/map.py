@@ -90,6 +90,7 @@ class Map:
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
+        print("Path:", final_path)
         return final_path[::-1]
 
     def update_context(self, context: Context, origin: bool = False) -> None:

@@ -88,90 +88,45 @@ class Overlord(Zerg):
         """
         map_id = self._deployed[id(drone)]
         self._update_queue.append((map_id, drone, context))
-
-    def _spiral(
+    
+    def _distance_sort(self, start: Coordinate, end: Coordinate):
+        start_x, start_y = start
+        end_x, end_y = end
+        return (start_x - end_x) + (start_y - end_y)
+    
+    def _assign_scout_target(
             self,
-            ring: int,
-            map: Map,
+            map_id: int,
             start: Coordinate
-            ) -> List[Coordinate]:
-        """Implement the spiral search for a given radius around start
-
-        Args:
-            ring (int): The radius around the start value in which
-                to check for valid tiles
-            map (Map): Map object to search on
-            start (Coordinate): Coordinate to start search from
-        Returns:
-            list(Coordinate)
-        """
-        adjacent_coords = []
-        # TODO: Use itertools.product(range(*), repeat=2)?
-        # TODO: Only take the outermost ring of coords to avoid repeating
-        for coord_x, coord_y in itertools.product(
-            range(-ring, 1 + ring),
-            range(-ring, 1 + ring),
-        ):
-            current_coord = Coordinate(start.x + coord_x, start.y + coord_y)
-            if current_coord != start:
-                adjacent_coords.append(current_coord)
-        for coord in adjacent_coords:
-            tile = map.get(coord, None)
-            if tile is None:
-                continue
-            path = None
+            ) -> Coordinate:
+        current_map = self._tile_maps[map_id]
+        tiles = current_map.get_unexplored_tiles()
+        tiles = sorted(tiles, key=lambda x:
+                       self._distance_sort(start, x.coordinate), reverse=True)
+        for tile in tiles:
+            coord = tile.coordinate
             default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
-            neighbor_icons = [map.get(coord, default_tile).icon for coord in coord.cardinals()]
+            neighbor_icons = [current_map.get(coord, default_tile).icon for coord in coord.cardinals()]
             if not any(True for icon in neighbor_icons if icon in [Icon.MINERAL, Icon.EMPTY,
                                                                    Icon.DEPLOY_ZONE, Icon.ACID]):
                 continue
-            print(f"Icons for {coord}", neighbor_icons)
-            if not tile.discovered:
-                print(f"call for {coord}")
-                path = map.dijkstra(start, coord)
-            if not path or not len(path):
-                #print(f"{coord} marked unreachable")
-                #map.add_tile(coord, Tile(coord, Icon.UNREACHABLE))
+            print(f"Finding path from {start} to {coord}")
+            path = current_map.dijkstra(start, tile.coordinate)
+            if not path:
+                #print("I gave up. c:")
+                #path = current_map.dijkstra(start, current_map.origin)
                 continue
-            return path
-
-        return None
-
-    def _spiral_search(
-            self,
-            start: Coordinate,
-            map_id: int
-            ) -> List[Coordinate]:
-        """Attempt to give a ScoutDrone a new path
-
-        This method searches for the first unexplored tile in a ring
-        around a given start tile, incrementally expanding the ring
-        in the case that a valid tile is not found, stopping after
-        all tiles within a 10-tile radius have been checked.
-
-        Args:
-            start (Coordinate): Start position of the search
-            map_id (int): map_id of the map to search on
-        Returns:
-            list(Coordinate): The path for the ScoutDrone to explore
-                to next
-        """
-        current_map = self._tile_maps[map_id]
-        for current_ring in range(1, 5):
-            print(current_ring)
-            path = self._spiral(current_ring, current_map, start)
-            if path is not None:
+            else:
                 break
 
-        return path
+        return(path)
 
     def _set_drone_path(self, drone_id: int, context: Context) -> None:
         """Give a drone a path based on their role and context."""
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
-        dest = self._spiral_search(start, map_id)
-        if dest is None:
-            return
+        #dest = self._spiral_search(start, map_id)
+        dest = self._assign_scout_target(map_id, start)
         self.drones[drone_id].path = dest
 
     def action(self, context=None) -> str:
@@ -204,12 +159,11 @@ class Overlord(Zerg):
         for map_id, drone, drone_context in self._update_queue:
             if not self._tile_maps.get(map_id):
                 self._tile_maps[map_id] = Map(drone_context)
-                # Map initialize already calls update_context()
-                # self._tile_maps[map_id].update_context(drone_context, True)
                 continue
             current_map = self._tile_maps[map_id]
             current_map.update_context(drone_context)
             if not len(drone.path):
+                print(current_map.get_unexplored_tiles())
                 self._set_drone_path(id(drone), drone_context)
         self._update_queue.clear()
 

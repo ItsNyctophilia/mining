@@ -19,6 +19,7 @@ class Map:
         Icon.ZERG: 1,
         Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
+        None: 1
     }
 
     def __init__(self, context: Context):
@@ -50,7 +51,7 @@ class Map:
         path_found = False
         pqueue: Queue[Tuple[int, Coordinate]] = Queue()
         pqueue.put((0, Tile(start)))
-        counter = 100
+        counter = 500
         while not pqueue.empty() and counter:
             _, node = pqueue.get()
             node = node.coordinate
@@ -67,7 +68,6 @@ class Map:
             # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
             # if not are_tiles_valid:
             #     continue
-            print(f"Target {end}/{node_neighbors}")
             if end in node_neighbors:
                 path_found = True
                 parents_map[end] = node
@@ -76,24 +76,26 @@ class Map:
             visited.add(node)
             for neighbor in node_neighbors:
                 neighbor = self.get(neighbor, None)
-                if (self.get(neighbor, None) is None or neighbor in visited
-                    or neighbor.icon not in self.NODE_WEIGHTS):
+                if (neighbor is None or neighbor in visited):
                     continue
-                parents_map[neighbor.coordinate] = node
+                if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
+                    continue
+                if neighbor.coordinate not in visited:
+                    parents_map[neighbor.coordinate] = node
                 pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
             counter -= 1
         if not path_found:
-            print("Map:", parents_map)
             return []
 
         curr = end
         while curr != start:
+            print("iteration")
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
             if start in coord.cardinals():
                 break
-        print (final_path)
+        print(final_path)
         return final_path[::-1]
 
     def update_context(self, context: Context) -> None:
@@ -152,6 +154,14 @@ class Map:
             return self.__getitem__(key)
         except KeyError:
             return default
+
+    def get_unexplored_tiles(self):
+        unexplored_tiles = []
+        for coord in self._stored_tiles_:
+            current_tile = self._stored_tiles_[coord]
+            if not current_tile.discovered:
+                unexplored_tiles.append(current_tile)
+        return unexplored_tiles
 
     def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
         """Get the tile with the specified coordinates from the map.

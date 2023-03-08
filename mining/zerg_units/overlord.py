@@ -131,9 +131,9 @@ class Overlord(Zerg):
         if dest is None:
             return
         print("Start/Dest:", start, dest)
-        self.drones[drone_id].path = self._tile_maps[map_id].dijkstra(
-            start, dest
-        )
+        path = self._tile_maps[map_id].dijkstra(start, dest)
+        print(f"Setting drone {drone_id} path to {path}")
+        self.drones[drone_id].path = path
 
     def action(self, context=None) -> str:
         """Perform some action, based on the context of the situation.

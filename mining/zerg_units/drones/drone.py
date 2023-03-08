@@ -140,6 +140,9 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
+        print(
+            f"Acting! context: {context} path: {self.path} traveled: {self._path_traveled}"
+        )
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set
@@ -189,6 +192,7 @@ class Drone(Zerg):
             self._finish_traveling()
         else:
             self._steps += 1
+        print(f"Moving {direction}!")
         return direction
 
     def _finish_traveling(self):

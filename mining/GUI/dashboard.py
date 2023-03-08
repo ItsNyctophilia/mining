@@ -68,8 +68,16 @@ class Dashboard(tkinter.Toplevel):
         This creates a GUI for every map that the overlord has.
         """
         
-        new_map = GUI_Map(self, f'Map {self.map_count}')
+        new_map = GUI_Map(self, f'Map {self.map_count}', example_map)
+        new_map.prepare_GUI_map()
         self.map_dict[new_map] = example_map
+
+    def update_maps(self):
+        """
+        Updates the GUI Map with what it's physical map contains.
+        """
+        for gui_map, map_id in self.map_dict.items():
+            gui_map.update()
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def prep_dashboard_trees(self):

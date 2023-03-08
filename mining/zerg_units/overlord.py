@@ -165,6 +165,7 @@ class Overlord(Zerg):
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
         dest = self._spiral_search(start, map_id)
+        print(drone_id, dest, sep=": ")
         if dest is None:
             return
         self.drones[drone_id].path = dest
@@ -203,8 +204,9 @@ class Overlord(Zerg):
                 # self._tile_maps[map_id].update_context(drone_context, True)
                 continue
             self._tile_maps[map_id].update_context(drone_context)
-            if not drone.path:
+            if not len(drone.path):
                 self._set_drone_path(id(drone), drone_context)
+            print(drone.path, drone_context)
         self._update_queue = []
 
         return action

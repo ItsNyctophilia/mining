@@ -20,7 +20,7 @@ class Map:
         Icon.ZERG: 1,
         Icon.DEPLOY_ZONE: 2,
         Icon.ACID: 10,
-        Icon.MINERAL: NON_TRAVERSABLE,
+        Icon.MINERAL: 5,
         Icon.WALL: NON_TRAVERSABLE,
         Icon.UNREACHABLE: NON_TRAVERSABLE,
         None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
@@ -67,7 +67,13 @@ class Map:
                 path_found = True
                 break
             visited.add(node)
-            tile_neighbors = self.adjacency_list[Tile(node)]
+            tile = self.get(node, None)
+            try:
+                if tile.icon in [Icon.WALL, Icon.UNREACHABLE]:
+                    return []
+            except AttributeError:
+                pass
+            tile_neighbors = self.adjacency_list[tile]
             if not tile_neighbors:
                 continue
             for neighbor in tile_neighbors:

@@ -5,7 +5,7 @@ Defines the attributes it has along with the methods that it uses.
 import tkinter
 from tkinter import ttk
 from typing import Dict
-
+from .map import Map
 from mining.zerg_units.drones import Drone
 
 
@@ -20,8 +20,10 @@ class Dashboard(tkinter.Toplevel):
         """
         super().__init__(parent)
         self.photo = tkinter.PhotoImage(file="icon.png")
-
+        
         self.configure(bg="#2C292C")
+        self.map_dict = {}
+
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self.prep_dashboard_trees()
@@ -59,6 +61,12 @@ class Dashboard(tkinter.Toplevel):
             tree_view.column(string_column, width=width, anchor="se")
             tree_view.heading(string_column, text=column)
         return tree_view
+    
+    def create_map_gui(self):
+        """
+        This creates a GUI for every map that the overlord has.
+        """
+        new_map = Map(self, "Rookie")
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def prep_dashboard_trees(self):

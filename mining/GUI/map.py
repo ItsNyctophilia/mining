@@ -4,7 +4,7 @@ import tkinter
 from mining.utils import Icon, Tile
 
 
-class Map(tkinter.Toplevel):
+class GUI_Map(tkinter.Toplevel):
     """Serves as the constructor for the Map object.
 
     Arguments:
@@ -24,7 +24,7 @@ class Map(tkinter.Toplevel):
         )
         self.log.pack()
 
-    def prepare_map(self) -> None:
+    def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
         for x in range(200):

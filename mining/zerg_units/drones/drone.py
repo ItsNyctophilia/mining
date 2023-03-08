@@ -23,8 +23,7 @@ class Drone(Zerg):
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
-        self._capacity = self.max_capacity
-        self._moves = self.max_moves
+        self._capacity = 0
         self._path_to_goal: List[Coordinate] = []
         self._path_traveled: List[Coordinate] = []
         self._steps = 0
@@ -37,7 +36,7 @@ class Drone(Zerg):
         Returns:
             int: The max capacity.
         """
-        return self._capacity
+        return self.max_capacity
 
     @property
     def moves(self) -> int:
@@ -46,7 +45,7 @@ class Drone(Zerg):
         Returns:
             int: The drone's max moves.
         """
-        return self._moves
+        return self.max_moves
 
     @property
     def path(self) -> List[Coordinate]:
@@ -212,14 +211,31 @@ class Drone(Zerg):
             str: The direction the drone should head to reach the destination.
         """
         direction = curr.direction(dest)
-        icon = Icon(getattr(context, direction, Icon.EMPTY))
+        target = Icon(getattr(context, direction, Icon.EMPTY))
         if (direction := direction.upper()) == Directions.CENTER.name:
             self._finish_traveling()
         else:
-            self.take_damage(icon.health_cost())
-            self._steps += 1
+            self._handle_moving(target)
         print(f"Moving {direction}!")
         return direction
+
+    def _handle_moving(self, target: Icon):
+        """Perform any necessary tasks that come with moving the drone.
+
+        Args:
+            target (Icon): The icon of the targeted tile.
+        """
+        self.take_damage(target.health_cost())
+        self._hit_mineral(target)
+        if target.traversable():
+            self._steps += 1
+
+    def _hit_mineral(self, target: Icon):
+        if (
+            is_mineral := (target == Icon.MINERAL)
+        ) and self._capacity <= self.max_capacity:
+            self._capacity += 1
+        return is_mineral
 
     def _finish_traveling(self):
         """Perform some operations to signify traveling is done.

@@ -147,7 +147,7 @@ class Overlord(Zerg):
                 adjacent_coords.append(current_coord)
         for coord in adjacent_coords:
             tile = map.get(coord, None)
-            if tile is not None:
+            if tile is None:
                 continue
             path = None
             default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
@@ -162,10 +162,11 @@ class Overlord(Zerg):
                 in [Icon.MINERAL, Icon.EMPTY, Icon.DEPLOY_ZONE, Icon.ACID]
             ):
                 continue
-            print(neighbor_icons)
-            print(f"call for {coord}")
-            path = map.dijkstra(start, coord)
-            if not len(path):
+            print(f"Icons for {coord}", neighbor_icons)
+            if not tile.discovered:
+                print(f"call for {coord}")
+                path = map.dijkstra(start, coord)
+            if not path or not len(path):
                 # print(f"{coord} marked unreachable")
                 # map.add_tile(coord, Tile(coord, Icon.UNREACHABLE))
                 continue

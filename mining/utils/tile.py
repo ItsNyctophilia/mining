@@ -102,7 +102,10 @@ class Tile:
         # than' another tile, but the built-in pqueue requires it
         # in the case that two priority values in the queue are the 
         # same upon insertion.
-        return __o
+        coord = self.coordinate
+        other_coord = __o.coordinate
+        return (self if abs(coord.x + coord.y) <
+                abs(other_coord.x + other_coord.y) else __o)
 
     def __str__(self) -> str:
         icon_msg = f"Icon: {self.icon.value}" if self.icon else "Undiscovered"

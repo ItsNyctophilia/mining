@@ -14,13 +14,11 @@ class Map:
 
     COORDINATE_OFFSETS = Coordinate(0, 0).cardinals()
 
-    NON_TRAVERSABLE = 9999
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
         Icon.ZERG: 1,
         Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
-        Icon.MINERAL: 20,
     }
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
@@ -33,7 +31,7 @@ class Map:
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
         if context:
             self.origin = Coordinate(context.x, context.y)
-            self.add_tile(self.origin, Tile(self.origin, Icon.DEPLOY_ZONE))
+            self.add_tile(Tile(self.origin, Icon.DEPLOY_ZONE))
             self.update_context(context)
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
@@ -45,7 +43,6 @@ class Map:
         Returns:
             list(Coordinate): Path in the form of a Coordinate list
         """
-
         # TODO: dynamically assign acid weight
         visited: Set[Coordinate] = set()
         parents_map: Dict[Coordinate, Coordinate] = {}
@@ -53,35 +50,35 @@ class Map:
         path_found = False
         pqueue: Queue[Tuple[int, Tile]] = Queue()
         pqueue.put((0, Tile(start)))
-        counter = 1000
+        counter = 100
         while not pqueue.empty() and counter:
-            _, node = pqueue.get()
-            if node.icon == Icon.WALL:
+            _, tile = pqueue.get()
+            node = tile.coordinate
+            if node in visited:
                 continue
-            node = node.coordinate
             if node == end:
                 path_found = True
                 break
             node_neighbors = node.cardinals()
 
-            tile_icons = [
-                self.get(neighbor, self.DEFAULT_TILE).icon
-                for neighbor in node_neighbors
-            ]
-            are_tiles_valid = any(i in tile_icons for i in self.NODE_WEIGHTS)
-            if not are_tiles_valid:
-                continue
-
+            # default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
+            # tiles = [self.get(neighbor, default_tile).icon
+            #          for neighbor in node_neighbors]
+            # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
+            # if not are_tiles_valid:
+            #     continue
+            print(f"Target {end}/{node_neighbors}")
             if end in node_neighbors:
                 path_found = True
                 parents_map[end] = node
                 break
+
             visited.add(node)
-            for neighbor in node_neighbors:
-                neighbor = self.get(neighbor, None)
+            for neighbor_coord in node_neighbors:
+                neighbor = self.get(neighbor_coord, None)
                 if (
-                    neighbor is None
-                    or neighbor in visited
+                    not neighbor
+                    or neighbor.coordinate in visited
                     or neighbor.icon not in self.NODE_WEIGHTS
                 ):
                     continue
@@ -89,10 +86,10 @@ class Map:
                 pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
             counter -= 1
         if not path_found:
+            print("Map:", parents_map)
             return []
 
         curr = end
-        final_path.append(curr)
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)
@@ -120,9 +117,18 @@ class Map:
         for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
             current_tile = Tile(coordinate, Icon(symbol))
             self._stored_tiles_[coordinate] = current_tile
+            for neighbor_coordinate in coordinate.cardinals():
+                if self.get(neighbor_coordinate, None) is None:
+                    neighbor_tile = Tile(neighbor_coordinate)
+                    self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
-    def add_tile(self, coord: Coordinate, tile: Tile) -> None:
-        self._stored_tiles_[coord] = tile
+    def add_tile(self, tile: Tile) -> None:
+        """Add tile to map.
+
+        Args:
+            tile (Tile): The tile to add.
+        """
+        self._stored_tiles_[tile.coordinate] = tile
 
     @overload
     def get(

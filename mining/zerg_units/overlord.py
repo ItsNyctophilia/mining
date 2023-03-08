@@ -2,7 +2,7 @@
 
 import itertools
 from queue import SimpleQueue
-from typing import Dict, List, Optional, Set, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type
 
 from mining.GUI.dashboard import Dashboard
 from mining.utils import Context, Coordinate, Icon, Map, Tile
@@ -28,7 +28,6 @@ class Overlord(Zerg):
             dashboard (_type_, optional): The GUI dashboard. Defaults to None.
         """
         self.dashboard = dashboard
-        self._maps: Dict[int, float] = {}
         # a map id as key and summary as value
         self._drones: Dict[Type[Drone], Dict[int, Drone]] = {
             ScoutDrone: {},
@@ -36,15 +35,13 @@ class Overlord(Zerg):
         }
         self.drones: Dict[int, Drone] = {}
         # a drone id as key and drone as value
-        self._minerals: Set[Tuple[Coordinate, int]] = set()
-        # a set of the coords of minerals and maps
         self._deployed: Dict[int, Optional[int]] = {}
         # a drone id as key and map id as value
         self._update_queue: SimpleQueue[
             Tuple[int, Drone, Context]
         ] = SimpleQueue()
         # a list of map updates from zerg drones
-        self._tile_maps: Dict[int, Map] = {}
+        self._maps: Dict[int, Map] = {}
         # a map id as key and Map as value
 
         for _ in range(3):
@@ -72,6 +69,7 @@ class Overlord(Zerg):
         del self._drones[type(drone)][drone_id]
         del self._deployed[drone_id]
         del self.drones[drone_id]
+        # TODO: if miner dies, untask a mineral it may have been working on
 
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density.
@@ -80,13 +78,7 @@ class Overlord(Zerg):
             map_id (int): The id of the map.
             summary (float): The density of minerals in the map.
         """
-        self._maps[map_id] = summary
-        self._tile_maps[map_id] = Map()
-
-    def add_mineral(self, coord: Coordinate, drone_id: int) -> None:
-        """Add a mineral to the set of known minerals."""
-        if map_id := self._deployed[drone_id]:
-            self._minerals.add((coord, map_id))
+        self._maps[map_id] = Map(summary)
 
     def del_mineral(self, coord: Coordinate, drone_id: int) -> None:
         """Remove a mineral from the set of known minerals.
@@ -97,7 +89,7 @@ class Overlord(Zerg):
         """
         # TODO: maybe pass in map id instead of drone id
         if map_id := self._deployed[drone_id]:
-            self._minerals.remove((coord, map_id))
+            del self._maps[map_id].minerals[coord]
 
     def _select_map(self) -> int:
         """Select the map with the least number of zerg on it.
@@ -192,7 +184,7 @@ class Overlord(Zerg):
                 to next
         """
         path = None
-        current_map = self._tile_maps[map_id]
+        current_map = self._maps[map_id]
         for current_ring in range(1, 5):
             print(current_ring)
             path = self._spiral(current_ring, current_map, start)
@@ -243,6 +235,6 @@ class Overlord(Zerg):
         # TODO: Possibly add GUI updates here
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()
-            self._tile_maps[map_id].update_context(drone_context)
+            self._maps[map_id].update_context(drone_context)
             if not drone.path:
                 self._set_drone_path(drone, drone_context)

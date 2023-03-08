@@ -179,12 +179,12 @@ class Drone(Zerg):
         result = self._choose_direction(current_location, dest, context)
         # TODO: Remove this code and the Icon import when
         # better implementation is created
-        map_id = self._overlord._deployed[id(self)]
-        map_object = self._overlord._tile_maps[map_id]
-        with contextlib.suppress(AttributeError):
-            if map_object.get(dest, None).icon == Icon.WALL:
-                self.path = []
-                self._finish_traveling()
+        if map_id := self._overlord._deployed[id(self)]:
+            map_object = self._overlord._maps[map_id]
+            with contextlib.suppress(AttributeError):
+                if map_object[dest].icon == Icon.WALL:
+                    self.path = []
+                    self._finish_traveling()
         return result
 
     def _update_path(self, curr: Coordinate) -> Coordinate:

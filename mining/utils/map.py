@@ -22,17 +22,16 @@ class Map:
     }
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, context: Optional[Context] = None):
+    def __init__(self, density: float):
         """Initialize a Map with a context object.
 
         Args:
             context (Context): The origin of the map.
         """
+        self.density = density
+        self.minerals: Dict[Coordinate, Optional[int]] = {}
+        # a set of the coords of minerals and drone id tasked to mining it
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
-        if context:
-            self.origin = Coordinate(context.x, context.y)
-            self.add_tile(Tile(self.origin, Icon.DEPLOY_ZONE))
-            self.update_context(context)
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
         """Apply Dijkstra's Algorithm to find path between points.
@@ -113,10 +112,16 @@ class Map:
         y = context.y
         symbols = [context.north, context.south, context.east, context.west]
         zerg_position = Coordinate(x, y)
+        if len(self._stored_tiles_) == 0:
+            self.origin = zerg_position
+            self.add_tile(Tile(self.origin, Icon.DEPLOY_ZONE))
 
         for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
-            current_tile = Tile(coordinate, Icon(symbol))
+            icon = Icon(symbol)
+            current_tile = Tile(coordinate, icon)
             self._stored_tiles_[coordinate] = current_tile
+            if icon == Icon.MINERAL:
+                self.minerals.setdefault(coordinate)
             for neighbor_coordinate in coordinate.cardinals():
                 if self.get(neighbor_coordinate, None) is None:
                     neighbor_tile = Tile(neighbor_coordinate)

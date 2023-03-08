@@ -5,7 +5,7 @@ import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
-from mining.utils import Context, Coordinate, Directions
+from mining.utils import Context, Coordinate, Directions, Icon
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
@@ -71,6 +71,24 @@ class Drone(Zerg):
         This value will automatically be set when the path is updated.
         """
         return self._path_to_goal[-1] if self._path_to_goal else None
+
+    def take_damage(self, damage) -> bool:
+        """Take damage.
+
+        If the drone died, the Overlord will be notified.
+
+        Args:
+            damage (int): The damage to take.
+
+        Returns:
+            bool: False if taking damage caused the drone to die.
+        """
+        self._health -= damage
+        if not (alive := self._health > 0):
+            # If the drone times out before the action can be returned, this
+            # may cause an issue
+            self._overlord.mark_drone_dead(id(self))
+        return alive
 
     @classmethod
     def drone_blueprint(
@@ -141,7 +159,8 @@ class Drone(Zerg):
             str: The direction the drone would like to move.
         """
         print(
-            f"Acting! context: {context} path: {self.path} traveled: {self._path_traveled}"
+            f"Acting! context: {context} path: {self.path} traveled: "
+            f"{self._path_traveled}"
         )
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
@@ -149,7 +168,7 @@ class Drone(Zerg):
         if self.path:
             current_location = Coordinate(context.x, context.y)
             dest = self._update_path(current_location)
-            result = self._choose_direction(current_location, dest)
+            result = self._choose_direction(current_location, dest, context)
         else:
             self._finish_traveling()
         return result
@@ -176,21 +195,28 @@ class Drone(Zerg):
 
         return dest
 
-    def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
+    def _choose_direction(
+        self, curr: Coordinate, dest: Coordinate, context: Context
+    ) -> str:
         """Choose which cardinal direction the drone should head.
+
+        Health calculations will be made during this call. If the drone dies,
+        the Overlord will be notified.
 
         Args:
             curr (Coordinate): The drone's current location.
             dest (Coordinate): The destination of the drone.
+            context (Context): The context surrounding the drone.
 
         Returns:
             str: The direction the drone should head to reach the destination.
         """
-        # choose direction to move in
-        direction = curr.direction(dest).upper()
-        if direction == Directions.CENTER.name:
+        direction = curr.direction(dest)
+        icon = Icon(getattr(context, direction, Icon.EMPTY))
+        if (direction := direction.upper()) == Directions.CENTER.name:
             self._finish_traveling()
         else:
+            self.take_damage(icon.health_cost())
             self._steps += 1
         print(f"Moving {direction}!")
         return direction

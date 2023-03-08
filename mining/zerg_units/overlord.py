@@ -49,6 +49,15 @@ class Overlord(Zerg):
         new_drone = drone_types[type](self)
         self.drones[id(new_drone)] = new_drone
 
+    def mark_drone_dead(self, drone_id: int) -> None:
+        """Mark a drone as dead.
+
+        Args:
+            drone_id (int): The drone to mark as dead.
+        """
+        del self.drones[drone_id]
+        del self._deployed[drone_id]
+
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density."""
         self.maps[map_id] = summary

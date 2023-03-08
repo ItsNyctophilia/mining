@@ -96,6 +96,9 @@ class Tile:
             if isinstance(__o, Tile)
             else NotImplemented
         )
+    
+    def __lt__(self, __o):
+        return __o
 
     def __str__(self) -> str:
         icon_msg = f"Icon: {self.icon.value}" if self.icon else "Undiscovered"

@@ -111,21 +111,16 @@ class Overlord(Zerg):
             range(-ring, 1 + ring),
             range(-ring, 1 + ring),
         ):
-            current_coord = Coordinate(coord_x, coord_y)
+            current_coord = Coordinate(start.x + coord_x, start.y + coord_y)
             if current_coord != start:
                 adjacent_coords.append(current_coord)
         for coord in adjacent_coords:
-
             try:
-                neighbors = map.adjacency_list[Tile(coord)]
                 tile = map.get(coord, None)
+                path = None
                 if tile is None:
-                    continue
-                if not neighbors and (tile.icon not in [Icon.WALL, Icon.UNREACHABLE]):
                     path = map.dijkstra(start, coord)
-                    if not path:
-                        tile = Icon.UNREACHABLE
-                        continue
+                if path:
                     return path
 
             except KeyError:
@@ -165,7 +160,6 @@ class Overlord(Zerg):
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
         dest = self._spiral_search(start, map_id)
-        print(drone_id, dest, sep=": ")
         if dest is None:
             return
         self.drones[drone_id].path = dest
@@ -206,7 +200,6 @@ class Overlord(Zerg):
             self._tile_maps[map_id].update_context(drone_context)
             if not len(drone.path):
                 self._set_drone_path(id(drone), drone_context)
-            print("PATH/CONTEXT:", drone.path, drone_context)
         self._update_queue = []
 
         return action

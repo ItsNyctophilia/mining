@@ -18,30 +18,22 @@ class Map:
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
         Icon.ZERG: 1,
-        Icon.DEPLOY_ZONE: 2,
+        Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
-        Icon.MINERAL: 5,
-        Icon.WALL: NON_TRAVERSABLE,
-        Icon.UNREACHABLE: NON_TRAVERSABLE,
-        None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
+        Icon.MINERAL: 20,
     }
 
-    def __init__(self, context: Optional[Context] = None):
-        """Initialize a Map.
-
-        If a starting context is given, it will be treated as the origin of the
-        map and the map will updates itself accordingly.
+    def __init__(self, context: Context):
+        """Initialize a Map with a context object
 
         Args:
-            context (Optional[Context], optional): The origin of the map.
-                Defaults to None.
+            context (Context): The origin of the map.
         """
-        # dict{Tile: [Tile, Tile, Tile, Tile]}
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
         if context:
-            # TODO: Use of self.origin?
             self.origin = Coordinate(context.x, context.y)
-            self.update_context(context, True)
+            self.add_tile(self.origin, Tile(self.origin, Icon.DEPLOY_ZONE))
+            self.update_context(context)
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
         """Apply Dijkstra's Algorithm to find path between points
@@ -60,43 +52,52 @@ class Map:
         path_found = False
         pqueue: Queue[Tuple[int, Coordinate]] = Queue()
         pqueue.put((0, Tile(start)))
-        counter = 100
+        counter = 1000
         while not pqueue.empty() and counter:
             _, node = pqueue.get()
+            if node.icon == Icon.WALL:
+                continue
             node = node.coordinate
             if node == end:
                 path_found = True
                 break
             node_neighbors = node.cardinals()
+
+            default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
+            tiles = [self.get(neighbor, default_tile).icon
+                     for neighbor in node_neighbors]
+            are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
+            if not are_tiles_valid:
+                continue
+
             if end in node_neighbors:
                 path_found = True
                 parents_map[end] = node
-                print("Path found!")
                 break
             visited.add(node)
             for neighbor in node_neighbors:
                 neighbor = self.get(neighbor, None)
-                if self.get(neighbor, None) is None:
+                if (neighbor is None or neighbor in visited or 
+                    neighbor.icon not in self.NODE_WEIGHTS):
                     continue
-                if neighbor in visited:
-                    continue
-                parents_map[neighbor] = node
+                parents_map[neighbor.coordinate] = node
                 pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
             counter -= 1
         if not path_found:
             return []
 
         curr = end
+        final_path.append(curr)
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
             if start in coord.cardinals():
-                final_path.append(start)
                 break
-        return final_path
+        print (final_path)
+        return final_path[::-1]
 
-    def update_context(self, context: Context, origin: bool = False) -> None:
+    def update_context(self, context: Context) -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -113,37 +114,12 @@ class Map:
 
         zerg_position = Coordinate(context.x, context.y)
 
-        # if origin:
-        #     start_tile = Tile(zerg_position, Icon.DEPLOY_ZONE)
-        #     self.adjacency_list.update({start_tile: []})
-        # else:
-        #     start_tile = Tile(zerg_position)
-
         for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
             current_tile = Tile(coordinate, Icon(symbol))
             self._stored_tiles_[coordinate] = current_tile
 
-        #     x_offset, y_offset = offset
-        #     current_coord = Coordinate(x + x_offset, y + y_offset)
-        #     current_tile = Tile(current_coord, Icon(symbol))
-        #     self._stored_tiles_[current_coord] = current_tile
-        #     neighbors.append(current_tile)
-        #     if current_tile not in self.adjacency_list:
-        #         neighbors_nbrs = []
-        #         for offset in self.COORDINATE_OFFSETS:
-        #             x_offset2, y_offset2 = offset
-        #             neighbor_coord = Coordinate(
-        #                 current_coord.x + x_offset2,
-        #                 current_coord.y + y_offset2,
-        #             )
-        #             neighbor_tile = Tile(neighbor_coord)
-        #             neighbors_nbrs.append(neighbor_tile)
-        #             if self.adjacency_list.get(neighbor_tile) is None:
-        #                 self._stored_tiles_[neighbor_coord] = neighbor_tile
-        #                 self.adjacency_list.update({neighbor_tile: None})
-        #         self.adjacency_list.update({current_tile: neighbors_nbrs})
-
-        # self.adjacency_list.update({start_tile: neighbors})
+    def add_tile(self, coord: Coordinate, tile: Tile) -> None:
+        self._stored_tiles_[coord] = tile
 
     @overload
     def get(
@@ -193,13 +169,13 @@ class Map:
             key = key.coordinate
         return self._stored_tiles_[key]
 
-    # def __iter__(self):
-    #     """Iterate over this map.
+    def __iter__(self):
+        """Iterate over this map.
 
-    #     Yields:
-    #         _type_: The iterator.
-    #     """
-    #     yield from self.adjacency_list
+        Yields:
+            _type_: The iterator.
+        """
+        yield from self._stored_tiles_
 
     # def __repr__(self) -> str:
     #     """Return a representation of this object.

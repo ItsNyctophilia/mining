@@ -22,5 +22,5 @@ class ScoutDrone(Drone):
     def path(self, new_path: List[Coordinate]) -> None:
         """Set the path this drone will take towards the tasked mineral."""
         # separate mineral tile as new attribute
-        self._unexplored_land = new_path.pop()
+        #self._unexplored_land = new_path.pop()
         super(type(self), type(self)).path.fset(self, new_path)

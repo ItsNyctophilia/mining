@@ -24,8 +24,8 @@ class Map:
     }
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, context: Context):
-        """Initialize a Map with a context object
+    def __init__(self, context: Optional[Context] = None):
+        """Initialize a Map with a context object.
 
         Args:
             context (Context): The origin of the map.

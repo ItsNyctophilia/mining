@@ -89,7 +89,7 @@ class Drone(Zerg):
         if not (alive := self._health > 0):
             # If the drone times out before the action can be returned, this
             # may cause an issue
-            self._overlord.mark_drone_dead(id(self))
+            self._overlord.mark_drone_dead(self)
         return alive
 
     @classmethod

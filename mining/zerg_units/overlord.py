@@ -1,7 +1,7 @@
 """Overlord, who oversees zerg drones and assigns tasks to them."""
 
 import itertools
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Type
 
 from mining.utils import Context, Coordinate, Icon, Map, Tile
 
@@ -20,7 +20,10 @@ class Overlord(Zerg):
         # a map id as key and summary as value
         self.maps: Dict[int, float] = {}
         # a drone id as key and drone as value
-        self.drones: Dict[int, Drone] = {}
+        self._drones: Dict[Type[Drone], Dict[int, Drone]] = {
+            ScoutDrone: {},
+            MinerDrone: {},
+        }
         # a set of the coords of minerals and maps
         self._minerals: Set[Tuple[Coordinate, int]] = set()
         # a drone id as key and map id as value
@@ -32,30 +35,34 @@ class Overlord(Zerg):
 
         for _ in range(3):
             # Create three MinerDrones and three ScoutDrones
-            self._create_drone("Miner")
-            self._create_drone("Scout")
-        for drone_id in self.drones:
-            # Set 'map deployed to' for all drones to None
-            self._deployed[drone_id] = None
+            self._create_drone(MinerDrone)
+            self._create_drone(ScoutDrone)
 
-    def _create_drone(self, type: str) -> None:
+    def drones(self) -> Dict[int, Drone]:
+        # sourcery skip: dict-assign-update-to-union
+        """Return the dictionary of drones this Overlord overseers."""
+        combined: Dict[int, Drone] = {}
+        for drone_dict in self._drones.values():
+            combined.update(drone_dict)
+        return combined
+
+    def _create_drone(self, drone_type: Type[Drone]) -> None:
         """Create a new zerg drone of the specified drone type."""
         # TODO: create custom drones based on available resources
-        drone_types = {
-            "Drone": Drone,
-            "Miner": MinerDrone,
-            "Scout": ScoutDrone,
-        }
-        new_drone = drone_types[type](self)
-        self.drones[id(new_drone)] = new_drone
+        new_drone = drone_type(self)
+        drone_id = id(new_drone)
+        self._drones[drone_type][drone_id] = new_drone
+        # Set 'map deployed to' for all drones to None
+        self._deployed[drone_id] = None
 
-    def mark_drone_dead(self, drone_id: int) -> None:
+    def mark_drone_dead(self, drone: Drone) -> None:
         """Mark a drone as dead.
 
         Args:
-            drone_id (int): The drone to mark as dead.
+            drone (int): The drone to mark as dead.
         """
-        del self.drones[drone_id]
+        drone_id = id(drone)
+        del self._drones[type(drone)][drone_id]
         del self._deployed[drone_id]
 
     def add_map(self, map_id: int, summary: float) -> None:
@@ -173,15 +180,16 @@ class Overlord(Zerg):
                 break
         return path
 
-    def _set_drone_path(self, drone_id: int, context: Context) -> None:
+    def _set_drone_path(self, drone: Drone, context: Context) -> None:
         """Give a drone a path based on their role and context."""
+        drone_id = id(drone)
         map_id = self._deployed[drone_id]
         start = Coordinate(context.x, context.y)
         dest = self._spiral_search(start, map_id)
-        if dest is None:
+        if not dest:
             return
         print(f"Setting path for drone {drone_id} to {dest}")
-        self.drones[drone_id].path = dest
+        self._drones[type(drone)][drone_id].path = dest
 
     def action(self, context=None) -> str:
         """Perform some action, based on the context of the situation.
@@ -193,7 +201,6 @@ class Overlord(Zerg):
         Returns:
             str: The action for the overlord to perform
         """
-        action = "None"
         # Deploy all scouts at start
         action = self._deploy_scouts()
 
@@ -203,14 +210,14 @@ class Overlord(Zerg):
         return action
 
     def _deploy_scouts(self) -> str:
-        for drone in self.drones.values():
-            if isinstance(drone, ScoutDrone):
-                if self._deployed[id(drone)]:
-                    continue
-                selected_map = self._select_map()
-                action = f"DEPLOY {id(drone)} {selected_map}"
-                self._deployed[id(drone)] = selected_map
-                break
+        action = "None"
+        for drone in self._drones[ScoutDrone].values():
+            if self._deployed[id(drone)]:
+                continue
+            selected_map = self._select_map()
+            action = f"DEPLOY {id(drone)} {selected_map}"
+            self._deployed[id(drone)] = selected_map
+            break
         return action
 
     def _update_map(self) -> None:
@@ -228,5 +235,5 @@ class Overlord(Zerg):
             current_map = self._tile_maps[map_id]
             current_map.update_context(drone_context)
             if not len(drone.path):
-                self._set_drone_path(id(drone), drone_context)
+                self._set_drone_path(drone, drone_context)
         self._update_queue.clear()

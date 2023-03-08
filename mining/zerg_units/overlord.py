@@ -239,19 +239,9 @@ class Overlord(Zerg):
         return action
 
     def _update_map(self) -> None:
-        # TODO: iterating over _update_queue twice. maybe combine loops?
-        # seen_drones = [drone for _, drone, _ in self._update_queue]
-        # for drone in self.drones.values():
-        #     if drone not in seen_drones:
-        #         self._deployed[id(drone)] = None
+        # TODO: Possibly add GUI updates here
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()
-            if not self._tile_maps.get(map_id):
-                self._tile_maps[map_id] = Map(drone_context)
-                # Map initialize already calls update_context()
-                # self._tile_maps[map_id].update_context(drone_context, True)
-                continue
-            current_map = self._tile_maps[map_id]
-            current_map.update_context(drone_context)
-            if not len(drone.path):
+            self._tile_maps[map_id].update_context(drone_context)
+            if not drone.path:
                 self._set_drone_path(drone, drone_context)

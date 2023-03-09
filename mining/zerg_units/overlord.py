@@ -1,13 +1,15 @@
 """Overlord, who oversees zerg drones and assigns tasks to them."""
 
 from queue import SimpleQueue
-from typing import Dict, List, Optional, Set, Tuple, Type
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Type
 
-from mining.GUI.dashboard import Dashboard
 from mining.utils import Context, Coordinate, Icon, Map, Tile
 
 from .drones import Drone, MinerDrone, ScoutDrone, State
 from .zerg import Zerg
+
+if TYPE_CHECKING:
+    from mining.GUI.dashboard import Dashboard
 
 
 class Overlord(Zerg):

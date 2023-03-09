@@ -13,7 +13,10 @@ from .map import GUI_Map
 
 
 class Dashboard(tkinter.Toplevel):
-    """Serves as blueprint for the dashboard class."""
+    """Serves as blueprint for the dashboard class.
+
+    This outlines the attributes and methods needed.
+    """
 
     def __init__(self, parent: tkinter.Toplevel) -> None:
         """Serve as the constructor for the Dashboard object.
@@ -65,17 +68,34 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def create_map_gui(self, physical_map: Map, map_id: int) -> None:
+    def create_map_gui(self, physical_map: Map) -> None:
         """Create a GUI for every map that the overlord has."""
+        self.map_count += 1
         new_map = GUI_Map(self, f"Map {self.map_count}", physical_map)
-        # new_map.prepare_GUI_map()
+        new_map.prepare_GUI_map()
         self.map_dict[new_map] = physical_map
-        self._fill_one_map_table(map_id)
+        self.add_map_table(physical_map)
 
     def update_maps(self) -> None:
         """Update the GUI Map with what it's physical map contains."""
         for gui_map in self.map_dict:
             gui_map.update()
+
+    def insert_action(self, action: str, tick: str) -> None:
+        """Insert action and tick info into the action table.
+
+        Arguments:
+            action (str): String that represents the action happening.
+
+            tick (str): String that represents the tick in which the
+                action is taking place.
+        """
+        self.action_tree.insert(
+            "",
+            "end",
+            text="Listbox",
+            values=(tick, action),
+        )
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _prep_dashboard_trees(self) -> None:
@@ -142,27 +162,15 @@ class Dashboard(tkinter.Toplevel):
         for entry in drone_dict:
             self.add_drone_to_tree(entry)
 
-    def _fill_one_map_table(self, map_id: int):
+    def add_map_table(self, new_map: Map) -> None:
+        """Fill map table with new maps that come from a dictionary.
+
+        Arguments:
+            new_map (map) : The map that will have it's ID added to the table.
+        """
         self.map_tree.insert(
             "",
             "end",
             text="Listbox",
-            values=(f"Map {self.map_count}", map_id),
+            values=(f"Map {self.map_count}", id(new_map)),
         )
-        self.map_count += 1
-
-    def fill_map_table(self, map_dict: dict) -> None:
-        """Fill map table with new maps that come from a dictionary.
-
-        Arguments:
-            map_dict (dict) : This dictionary should contain all the maps that
-                will be added to the table.
-        """
-        self._clear_table(self.map_tree)
-        for window_counter, entry in enumerate(map_dict.values(), start=1):
-            self.map_tree.insert(
-                "",
-                "end",
-                text="Listbox",
-                values=(f"Map {window_counter}", entry),
-            )

@@ -82,7 +82,24 @@ class Dashboard(tkinter.Toplevel):
         """
         for gui_map, map_id in self.map_dict.items():
             gui_map.update()
+    def insert_action(self, action: str, tick: str) -> None:
+        """
+        Inserts something into the action table as well as
+        the tick that it took place in.
+        Arguments:
+            action: string that represents the action happening.
 
+            tick: string that represents the tick in which the 
+            action is taking place.
+        """
+
+        self.action_tree.insert(
+            "",
+            "end",
+            text="Listbox",
+            values=(tick, action),
+        )
+    
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def prep_dashboard_trees(self) -> None:
         """

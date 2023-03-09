@@ -1,7 +1,9 @@
 """Abstract base class for all zerg units."""
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from mining.utils import Context
+if TYPE_CHECKING:
+    from mining.utils import Context
 
 
 class Zerg(ABC):
@@ -31,14 +33,8 @@ class Zerg(ABC):
         """
         return self._health
 
-    def take_damage(self) -> None:
-        """Take a single point of damage."""
-        # TODO: Mark zerg as dead with overlord if health hits 0
-        if self._health:
-            self._health -= 1
-
     @abstractmethod
-    def action(self, context: Context) -> str:
+    def action(self, context: "Context") -> str:
         """Perform some action, based on the type of zerg.
 
         Args:

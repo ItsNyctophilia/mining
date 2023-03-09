@@ -1,14 +1,20 @@
 """Parent class for all drone zerg units."""
+
 from __future__ import annotations
 
+import contextlib
 import logging
 from enum import Enum, auto
-from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-from mining.utils import Context, Coordinate, Directions
+# TODO: Remove Icon import once better implementation added
+from mining.utils import Coordinate, Directions, Icon
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
+    from typing import List, Optional, Type
+
+    from mining.utils import Context
     from mining.zerg_units import Overlord
 
 
@@ -19,16 +25,15 @@ class Drone(Zerg):
     max_capacity = 10
     max_moves = 1
 
-    def __init__(self, overlord: Overlord) -> None:
+    def __init__(self, overlord: "Overlord") -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
-        self._capacity = self.max_capacity
-        self._moves = self.max_moves
-        self._path_to_goal: List[Coordinate] = []
-        self._path_traveled: List[Coordinate] = []
+        self._capacity = 0
+        self._path_to_goal: List["Coordinate"] = []
+        self._path_traveled: List["Coordinate"] = []
         self._steps = 0
-        self._state = State.WAITING
+        self.state = State.WAITING
 
     @property
     def capacity(self) -> int:
@@ -37,7 +42,7 @@ class Drone(Zerg):
         Returns:
             int: The max capacity.
         """
-        return self._capacity
+        return self.max_capacity
 
     @property
     def moves(self) -> int:
@@ -46,10 +51,10 @@ class Drone(Zerg):
         Returns:
             int: The drone's max moves.
         """
-        return self._moves
+        return self.max_moves
 
     @property
-    def path(self) -> List[Coordinate]:
+    def path(self) -> List["Coordinate"]:
         """The path this drone will take to its destination.
 
         The destination of this drone will always be the final element of this
@@ -58,19 +63,37 @@ class Drone(Zerg):
         return self._path_to_goal
 
     @path.setter
-    def path(self, new_path: List[Coordinate]) -> None:
+    def path(self, new_path: List["Coordinate"]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)
-        self._state = State.TRAVELING if len(new_path) > 2 else State.WAITING
+        self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
     @property
-    def dest(self) -> Optional[Coordinate]:
+    def dest(self) -> Optional["Coordinate"]:
         """The coordinates of the current intended destination of this drone.
 
         This value will automatically be set when the path is updated.
         """
         return self._path_to_goal[-1] if self._path_to_goal else None
+
+    def take_damage(self, damage) -> bool:
+        """Take damage.
+
+        If the drone died, the Overlord will be notified.
+
+        Args:
+            damage (int): The damage to take.
+
+        Returns:
+            bool: False if taking damage caused the drone to die.
+        """
+        self._health -= damage
+        if not (alive := self._health > 0):
+            # If the drone times out before the action can be returned, this
+            # may cause an issue
+            self._overlord.mark_drone_dead(self)
+        return alive
 
     @classmethod
     def drone_blueprint(
@@ -131,7 +154,7 @@ class Drone(Zerg):
             + (cls.max_moves * 3)
         )
 
-    def action(self, context: Context) -> str:
+    def action(self, context: "Context") -> str:
         """Perform some action, based on the type of drone.
 
         Args:
@@ -140,20 +163,34 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
+        print(
+            f"Acting! context: {context} path: {self.path} traveled: "
+            f"{self._path_traveled}"
+        )
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set
         if self.path:
-            current_location = Coordinate(context.x, context.y)
-            dest = self._update_path(current_location, self.path)
-            result = self._choose_direction(current_location, dest)
+            result = self._travel(context)
         else:
             self._finish_traveling()
         return result
 
-    def _update_path(
-        self, curr: Coordinate, path: List[Coordinate]
-    ) -> Coordinate:
+    def _travel(self, context):
+        current_location = Coordinate(context.x, context.y)
+        dest = self._update_path(current_location)
+        result = self._choose_direction(current_location, dest, context)
+        # TODO: Remove this code and the Icon import when
+        # better implementation is created
+        if map_id := self._overlord._deployed[id(self)]:
+            map_object = self._overlord._maps[map_id]
+            with contextlib.suppress(AttributeError):
+                if map_object[dest].icon == Icon.WALL:
+                    self.path = []
+                    self._finish_traveling()
+        return result
+
+    def _update_path(self, curr: "Coordinate") -> "Coordinate":
         """Check if the current location is on the path, and remove if so.
 
         Args:
@@ -163,37 +200,69 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        # only pop if last action caused movement and not at destination
-        if curr == path[0] and len(path) > 1:
-            self._path_traveled.insert(0, path.pop(0))
-        return path[0]
+        dest = self.path[0]
+        # only pop if last action caused movement
+        if curr == dest:
+            self._path_traveled.insert(0, self.path.pop(0))
+            # if false, currently at destination
+            if self.path:
+                dest = self.path[0]
+            else:
+                print(f"Path clear! {self.path}")
 
-    def _choose_direction(self, curr: Coordinate, dest: Coordinate) -> str:
+        return dest
+
+    def _choose_direction(
+        self, curr: "Coordinate", dest: "Coordinate", context: "Context"
+    ) -> str:
         """Choose which cardinal direction the drone should head.
+
+        Health calculations will be made during this call. If the drone dies,
+        the Overlord will be notified.
 
         Args:
             curr (Coordinate): The drone's current location.
             dest (Coordinate): The destination of the drone.
+            context (Context): The context surrounding the drone.
 
         Returns:
             str: The direction the drone should head to reach the destination.
         """
-        # choose direction to move in
-        direction = curr.direction(dest).upper()
-        if direction == Directions.CENTER.name:
+        direction = curr.direction(dest)
+        target = Icon(getattr(context, direction, Icon.EMPTY))
+        if (direction := direction.upper()) == Directions.CENTER.name:
             self._finish_traveling()
         else:
-            self._steps += 1
+            self._handle_moving(target)
+        print(f"Moving {direction}!")
         return direction
 
-    def _finish_traveling(self):
+    def _handle_moving(self, target: "Icon") -> None:
+        """Perform any necessary tasks that come with moving the drone.
+
+        Args:
+            target (Icon): The icon of the targeted tile.
+        """
+        self.take_damage(target.health_cost())
+        self._hit_mineral(target)
+        if target.traversable():
+            self._steps += 1
+
+    def _hit_mineral(self, target: "Icon") -> bool:
+        if (
+            is_mineral := (target == Icon.MINERAL)
+        ) and self._capacity <= self.max_capacity:
+            self._capacity += 1
+        return is_mineral
+
+    def _finish_traveling(self) -> None:
         """Perform some operations to signify traveling is done.
 
         This method is mostly for subtypes to create a hook and modify behavior
         during travel. The drone base class will call this method whenever it
         reaches it's intended destination.
         """
-        self._state = State.WAITING
+        self.state = State.WAITING
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.
@@ -215,7 +284,7 @@ class Drone(Zerg):
             f"{base} current health = {self.health}, "
             f"max capacity = {self.capacity}, moves per turn = {self.moves}, "
             f"current destination = {self.dest}, "
-            f"Drone is {'' if self._state else 'not '}traveling"
+            f"Drone is {'' if self.state else 'not '}traveling"
         )
 
     def __repr__(self) -> str:
@@ -232,7 +301,7 @@ class Drone(Zerg):
             f"{self.path=})"
         )
 
-    def log_creation(self):
+    def log_creation(self) -> None:
         """Log the creation of a drone.
 
         Logging is stored in a special file in the current directory.

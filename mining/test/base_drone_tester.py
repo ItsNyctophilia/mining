@@ -58,9 +58,9 @@ class BaseDroneTester(unittest.TestCase):
 
     def _init_start_dest(
         self,
-        start: Optional[Tile] = None,
-        dest: Optional[Tile] = None,
-    ) -> Tuple[Tile, Tile]:
+        start: Optional["Tile"] = None,
+        dest: Optional["Tile"] = None,
+    ) -> Tuple["Tile", "Tile"]:
         if not start:
             start = Tile(Coordinate(0, 0), Icon.EMPTY)
         if not dest:
@@ -81,9 +81,9 @@ class BaseDroneTester(unittest.TestCase):
     def _generate_path(
         self,
         *,
-        start: Optional[Tile] = None,
-        dest: Optional[Tile] = None,
-    ) -> List[Tile]:
+        start: Optional["Tile"] = None,
+        dest: Optional["Tile"] = None,
+    ) -> List["Tile"]:
         start, dest = self._init_start_dest(start, dest)
         path = [dest]
         x, y = dest.coordinate
@@ -98,7 +98,7 @@ class BaseDroneTester(unittest.TestCase):
             path.insert(0, new_tile)
         return path
 
-    def _drone_act(self, travel_info: Dict[str, int], drone: Drone) -> bool:
+    def _drone_act(self, travel_info: Dict[str, int], drone: "Drone") -> bool:
         """Allow the drone to act.
 
         Return True if the drone requests to continue moving, else False.
@@ -126,7 +126,7 @@ class BaseDroneTester(unittest.TestCase):
         else:
             return False
 
-    def _get_context_from_map(self, coord: Coordinate) -> Context:
+    def _get_context_from_map(self, coord: "Coordinate") -> "Context":
         cardinals = dict(
             zip(["north", "south", "east", "west"], coord.cardinals())
         )
@@ -146,13 +146,13 @@ class BaseDroneTester(unittest.TestCase):
         }
         return Context(*coord, **icons)
 
-    def _register_tile(self, tile: Tile) -> None:
+    def _register_tile(self, tile: "Tile") -> None:
         context = self._get_context_from_map(tile.coordinate)
         self.map_.update_context(context)
         if tile.icon == Icon.MINERAL:
             self.minerals_[tile] = random.randint(1, 9)
 
-    def _update_tile(self, coord: Coordinate) -> bool:
+    def _update_tile(self, coord: "Coordinate") -> bool:
         """Update the tile if the testing class is tracking it.
 
         If the tile at the coordinate is tracked and is a mineral, decrement
@@ -196,11 +196,11 @@ class BaseDroneTester(unittest.TestCase):
 
     def _travel(
         self,
-        drone: Drone,
+        drone: "Drone",
         *,
-        start: Optional[Tile] = None,
-        dest: Optional[Tile] = None,
-    ) -> Tuple[int, int, Tile, Tile, Coordinate, List[Tile]]:
+        start: Optional["Tile"] = None,
+        dest: Optional["Tile"] = None,
+    ) -> Tuple[int, int, "Tile", "Tile", "Coordinate", List["Tile"]]:
         path = self._generate_path(start=start, dest=dest)
         start = path[0]
         dest = path[-1]

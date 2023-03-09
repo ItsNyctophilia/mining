@@ -12,6 +12,7 @@ class Icon(Enum):
     MINERAL = "*"
     ACID = "~"
     EMPTY = " "
+    UNREACHABLE = "X"
 
     def traversable(self) -> bool:
         """Whether a tile with this icon is traversable by a drone.
@@ -35,3 +36,18 @@ class Icon(Enum):
             return 3
         else:
             return 0
+
+    def unicode(self) -> str:
+        """Return the unicode representation of this icon.
+
+        Returns:
+            str: The icon as a unicode character.
+        """
+        return {
+            Icon.WALL: "\u00A4",
+            Icon.ACID: "\u05e1",
+            Icon.MINERAL: "\u0275",
+            Icon.ZERG: "\u017e",
+            Icon.DEPLOY_ZONE: "\u02c5",
+            Icon.EMPTY: " ",
+        }[self]

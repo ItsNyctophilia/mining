@@ -1,9 +1,15 @@
 """Miner drone, whose primary purpose is to mine minerals."""
-from typing import List, Optional
+from __future__ import annotations
 
-from mining.utils import Context, Coordinate, Icon
+from typing import TYPE_CHECKING
 
 from .drone import Drone, State
+
+if TYPE_CHECKING:
+    from typing import List, Optional
+
+    from mining.utils import Context, Coordinate
+    from mining.zerg_units import Overlord
 
 
 class MinerDrone(Drone):
@@ -13,13 +19,17 @@ class MinerDrone(Drone):
     max_capacity = 10
     max_moves = 2
 
-    def __init__(self, overlord) -> None:
-        """Initialize a Miner."""
+    def __init__(self, overlord: "Overlord") -> None:
+        """Initialize a Miner.
+
+        Args:
+            overlord (Overlord): The Overlord owning this drone.
+        """
         super().__init__(overlord)
-        self._mineral_location: Optional[Coordinate] = None
+        self._mineral_location: Optional["Coordinate"] = None
 
     @Drone.path.setter
-    def path(self, new_path: List[Coordinate]) -> None:
+    def path(self, new_path: List["Coordinate"]) -> None:
         """Set the path this drone will take towards the tasked mineral."""
         # separate mineral tile as new attribute
         self._mineral_location = new_path.pop()
@@ -28,7 +38,7 @@ class MinerDrone(Drone):
         )
         super(type(self), type(self)).path.fset(self, new_path)
 
-    def action(self, context: Context) -> str:
+    def action(self, context: "Context") -> str:
         # sourcery skip: assign-if-exp, reintroduce-else
         """Perform some action.
 
@@ -45,12 +55,12 @@ class MinerDrone(Drone):
             str: The intended next destination of the drone.
         """
         result = super().action(context)
-        if self._state == State.WORKING:
+        if self.state == State.WORKING:
             return self._mine(context)
         else:
             return result
 
-    def _mine(self, context: Context) -> str:
+    def _mine(self, context: "Context") -> str:
         """Mine the miner's tasked mineral until it is depleted.
 
         Args:
@@ -60,15 +70,17 @@ class MinerDrone(Drone):
             str: The direction the miner wants to move.
         """
         dest_icon = getattr(context, self._mineral_direction)
-        if dest_icon == Icon.MINERAL.value:
+        if self._hit_mineral(dest_icon):
             return self._mineral_direction.upper()
         super(type(self), type(self)).path.fset(self, self._path_traveled)
-        self._state = State.TRAVELING
+        self.state = State.TRAVELING
         return super().action(context)
 
     def _finish_traveling(self):
         # set state to working if miner tasked with a mineral
         # else assume at loading zone and wait for pickup
-        self._state = (
-            State.WORKING if self._mineral_location else State.WAITING
-        )
+        if self._mineral_location:
+            self.state = State.WORKING
+        else:
+            self._overlord.request_pickup(self)
+            self.state = State.WAITING

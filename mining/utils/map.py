@@ -1,78 +1,113 @@
 """A map made up of tiles."""
 
-from queue import PriorityQueue as Queue
-from typing import Dict, List, Optional, Tuple, Union, overload
+from __future__ import annotations
 
-from .context import Context
+from queue import PriorityQueue as Queue
+from typing import TYPE_CHECKING, overload
+
 from .coordinate import Coordinate
 from .icon import Icon
 from .tile import Tile
+
+if TYPE_CHECKING:
+    from typing import Dict, List, Optional, Set, Tuple, Union
+
+    from mining.zerg_units.drones import Drone
+
+    from .context import Context
 
 
 class Map:
     """A map object, used to describe the tile layout of an area."""
 
-    COORDINATE_OFFSETS = Coordinate(0, 0).cardinals()
-
-    NON_TRAVERSABLE = 9999
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
-        Icon.DEPLOY_ZONE: 2,
+        Icon.ZERG: 1,
+        Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
-        Icon.MINERAL: NON_TRAVERSABLE,
-        Icon.WALL: NON_TRAVERSABLE,
-        None: NON_TRAVERSABLE,  # catch-all case for undiscovered tiles
+        None: 1,
     }
+    DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, context: Optional[Context] = None):
-        """Initialize a Map.
-
-        If a starting context is given, it will be treated as the origin of the
-        map and the map will updates itself accordingly.
+    def __init__(self, density: "float") -> None:
+        """Initialize a Map with a context object.
 
         Args:
-            context (Optional[Context], optional): The origin of the map.
-                Defaults to None.
+            context (Context): The origin of the map.
         """
-        # dict{Tile: [Tile, Tile, Tile, Tile]}
-        self.adjacency_list: Dict[Tile, List[Tile]] = {}
-        self._stored_tiles_: Dict[Coordinate, Tile] = {}
-        if context:
-            # TODO: Use of self.origin?
-            self.origin = Coordinate(context.x, context.y)
-            self.update_context(context, True)
+        self.density = density
+        self.minerals: Dict["Coordinate", Optional[int]] = {}
+        # a set of the coords of minerals and drone id tasked to mining it
+        self.untasked_minerals: Set["Coordinate"] = set()
+        self._stored_tiles_: Dict["Coordinate", "Tile"] = {}
+        self.scout_count = 0
 
-    def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
-        # TODO: Add docstring
+    def dijkstra(
+        self, start: "Coordinate", end: "Coordinate"
+    ) -> List["Coordinate"]:
+        """Apply Dijkstra's Algorithm to find path between points.
 
+        Args:
+            start (Coordinate): The start point for the search
+            end (Coordinate): The end point for the search
+        Returns:
+            list(Coordinate): Path in the form of a Coordinate list
+        """
         # TODO: dynamically assign acid weight
-        visited: List[Coordinate] = []  # TODO: should this be a set?
-        parents_map: Dict[Coordinate, Coordinate] = {}
-        final_path: List[Coordinate] = []
-        pqueue: Queue[Tuple[int, Coordinate]] = Queue()
-        pqueue.put((0, start))
-        while not pqueue.empty():
-            _, node = pqueue.get()
-            visited.append(node)
-            tile_neighbors = self.adjacency_list[Tile(node)]
-            if not tile_neighbors:
+        visited: Set["Coordinate"] = set()
+        parents_map: Dict["Coordinate", "Coordinate"] = {}
+        final_path: List["Coordinate"] = []
+        path_found = False
+        pqueue: Queue[Tuple[int, "Tile"]] = Queue()
+        pqueue.put((0, Tile(start)))
+        counter = 500
+        while not pqueue.empty() and counter:
+            _, tile = pqueue.get()
+            node = tile.coordinate
+            if node in visited:
                 continue
-            for neighbor in tile_neighbors:
-                neigh_coord = neighbor.coordinate
-                if neigh_coord in visited:
+            if node == end:
+                path_found = True
+                break
+            node_neighbors = node.cardinals()
+
+            # default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
+            # tiles = [self.get(neighbor, default_tile).icon
+            #          for neighbor in node_neighbors]
+            # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
+            # if not are_tiles_valid:
+            #     continue
+            if end in node_neighbors:
+                path_found = True
+                parents_map[end] = node
+                break
+
+            visited.add(node)
+            for neighbor_coord in node_neighbors:
+                neighbor = self.get(neighbor_coord, None)
+                if neighbor is None or neighbor in visited:
                     continue
-                parents_map[neigh_coord] = node
-                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neigh_coord))
+                if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
+                    continue
+                if neighbor.coordinate not in visited:
+                    parents_map[neighbor.coordinate] = node
+                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
+            counter -= 1
+        if not path_found:
+            return []
 
         curr = end
         while curr != start:
+            print("iteration")
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
-        # TODO: would prepending be better than appending and reversing?
+            if start in coord.cardinals():
+                break
+        print(final_path)
         return final_path[::-1]
 
-    def update_context(self, context: Context, origin: bool = False) -> None:
+    def update_context(self, context: "Context") -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -81,48 +116,56 @@ class Map:
             origin (bool): Whether or not the passed context object
                 is the origin of the map.
         """
-        x, y, *symbols = context
+        x = context.x
+        y = context.y
+        symbols = [context.north, context.south, context.east, context.west]
         zerg_position = Coordinate(x, y)
+        if len(self._stored_tiles_) == 0:
+            self.origin = zerg_position
+            self.add_tile(Tile(self.origin, Icon.DEPLOY_ZONE))
 
-        if origin:
-            start_tile = Tile(zerg_position, Icon.DEPLOY_ZONE)
-            self.adjacency_list.update({start_tile: []})
-        else:
-            start_tile = Tile(zerg_position)
+        for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
+            icon = Icon(symbol)
+            tile = Tile(coordinate, icon)
+            self._stored_tiles_[coordinate] = tile
+            self._track_mineral(icon, coordinate)
+            for neighbor_coordinate in coordinate.cardinals():
+                if self.get(neighbor_coordinate, None) is None:
+                    neighbor_tile = Tile(neighbor_coordinate)
+                    self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
-        neighbors = []
+    def add_tile(self, tile: "Tile") -> None:
+        """Add tile to map.
 
-        # TODO: use zerg_position.cardinals() instead of static offsets
-        for symbol, offset in zip(symbols, self.COORDINATE_OFFSETS):
-            x_offset, y_offset = offset
-            current_coord = Coordinate(x + x_offset, y + y_offset)
-            current_tile = Tile(current_coord, Icon(symbol))
-            neighbors.append(current_tile)
-            if current_tile not in self.adjacency_list:
-                neighbors_nbrs = []
-                self._stored_tiles_[current_coord] = current_tile
-                for offset in self.COORDINATE_OFFSETS:
-                    x_offset2, y_offset2 = offset
-                    neighbor_coord = Coordinate(
-                        current_coord.x + x_offset2,
-                        current_coord.y + y_offset2,
-                    )
-                    neighbor_tile = Tile(neighbor_coord)
-                    neighbors_nbrs.append(neighbor_tile)
-                    if self.adjacency_list.get(neighbor_tile) is None:
-                        self.adjacency_list.update({neighbor_tile: []})
-                self.adjacency_list.update({current_tile: neighbors_nbrs})
+        Args:
+            tile (Tile): The tile to add.
+        """
+        self._stored_tiles_[tile.coordinate] = tile
 
-        self.adjacency_list.update({start_tile: neighbors})
+    def _track_mineral(self, icon: "Icon", coordinate: "Coordinate") -> None:
+        if icon == Icon.MINERAL and not self.minerals.setdefault(coordinate):
+            self.untasked_minerals.add(coordinate)
+
+    def task_miner(self, miner: "Drone") -> None:
+        """Task the miner with mining an available mineral.
+
+        The miner will have their path variable set, and the mineral they are
+        tasked with will be removed from the untasked_minerals set.
+
+        Args:
+            miner (Drone): The miner to task.
+        """
+        mineral = self.untasked_minerals.pop()
+        miner.path = self.dijkstra(self.origin, mineral)
 
     @overload
     def get(
-        self, key: Union[Tile, Coordinate], default: None
-    ) -> Optional[Tile]:
+        self, key: Union["Tile", "Coordinate"], default: None
+    ) -> Optional["Tile"]:
         pass
 
     @overload
-    def get(self, key: Union[Tile, Coordinate], default: Tile) -> Tile:
+    def get(self, key: Union["Tile", "Coordinate"], default: "Tile") -> "Tile":
         pass
 
     def get(self, key, default):
@@ -144,7 +187,19 @@ class Map:
         except KeyError:
             return default
 
-    def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
+    def get_unexplored_tiles(self) -> List["Tile"]:
+        """Return a list of all unexplored tiles on the map.
+
+        Returns:
+            List[Tile]: The unexplored tile list.
+        """
+        return [
+            tile
+            for tile in self._stored_tiles_.values()
+            if not tile.discovered
+        ]
+
+    def __getitem__(self, key: Union["Tile", "Coordinate"]) -> "Tile":
         """Get the tile with the specified coordinates from the map.
 
         A Tile or Coordinate object may be passed in as the key; if a Tile is
@@ -169,7 +224,7 @@ class Map:
         Yields:
             _type_: The iterator.
         """
-        yield from self.adjacency_list
+        yield from self._stored_tiles_
 
     def __repr__(self) -> str:
         """Return a representation of this object.
@@ -179,4 +234,4 @@ class Map:
         Returns:
             str: The string representation of this object.
         """
-        return f"Map({list(self.adjacency_list)})"
+        return f"Map({list(self._stored_tiles_)})"

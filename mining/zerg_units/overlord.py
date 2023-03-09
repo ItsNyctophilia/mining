@@ -74,6 +74,8 @@ class Overlord(Zerg):
         self.drones[drone_id] = new_drone
         # Set 'map deployed to' for all drones to None
         self._deployed[drone_id] = None
+        if isinstance(new_drone, MinerDrone):
+            self._idle_miners.add(new_drone)
 
     def mark_drone_dead(self, drone: "Drone") -> None:
         """Mark a drone as dead.
@@ -82,10 +84,13 @@ class Overlord(Zerg):
             drone (int): The drone to mark as dead.
         """
         drone_id = id(drone)
-        del self._drones[type(drone)][drone_id]
-        del self._deployed[drone_id]
-        del self.drones[drone_id]
-        # TODO: if miner dies, untask a mineral it may have been working on
+        if map_id := self._deployed[drone_id]:
+            del self._drones[type(drone)][drone_id]
+            del self._deployed[drone_id]
+            del self.drones[drone_id]
+            if type(drone) == ScoutDrone:
+                self._maps[map_id].scout_count -= 1
+            # TODO: if miner dies, untask a mineral it may have been working on
 
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density.
@@ -218,32 +223,41 @@ class Overlord(Zerg):
             current_map = self._maps[map_id]
             current_map.update_context(drone_context)
             if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
-                print(current_map.get_unexplored_tiles())
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps()
 
     def _recall_drones(self) -> str:
         if not self._pickup_queue.empty():
             map_, drone = self._pickup_queue.get()
-            if type(drone) == ScoutDrone:
+            if isinstance(drone, ScoutDrone):
                 map_.scout_count -= 1
-            return f"{self.RETURN} {id(drone)}"
+            elif isinstance(drone, MinerDrone):
+                self._idle_miners.add(drone)
+            action = f"{self.RETURN} {id(drone)}"
+            print(action)
+            return action
         return ""
 
     def _deploy_miners(self) -> str:
         for map_id, map_ in self._maps.items():
             if map_.untasked_minerals and self._idle_miners:
                 miner = self._idle_miners.pop()
+                miner_id = id(miner)
                 map_.task_miner(miner)
-                return self._build_action(self.DEPLOY, id(miner), map_id)
+                print("IDLE MINERS", self._idle_miners)
+                self._deployed[miner_id] = map_id
+                return self._build_action(self.DEPLOY, miner_id, map_id)
         return ""
 
     def _deploy_scouts(self) -> str:
         for drone in self._drones[ScoutDrone].values():
-            if not self._deployed[id(drone)]:
+            drone_id = id(drone)
+            if not self._deployed[drone_id]:
                 map_id = self._select_map()
-                self._deployed[id(drone)] = map_id
-                return self._build_action(self.DEPLOY, id(drone), map_id)
+                self._deployed[drone_id] = map_id
+                action = self._build_action(self.DEPLOY, drone_id, map_id)
+                print(action)
+                return action
         return ""
 
     def _build_action(self, action: str, drone_id: int, map_id: int) -> str:

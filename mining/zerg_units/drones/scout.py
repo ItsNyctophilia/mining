@@ -46,6 +46,7 @@ class ScoutDrone(Drone):
             Icon(context.west),
         ]
         if all(not icon.traversable() for icon in cardinals):
+            self._overlord.enqueue_map_update(self, context)
             self._finish_traveling()
             self._overlord.request_pickup(self)
             return Directions.CENTER.name

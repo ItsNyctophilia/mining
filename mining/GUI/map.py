@@ -12,7 +12,11 @@ class GUI_Map(tkinter.Toplevel):
     """
 
     def __init__(self, parent, title: str, physical_map: map):
-        # TODO: Add docstring
+        """
+        
+        This provides the attributes used in the constructor of the GUI maps.
+
+        """
         super().__init__(parent)
         self.photo = tkinter.PhotoImage(file="icon.png")
         self.wm_iconphoto(False, self.photo)
@@ -24,10 +28,11 @@ class GUI_Map(tkinter.Toplevel):
             self, width=100, height=100, state="normal", wrap="none"
         )
         self.log.pack()
-        self.log.font=("TkFixedFont", 16)
 
     def prepare_GUI_map(self) -> None:
-        """Prepare map by filling it with unknown characters."""
+        """
+        Prepare map by filling it with unknown characters.
+        """
         self.log.config(state="normal")
         for x in range(200):
             for y in range(200):
@@ -35,9 +40,11 @@ class GUI_Map(tkinter.Toplevel):
             self.log.insert(f"{x}.200", "\n")
         self.log.config(state="disabled")
     
-    def update(self):
-        """Updates GUI Map with any updated coordinates that
-        the physical map may have"""
+    def update(self) -> None:
+        """
+        Updates GUI Map with any updated coordinates that
+        the physical map may have.
+        """
         for item in self.physicalmap._stored_tiles_.values():
             self.translate_tile(item)
 

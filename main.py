@@ -33,13 +33,10 @@ root = Tk()
 
 example = Dashboard(root)
 
-map_dict = {
-        1 : "Map one",
-        2 : "Map two",
-        3 : "Map three",
-        }
+
 cocopebbles = file_read("map03.txt")
-example.fill_map_table(map_dict)
+cocopebbles2 = file_read("map02.txt")
+example.create_map_gui(cocopebbles2)
 example.create_map_gui(cocopebbles)
 example.update_maps()
 mainloop()

@@ -11,7 +11,9 @@ from mining.zerg_units.drones import Drone
 
 
 class Dashboard(tkinter.Toplevel):
-    """Serves as blueprint for the dashboard class."""
+    """Serves as blueprint for the dashboard class.
+    This outlines the attributes and methods needed.
+    """
 
     def __init__(self, parent):
         """Serve as the constructor for the Dashboard object.
@@ -31,7 +33,7 @@ class Dashboard(tkinter.Toplevel):
         self.title("Overlord's Dashboard")
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_tree(self, column_dictionary: dict) -> ttk.Treeview:
+    def make_tree(self, column_dictionary: dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
         Dashboards typically serve spreadsheets in the gui.
@@ -63,16 +65,18 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
     
-    def create_map_gui(self, example_map):
+    def create_map_gui(self, example_map: map) -> None:
         """
         This creates a GUI for every map that the overlord has.
         """
         
         new_map = GUI_Map(self, f'Map {self.map_count}', example_map)
+        self.map_count += 1
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = example_map
+        self.add_map_table(example_map)
 
-    def update_maps(self):
+    def update_maps(self) -> None:
         """
         Updates the GUI Map with what it's physical map contains.
         """
@@ -80,8 +84,12 @@ class Dashboard(tkinter.Toplevel):
             gui_map.update()
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def prep_dashboard_trees(self):
-        """Prepare the three tree views in the dashboard."""
+    def prep_dashboard_trees(self) -> None:
+        """
+        Prepare the three tree views in the dashboard.
+        """
+        
+
         map_dict = {"Window Title": 180, "Map ID": 180}
 
         action_tree = {"Action": 180, "Tick": 180}
@@ -144,18 +152,15 @@ class Dashboard(tkinter.Toplevel):
         for entry in drone_dict.values():
             self.add_drone_to_tree(entry)
 
-    def fill_map_table(self, map_dict: dict) -> None:
+    def add_map_table(self, new_map: map) -> None:
         """Fill map table with new maps that come from a dictionary.
 
         Arguments:
-            map_dict (dict) : This dictionary should contain all the maps that
-                will be added to the table.
+            new_map (map) : The map that will have it's ID added to the table
         """
-        self.clear_table(self.map_tree)
-        for window_counter, entry in enumerate(map_dict.values(), start=1):
-            self.map_tree.insert(
+        self.map_tree.insert(
                 "",
                 "end",
                 text="Listbox",
-                values=(f"Map {window_counter}", entry),
+                values=(f"Map {self.map_count}", id(map)),
             )

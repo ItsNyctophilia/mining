@@ -4,12 +4,13 @@ Defines the attributes it has along with the methods that it uses.
 """
 import tkinter
 from tkinter import ttk
-from typing import Dict, Iterable
-
-from mining.utils import Map
-from mining.zerg_units.drones import Drone
+from typing import TYPE_CHECKING, Dict, Iterable
 
 from .map import GUI_Map
+
+if TYPE_CHECKING:
+    from mining.utils import Map
+    from mining.zerg_units.drones import Drone
 
 
 class Dashboard(tkinter.Toplevel):
@@ -68,7 +69,7 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def create_map_gui(self, physical_map: Map) -> None:
+    def create_map_gui(self, physical_map: "Map") -> None:
         """Create a GUI for every map that the overlord has."""
         self.map_count += 1
         new_map = GUI_Map(self, f"Map {self.map_count}", physical_map)
@@ -90,7 +91,7 @@ class Dashboard(tkinter.Toplevel):
             tick (str): String that represents the tick in which the
                 action is taking place.
         """
-        self.action_tree.insert(
+        self.turn_tree.insert(
             "",
             "end",
             text="Listbox",
@@ -121,7 +122,7 @@ class Dashboard(tkinter.Toplevel):
             row=1, column=0, columnspan=2, padx=padding, pady=padding
         )
 
-    def add_drone_to_tree(self, new_drone: Drone) -> None:
+    def add_drone_to_tree(self, new_drone: "Drone") -> None:
         """Add a drone to the drone tree in the gui.
 
         Arguments:
@@ -151,7 +152,7 @@ class Dashboard(tkinter.Toplevel):
         for entry in tree.get_children():
             tree.delete(entry)
 
-    def update_drone_table(self, drone_dict: Iterable[Drone]) -> None:
+    def update_drone_table(self, drone_dict: Iterable["Drone"]) -> None:
         """Clear drone table and adds a new dictionary of drones to the table.
 
         Arguments:
@@ -162,7 +163,7 @@ class Dashboard(tkinter.Toplevel):
         for entry in drone_dict:
             self.add_drone_to_tree(entry)
 
-    def add_map_table(self, new_map: Map) -> None:
+    def add_map_table(self, new_map: "Map") -> None:
         """Fill map table with new maps that come from a dictionary.
 
         Arguments:

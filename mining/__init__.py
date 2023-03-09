@@ -1,2 +1,2 @@
-from .zerg_units import Zerg, Overlord
-from .GUI.dashboard import Dashboard
+from .GUI import Dashboard
+from .zerg_units import Overlord

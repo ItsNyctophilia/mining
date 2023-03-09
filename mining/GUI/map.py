@@ -1,7 +1,9 @@
 """Defines Map class along with the methods and attributes that it uses."""
 import tkinter
+from typing import TYPE_CHECKING
 
-from mining.utils import Map, Tile
+if TYPE_CHECKING:
+    from mining.utils import Map, Tile
 
 
 class GUI_Map(tkinter.Toplevel):
@@ -11,7 +13,7 @@ class GUI_Map(tkinter.Toplevel):
         parent (tkinter.Toplevel): Takes in a tkinter top level window
     """
 
-    def __init__(self, parent, title: str, physical_map: Map) -> None:
+    def __init__(self, parent, title: str, physical_map: "Map") -> None:
         """Initialize the GUI map.
 
         Args:
@@ -37,7 +39,6 @@ class GUI_Map(tkinter.Toplevel):
         for x in range(200):
             for y in range(200):
                 self.log.insert(f"{x}.{y}", "\u02FD")
-                # self.log.insert(f"{x}.{y}", "?")
             self.log.insert(f"{x}.200", "\n")
         self.log.config(state="disabled")
 
@@ -46,7 +47,7 @@ class GUI_Map(tkinter.Toplevel):
         for tile in self.physical_map._stored_tiles_.values():
             self.translate_tile(tile)
 
-    def translate_tile(self, new_tile: Tile) -> None:
+    def translate_tile(self, new_tile: "Tile") -> None:
         """Write a tile object to the map.
 
         new_tile (Tile) : Specifies the tile that should be written into the
@@ -56,7 +57,6 @@ class GUI_Map(tkinter.Toplevel):
         unicode_character = (
             new_tile.icon.unicode() if new_tile.icon else "\u2061"
         )
-        # unicode_character = new_tile.icon.value if new_tile.icon else "?"
         coordinates = f"{new_tile.coordinate[1]}.{new_tile.coordinate[0]}"
         self.log.insert(coordinates, unicode_character)
         self.log.config(state="disabled")

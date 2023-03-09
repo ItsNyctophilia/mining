@@ -24,7 +24,7 @@ class Overlord(Zerg):
         self,
         total_ticks: int,
         refined_minerals: int,
-        dashboard: Dashboard,
+        dashboard: "Dashboard",
     ) -> None:
         """Initialize the Overlord.
 
@@ -89,7 +89,7 @@ class Overlord(Zerg):
         """
         physical_map = Map(summary)
         self._maps[map_id] = physical_map
-        self.dashboard.create_map_gui(physical_map, map_id)
+        self.dashboard.create_map_gui(physical_map)
         self.dashboard.update_drone_table(self.drones.values())
 
     def del_mineral(self, coord: Coordinate, drone_id: int) -> None:

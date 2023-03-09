@@ -1,7 +1,7 @@
 """Defines Map class along with the methods and attributes that it uses."""
 import tkinter
 
-from mining.utils import Icon, Map, Tile
+from mining.utils import Map, Tile
 
 
 class GUI_Map(tkinter.Toplevel):
@@ -31,20 +31,22 @@ class GUI_Map(tkinter.Toplevel):
         )
         self.log.pack()
         self.log.font = ("TkFixedFont", 16)
+        self.prepare_GUI_map()
 
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
         for x in range(200):
             for y in range(200):
-                self.log.insert(f"{x}.{y}", "\u02FD")
+                # self.log.insert(f"{x}.{y}", "\u02FD")
+                self.log.insert(f"{x}.{y}", "?")
             self.log.insert(f"{x}.200", "\n")
         self.log.config(state="disabled")
 
-    def update(self):
+    def update(self) -> None:
         """Update GUI Map with any updated coordinates."""
-        for item in self.physical_map._stored_tiles_.values():
-            self.translate_tile(item)
+        for tile in self.physical_map._stored_tiles_.values():
+            self.translate_tile(tile)
 
     def translate_tile(self, new_tile: Tile) -> None:
         """Write a tile object to the map.
@@ -53,16 +55,8 @@ class GUI_Map(tkinter.Toplevel):
             map
         """
         self.log.config(state="normal")
-        unicode_dict = {
-            Icon.WALL: "\u00A4",
-            Icon.ACID: "\u05e1",
-            Icon.MINERAL: "\u0275",
-            Icon.ZERG: "\u017e",
-            Icon.DEPLOY_ZONE: "\u02c5",
-            Icon.EMPTY: " ",
-        }
-        unicode_character = unicode_dict.get(new_tile.icon, "\u2061")
-
-        coordinates = f"{new_tile.coordinate.y}.{new_tile.coordinate.x}"
+        # unicode_character = new_tile.icon.unicode() if new_tile.icon else "\u2061"
+        unicode_character = new_tile.icon.value if new_tile.icon else "?"
+        coordinates = f"{new_tile.coordinate.x}.{new_tile.coordinate.y}"
         self.log.insert(coordinates, unicode_character)
         self.log.config(state="disabled")

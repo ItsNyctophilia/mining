@@ -78,7 +78,10 @@ class Overlord(Zerg):
             map_id (int): The id of the map.
             summary (float): The density of minerals in the map.
         """
-        self._maps[map_id] = Map(summary)
+        physical_map = Map(summary)
+        self._maps[map_id] = physical_map
+        self.dashboard.create_map_gui(physical_map, map_id)
+        self.dashboard.update_drone_table(self.drones.values())
 
     def del_mineral(self, coord: Coordinate, drone_id: int) -> None:
         """Remove a mineral from the set of known minerals.
@@ -238,3 +241,4 @@ class Overlord(Zerg):
             self._maps[map_id].update_context(drone_context)
             if not drone.path:
                 self._set_drone_path(drone, drone_context)
+        self.dashboard.update_maps()

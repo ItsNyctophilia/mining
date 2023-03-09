@@ -3,6 +3,8 @@
 from queue import PriorityQueue as Queue
 from typing import Dict, List, Optional, Set, Tuple, Union, overload
 
+from mining.zerg_units.drones import Drone
+
 from .context import Context
 from .coordinate import Coordinate
 from .icon import Icon
@@ -21,7 +23,7 @@ class Map:
     }
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, density: float):
+    def __init__(self, density: float) -> None:
         """Initialize a Map with a context object.
 
         Args:
@@ -30,6 +32,7 @@ class Map:
         self.density = density
         self.minerals: Dict[Coordinate, Optional[int]] = {}
         # a set of the coords of minerals and drone id tasked to mining it
+        self.untasked_minerals: Set[Coordinate] = set()
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
         self.scout_count = 0
 
@@ -115,10 +118,9 @@ class Map:
 
         for symbol, coordinate in zip(symbols, zerg_position.cardinals()):
             icon = Icon(symbol)
-            current_tile = Tile(coordinate, icon)
-            self._stored_tiles_[coordinate] = current_tile
-            if icon == Icon.MINERAL:
-                self.minerals.setdefault(coordinate)
+            tile = Tile(coordinate, icon)
+            self._stored_tiles_[coordinate] = tile
+            self._track_mineral(icon, coordinate)
             for neighbor_coordinate in coordinate.cardinals():
                 if self.get(neighbor_coordinate, None) is None:
                     neighbor_tile = Tile(neighbor_coordinate)
@@ -131,6 +133,22 @@ class Map:
             tile (Tile): The tile to add.
         """
         self._stored_tiles_[tile.coordinate] = tile
+
+    def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
+        if icon == Icon.MINERAL and not self.minerals.setdefault(coordinate):
+            self.untasked_minerals.add(coordinate)
+
+    def task_miner(self, miner: Drone) -> None:
+        """Task the miner with mining an available mineral.
+
+        The miner will have their path variable set, and the mineral they are
+        tasked with will be removed from the untasked_minerals set.
+
+        Args:
+            miner (Drone): The miner to task.
+        """
+        mineral = self.untasked_minerals.pop()
+        miner.path = self.dijkstra(self.origin, mineral)
 
     @overload
     def get(

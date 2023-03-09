@@ -1,7 +1,7 @@
 """Overlord, who oversees zerg drones and assigns tasks to them."""
 
 from queue import SimpleQueue
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Set, Tuple, Type
 
 from mining.GUI.dashboard import Dashboard
 from mining.utils import Context, Coordinate, Icon, Map, Tile
@@ -38,6 +38,7 @@ class Overlord(Zerg):
         # a drone id as key and drone as value
         self._deployed: Dict[int, Optional[int]] = {}
         # a drone id as key and map id as value
+        self._idle_miners: Set[Drone] = set()
         self._update_queue: SimpleQueue[
             Tuple[int, Drone, Context]
         ] = SimpleQueue()
@@ -180,7 +181,7 @@ class Overlord(Zerg):
         # Drone map updates
         self._update_map()
 
-        return action
+        return self._deploy_miners()
 
     def _deploy_scouts(self) -> str:
         action = ""
@@ -202,6 +203,16 @@ class Overlord(Zerg):
                 print(current_map.get_unexplored_tiles())
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps()
+
+    def _deploy_miners(self) -> str:
+        action = "None"
+        for map_id, map_ in self._maps.items():
+            if map_.untasked_minerals and self._idle_miners:
+                miner = self._idle_miners.pop()
+                map_.task_miner(miner)
+                action = self._build_action("DEPLOY", id(miner), map_id)
+                break
+        return action
 
     def _build_action(self, action: str, drone_id: int, map_id: int) -> str:
         return f"{action} {drone_id} {map_id}"

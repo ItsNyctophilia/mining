@@ -77,10 +77,12 @@ class Dashboard(tkinter.Toplevel):
         self.map_dict[new_map] = physical_map
         self.add_map_table(physical_map)
 
-    def update_maps(self) -> None:
+    def update_maps(self, drone_positions) -> None:
         """Update the GUI Map with what it's physical map contains."""
-        for gui_map in self.map_dict:
-            gui_map.update()
+        for idx, gui_map in enumerate(self.map_dict):
+            zerg_on_map = [drone[1] for drone in
+                           drone_positions if drone[0] == idx]
+            gui_map.update(zerg_on_map)
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.

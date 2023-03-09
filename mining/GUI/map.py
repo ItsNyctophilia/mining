@@ -2,8 +2,8 @@
 import tkinter
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from mining.utils import Map, Tile
+#if TYPE_CHECKING:
+from mining.utils import Map, Tile, Icon
 
 
 class GUI_Map(tkinter.Toplevel):
@@ -42,10 +42,13 @@ class GUI_Map(tkinter.Toplevel):
             self.log.insert(f"{x}.200", "\n")
         self.log.config(state="disabled")
 
-    def update(self) -> None:
+    def update(self, drone_coords) -> None:
         """Update GUI Map with any updated coordinates."""
         for tile in self.physical_map._stored_tiles_.values():
             self.translate_tile(tile)
+        for coord in drone_coords:
+            zerg_tile = Tile(coord, Icon.ZERG)
+            self.translate_tile(zerg_tile)
 
     def translate_tile(self, new_tile: "Tile") -> None:
         """Write a tile object to the map.

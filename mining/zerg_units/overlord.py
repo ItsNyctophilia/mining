@@ -213,14 +213,17 @@ class Overlord(Zerg):
         return self._deploy_scouts()
 
     def _update_map(self) -> None:
+        drone_positions = []
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()
+            zerg_coord = Coordinate(drone_context.x, drone_context.y)
+            drone_positions.append((map_id, zerg_coord))
             current_map = self._maps[map_id]
             current_map.update_context(drone_context)
             if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
                 print(current_map.get_unexplored_tiles())
                 self._set_drone_path(drone, drone_context)
-        self.dashboard.update_maps()
+        self.dashboard.update_maps(drone_positions)
 
     def _recall_drones(self) -> str:
         if not self._pickup_queue.empty():

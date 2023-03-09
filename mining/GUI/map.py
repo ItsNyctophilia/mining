@@ -58,5 +58,6 @@ class GUI_Map(tkinter.Toplevel):
             new_tile.icon.unicode() if new_tile.icon else "\u2061"
         )
         coordinates = f"{new_tile.coordinate[1]}.{new_tile.coordinate[0]}"
+        self.log.delete(coordinates)
         self.log.insert(coordinates, unicode_character)
         self.log.config(state="disabled")

@@ -5,13 +5,16 @@ from __future__ import annotations
 import contextlib
 import logging
 from enum import Enum, auto
-from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 # TODO: Remove Icon import once better implementation added
-from mining.utils import Context, Coordinate, Directions, Icon
+from mining.utils import Coordinate, Directions, Icon
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
+    from typing import List, Optional, Type
+
+    from mining.utils import Context
     from mining.zerg_units import Overlord
 
 
@@ -22,13 +25,13 @@ class Drone(Zerg):
     max_capacity = 10
     max_moves = 1
 
-    def __init__(self, overlord: Overlord) -> None:
+    def __init__(self, overlord: "Overlord") -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
         self._capacity = 0
-        self._path_to_goal: List[Coordinate] = []
-        self._path_traveled: List[Coordinate] = []
+        self._path_to_goal: List["Coordinate"] = []
+        self._path_traveled: List["Coordinate"] = []
         self._steps = 0
         self.state = State.WAITING
 
@@ -51,7 +54,7 @@ class Drone(Zerg):
         return self.max_moves
 
     @property
-    def path(self) -> List[Coordinate]:
+    def path(self) -> List["Coordinate"]:
         """The path this drone will take to its destination.
 
         The destination of this drone will always be the final element of this
@@ -60,14 +63,14 @@ class Drone(Zerg):
         return self._path_to_goal
 
     @path.setter
-    def path(self, new_path: List[Coordinate]) -> None:
+    def path(self, new_path: List["Coordinate"]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)
         self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
     @property
-    def dest(self) -> Optional[Coordinate]:
+    def dest(self) -> Optional["Coordinate"]:
         """The coordinates of the current intended destination of this drone.
 
         This value will automatically be set when the path is updated.
@@ -151,7 +154,7 @@ class Drone(Zerg):
             + (cls.max_moves * 3)
         )
 
-    def action(self, context: Context) -> str:
+    def action(self, context: "Context") -> str:
         """Perform some action, based on the type of drone.
 
         Args:
@@ -187,7 +190,7 @@ class Drone(Zerg):
                     self._finish_traveling()
         return result
 
-    def _update_path(self, curr: Coordinate) -> Coordinate:
+    def _update_path(self, curr: "Coordinate") -> "Coordinate":
         """Check if the current location is on the path, and remove if so.
 
         Args:
@@ -210,7 +213,7 @@ class Drone(Zerg):
         return dest
 
     def _choose_direction(
-        self, curr: Coordinate, dest: Coordinate, context: Context
+        self, curr: "Coordinate", dest: "Coordinate", context: "Context"
     ) -> str:
         """Choose which cardinal direction the drone should head.
 
@@ -234,7 +237,7 @@ class Drone(Zerg):
         print(f"Moving {direction}!")
         return direction
 
-    def _handle_moving(self, target: Icon):
+    def _handle_moving(self, target: "Icon") -> None:
         """Perform any necessary tasks that come with moving the drone.
 
         Args:
@@ -245,14 +248,14 @@ class Drone(Zerg):
         if target.traversable():
             self._steps += 1
 
-    def _hit_mineral(self, target: Icon):
+    def _hit_mineral(self, target: "Icon") -> bool:
         if (
             is_mineral := (target == Icon.MINERAL)
         ) and self._capacity <= self.max_capacity:
             self._capacity += 1
         return is_mineral
 
-    def _finish_traveling(self):
+    def _finish_traveling(self) -> None:
         """Perform some operations to signify traveling is done.
 
         This method is mostly for subtypes to create a hook and modify behavior
@@ -298,7 +301,7 @@ class Drone(Zerg):
             f"{self.path=})"
         )
 
-    def log_creation(self):
+    def log_creation(self) -> None:
         """Log the creation of a drone.
 
         Logging is stored in a special file in the current directory.

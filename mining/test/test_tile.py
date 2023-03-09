@@ -59,8 +59,8 @@ class TestTile(unittest.TestCase):
         return random.randint(-10, 10), random.randint(-10, 10)
 
     def _randomize_coordinate(
-        self, avoid: Optional[Coordinate] = None
-    ) -> Coordinate:
+        self, avoid: Optional["Coordinate"] = None
+    ) -> "Coordinate":
         x, y = self._random_numbers()
         if not avoid:
             return Coordinate(x, y)

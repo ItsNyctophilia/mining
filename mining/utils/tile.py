@@ -1,14 +1,22 @@
 """A single tile on the map."""
-from typing import Optional
+from __future__ import annotations
 
-from .coordinate import Coordinate
+from typing import TYPE_CHECKING
+
 from .icon import Icon
+
+if TYPE_CHECKING:
+    from typing import Optional
+
+    from .coordinate import Coordinate
 
 
 class Tile:
     """A single tile on the map."""
 
-    def __init__(self, coordinate: Coordinate, icon: Optional[Icon] = None):
+    def __init__(
+        self, coordinate: "Coordinate", icon: Optional["Icon"] = None
+    ):
         """Initialize the tile.
 
         Args:
@@ -20,12 +28,12 @@ class Tile:
         self._icon = icon
 
     @property
-    def coordinate(self) -> Coordinate:
+    def coordinate(self) -> "Coordinate":
         """The coordinates of this tile on the map."""
         return self._coordinate
 
     @property
-    def icon(self) -> Optional[Icon]:
+    def icon(self) -> Optional["Icon"]:
         """The icon for this tile.
 
         Setting the icon for a tile implicitly makes it discovered. If a tile
@@ -34,7 +42,7 @@ class Tile:
         return self._icon or None
 
     @icon.setter
-    def icon(self, icon: Icon) -> None:
+    def icon(self, icon: "Icon") -> None:
         if not icon:
             raise ValueError("Cannot set icon to None")
         self._icon = icon
@@ -96,16 +104,19 @@ class Tile:
             if isinstance(__o, Tile)
             else NotImplemented
         )
-    
+
     def __lt__(self, __o):
         # it isn't actually sensible to ever see if a tile is 'less
         # than' another tile, but the built-in pqueue requires it
-        # in the case that two priority values in the queue are the 
+        # in the case that two priority values in the queue are the
         # same upon insertion.
         coord = self.coordinate
         other_coord = __o.coordinate
-        return (self if abs(coord.x + coord.y) <
-                abs(other_coord.x + other_coord.y) else __o)
+        return (
+            self
+            if abs(coord.x + coord.y) < abs(other_coord.x + other_coord.y)
+            else __o
+        )
 
     def __str__(self) -> str:
         icon_msg = f"Icon: {self.icon.value}" if self.icon else "Undiscovered"

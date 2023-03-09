@@ -1,14 +1,20 @@
 """A map made up of tiles."""
 
+from __future__ import annotations
+
 from queue import PriorityQueue as Queue
-from typing import Dict, List, Optional, Set, Tuple, Union, overload
+from typing import TYPE_CHECKING, overload
 
-from mining.zerg_units.drones import Drone
-
-from .context import Context
 from .coordinate import Coordinate
 from .icon import Icon
 from .tile import Tile
+
+if TYPE_CHECKING:
+    from typing import Dict, List, Optional, Set, Tuple, Union
+
+    from mining.zerg_units.drones import Drone
+
+    from .context import Context
 
 
 class Map:
@@ -23,20 +29,22 @@ class Map:
     }
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, density: float) -> None:
+    def __init__(self, density: "float") -> None:
         """Initialize a Map with a context object.
 
         Args:
             context (Context): The origin of the map.
         """
         self.density = density
-        self.minerals: Dict[Coordinate, Optional[int]] = {}
+        self.minerals: Dict["Coordinate", Optional[int]] = {}
         # a set of the coords of minerals and drone id tasked to mining it
-        self.untasked_minerals: Set[Coordinate] = set()
-        self._stored_tiles_: Dict[Coordinate, Tile] = {}
+        self.untasked_minerals: Set["Coordinate"] = set()
+        self._stored_tiles_: Dict["Coordinate", "Tile"] = {}
         self.scout_count = 0
 
-    def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
+    def dijkstra(
+        self, start: "Coordinate", end: "Coordinate"
+    ) -> List["Coordinate"]:
         """Apply Dijkstra's Algorithm to find path between points.
 
         Args:
@@ -46,11 +54,11 @@ class Map:
             list(Coordinate): Path in the form of a Coordinate list
         """
         # TODO: dynamically assign acid weight
-        visited: Set[Coordinate] = set()
-        parents_map: Dict[Coordinate, Coordinate] = {}
-        final_path: List[Coordinate] = []
+        visited: Set["Coordinate"] = set()
+        parents_map: Dict["Coordinate", "Coordinate"] = {}
+        final_path: List["Coordinate"] = []
         path_found = False
-        pqueue: Queue[Tuple[int, Tile]] = Queue()
+        pqueue: Queue[Tuple[int, "Tile"]] = Queue()
         pqueue.put((0, Tile(start)))
         counter = 500
         while not pqueue.empty() and counter:
@@ -99,7 +107,7 @@ class Map:
         print(final_path)
         return final_path[::-1]
 
-    def update_context(self, context: Context) -> None:
+    def update_context(self, context: "Context") -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -126,7 +134,7 @@ class Map:
                     neighbor_tile = Tile(neighbor_coordinate)
                     self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
-    def add_tile(self, tile: Tile) -> None:
+    def add_tile(self, tile: "Tile") -> None:
         """Add tile to map.
 
         Args:
@@ -134,11 +142,11 @@ class Map:
         """
         self._stored_tiles_[tile.coordinate] = tile
 
-    def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
+    def _track_mineral(self, icon: "Icon", coordinate: "Coordinate") -> None:
         if icon == Icon.MINERAL and not self.minerals.setdefault(coordinate):
             self.untasked_minerals.add(coordinate)
 
-    def task_miner(self, miner: Drone) -> None:
+    def task_miner(self, miner: "Drone") -> None:
         """Task the miner with mining an available mineral.
 
         The miner will have their path variable set, and the mineral they are
@@ -152,12 +160,12 @@ class Map:
 
     @overload
     def get(
-        self, key: Union[Tile, Coordinate], default: None
-    ) -> Optional[Tile]:
+        self, key: Union["Tile", "Coordinate"], default: None
+    ) -> Optional["Tile"]:
         pass
 
     @overload
-    def get(self, key: Union[Tile, Coordinate], default: Tile) -> Tile:
+    def get(self, key: Union["Tile", "Coordinate"], default: "Tile") -> "Tile":
         pass
 
     def get(self, key, default):
@@ -179,7 +187,7 @@ class Map:
         except KeyError:
             return default
 
-    def get_unexplored_tiles(self) -> List[Tile]:
+    def get_unexplored_tiles(self) -> List["Tile"]:
         """Return a list of all unexplored tiles on the map.
 
         Returns:
@@ -191,7 +199,7 @@ class Map:
             if not tile.discovered
         ]
 
-    def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
+    def __getitem__(self, key: Union["Tile", "Coordinate"]) -> "Tile":
         """Get the tile with the specified coordinates from the map.
 
         A Tile or Coordinate object may be passed in as the key; if a Tile is

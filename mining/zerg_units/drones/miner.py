@@ -1,9 +1,15 @@
 """Miner drone, whose primary purpose is to mine minerals."""
-from typing import List, Optional
+from __future__ import annotations
 
-from mining.utils import Context, Coordinate
+from typing import TYPE_CHECKING
 
 from .drone import Drone, State
+
+if TYPE_CHECKING:
+    from typing import List, Optional
+
+    from mining.utils import Context, Coordinate
+    from mining.zerg_units import Overlord
 
 
 class MinerDrone(Drone):
@@ -13,13 +19,17 @@ class MinerDrone(Drone):
     max_capacity = 10
     max_moves = 2
 
-    def __init__(self, overlord) -> None:
-        """Initialize a Miner."""
+    def __init__(self, overlord: "Overlord") -> None:
+        """Initialize a Miner.
+
+        Args:
+            overlord (Overlord): The Overlord owning this drone.
+        """
         super().__init__(overlord)
-        self._mineral_location: Optional[Coordinate] = None
+        self._mineral_location: Optional["Coordinate"] = None
 
     @Drone.path.setter
-    def path(self, new_path: List[Coordinate]) -> None:
+    def path(self, new_path: List["Coordinate"]) -> None:
         """Set the path this drone will take towards the tasked mineral."""
         # separate mineral tile as new attribute
         self._mineral_location = new_path.pop()
@@ -28,7 +38,7 @@ class MinerDrone(Drone):
         )
         super(type(self), type(self)).path.fset(self, new_path)
 
-    def action(self, context: Context) -> str:
+    def action(self, context: "Context") -> str:
         # sourcery skip: assign-if-exp, reintroduce-else
         """Perform some action.
 
@@ -50,7 +60,7 @@ class MinerDrone(Drone):
         else:
             return result
 
-    def _mine(self, context: Context) -> str:
+    def _mine(self, context: "Context") -> str:
         """Mine the miner's tasked mineral until it is depleted.
 
         Args:

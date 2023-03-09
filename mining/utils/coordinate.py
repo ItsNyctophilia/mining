@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from functools import singledispatchmethod
-from typing import NamedTuple, Tuple, Union
+from typing import TYPE_CHECKING, NamedTuple, Tuple
 
 from .directions import Directions
+
+if TYPE_CHECKING:
+    from typing import Union
 
 
 class Coordinate(NamedTuple):
@@ -14,7 +17,7 @@ class Coordinate(NamedTuple):
     y: int
 
     @singledispatchmethod
-    def difference(self, other_coord: Coordinate) -> Tuple[int, int]:
+    def difference(self, other_coord: "Coordinate") -> Tuple[int, int]:
         """Get the difference in distance between 2 coordinates.
 
         In relation to this coordinate, a positive/negative return value will
@@ -50,7 +53,7 @@ class Coordinate(NamedTuple):
         return (x - self.x, y - self.y)
 
     @singledispatchmethod
-    def direction(self, other_coord: Coordinate) -> str:
+    def direction(self, other_coord: "Coordinate") -> str:
         """Get the direction of the other coordinate in relation to this one.
 
         Note that this only works if this coordinate and the other are on the
@@ -97,7 +100,7 @@ class Coordinate(NamedTuple):
 
     def cardinals(
         self,
-    ) -> Tuple[Coordinate, Coordinate, Coordinate, Coordinate]:
+    ) -> Tuple["Coordinate", "Coordinate", "Coordinate", "Coordinate"]:
         """Return translated coordinate objects in the 4 cardinal directions.
 
         The order returned is North, South, East, West.
@@ -113,7 +116,9 @@ class Coordinate(NamedTuple):
             self.translate_one(Directions.WEST),
         )
 
-    def translate_one(self, direction: Union[str, Directions]) -> Coordinate:
+    def translate_one(
+        self, direction: Union[str, "Directions"]
+    ) -> "Coordinate":
         """Translate this coordinate in the given direction.
 
         Translation moves the coordinate by 1 space in the given direction.
@@ -142,7 +147,7 @@ class Coordinate(NamedTuple):
         else:
             return Coordinate(*self)
 
-    def translate(self, x_offset: int, y_offset: int) -> Coordinate:
+    def translate(self, x_offset: int, y_offset: int) -> "Coordinate":
         """Translate this coordinate in the given direction.
 
         Translation moves the coordinate by the given direction offset.

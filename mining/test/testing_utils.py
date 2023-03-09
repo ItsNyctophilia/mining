@@ -25,8 +25,8 @@ class TestingUtils:
     def randomize_coordinate(
         min: int = -10,
         max=10,
-        avoid: Optional[Coordinate] = None,
-    ) -> Coordinate:
+        avoid: Optional["Coordinate"] = None,
+    ) -> "Coordinate":
         """Create a randomized coordinate with given min/max.
 
         The avoid parameter can be used to set a coordinate to never return.

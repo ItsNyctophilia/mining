@@ -33,7 +33,7 @@ class Dashboard(tkinter.Toplevel):
         self.title("Overlord's Dashboard")
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_tree(self, column_dictionary: dict[str, int]) -> ttk.Treeview:
+    def make_tree(self, column_dictionary):
         """Build trees for the dashboard to use.
 
         Dashboards typically serve spreadsheets in the gui.
@@ -70,8 +70,8 @@ class Dashboard(tkinter.Toplevel):
         This creates a GUI for every map that the overlord has.
         """
         
-        new_map = GUI_Map(self, f'Map {self.map_count}', example_map)
         self.map_count += 1
+        new_map = GUI_Map(self, f'Map {self.map_count}', example_map)
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = example_map
         self.add_map_table(example_map)

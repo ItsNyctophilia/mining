@@ -69,4 +69,8 @@ class MinerDrone(Drone):
     def _finish_traveling(self):
         # set state to working if miner tasked with a mineral
         # else assume at loading zone and wait for pickup
-        self.state = State.WORKING if self._mineral_location else State.WAITING
+        if self._mineral_location:
+            self.state = State.WORKING
+        else:
+            self._overlord.request_pickup(id(self))
+            self.state = State.WAITING

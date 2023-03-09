@@ -15,6 +15,9 @@ class Overlord(Zerg):
 
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
+    DEPLOY = "DEPLOY"
+    RETURN = "RETURN"
+
     def __init__(
         self,
         total_ticks: int,
@@ -42,7 +45,9 @@ class Overlord(Zerg):
         self._update_queue: SimpleQueue[
             Tuple[int, Drone, Context]
         ] = SimpleQueue()
-        # a list of map updates from zerg drones
+        # a queue of map updates from zerg drones
+        self._pickup_queue: SimpleQueue[Tuple[int, int]] = SimpleQueue()
+        # a queue of pick up requests from drones
         self._maps: Dict[int, Map] = {}
         # a map id as key and Map as value
 
@@ -102,7 +107,6 @@ class Overlord(Zerg):
         Returns:
             int: The id of the chosen map
         """
-        # TODO: Only count DroneScouts to avoid conflicts with miners
         map_id, map_ = min(
             self._maps.items(),
             key=lambda map_pair: map_pair[1].scout_count,
@@ -121,6 +125,20 @@ class Overlord(Zerg):
         """
         if map_id := self._deployed[id(drone)]:
             self._update_queue.put((map_id, drone, context))
+
+    def request_pickup(self, drone_id: int) -> None:
+        """Enqueue a drone pickup requests.
+
+        This method will register the drone's request to be picked up to a
+        queue that will be processed at a later time. If a drone is not on the
+        deployment zone when its request is handled, it will not be picked up.
+
+        Args:
+            drone (Drone): The drone requesting pickup.
+            coordinate (Coordinate): The location of the drone.
+        """
+        if map_id := self._deployed[drone_id]:
+            self._pickup_queue.put((map_id, drone_id))
 
     def _distance_sort(self, start: Coordinate, end: Coordinate):
         start_x, start_y = start
@@ -174,25 +192,15 @@ class Overlord(Zerg):
         Returns:
             str: The action for the overlord to perform
         """
-        # Deploy all scouts at start
-        if action := self._deploy_scouts():
-            return action
-
-        # Drone map updates
         self._update_map()
 
-        return self._deploy_miners()
+        if action := self._recall_drones():
+            return action
 
-    def _deploy_scouts(self) -> str:
-        action = ""
-        for drone in self._drones[ScoutDrone].values():
-            if not self._deployed[id(drone)]:
-                selected_map = self._select_map()
-                action = f"DEPLOY {id(drone)} {selected_map}"
-                action = self._build_action("DEPLOY", id(drone), selected_map)
-                self._deployed[id(drone)] = selected_map
-                break
-        return action
+        if action := self._deploy_miners():
+            return action
+
+        return self._deploy_scouts()
 
     def _update_map(self) -> None:
         while not self._update_queue.empty():
@@ -204,15 +212,27 @@ class Overlord(Zerg):
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps()
 
+    def _recall_drones(self) -> str:
+        if not self._pickup_queue.empty():
+            map_id, drone_id = self._pickup_queue.get()
+            return self._build_action(self.RETURN, drone_id, map_id)
+        return ""
+
     def _deploy_miners(self) -> str:
-        action = "None"
         for map_id, map_ in self._maps.items():
             if map_.untasked_minerals and self._idle_miners:
                 miner = self._idle_miners.pop()
                 map_.task_miner(miner)
-                action = self._build_action("DEPLOY", id(miner), map_id)
-                break
-        return action
+                return self._build_action(self.DEPLOY, id(miner), map_id)
+        return ""
+
+    def _deploy_scouts(self) -> str:
+        for drone in self._drones[ScoutDrone].values():
+            if not self._deployed[id(drone)]:
+                map_id = self._select_map()
+                self._deployed[id(drone)] = map_id
+                return self._build_action(self.DEPLOY, id(drone), map_id)
+        return ""
 
     def _build_action(self, action: str, drone_id: int, map_id: int) -> str:
         return f"{action} {drone_id} {map_id}"

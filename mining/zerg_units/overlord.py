@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple, Type
 from mining.GUI.dashboard import Dashboard
 from mining.utils import Context, Coordinate, Icon, Map, Tile
 
-from .drones import Drone, MinerDrone, ScoutDrone
+from .drones import Drone, MinerDrone, ScoutDrone, State
 from .zerg import Zerg
 
 
@@ -191,12 +191,11 @@ class Overlord(Zerg):
         return action
 
     def _update_map(self) -> None:
-        # TODO: Possibly add GUI updates here
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()
             current_map = self._maps[map_id]
             current_map.update_context(drone_context)
-            if not drone.path:
+            if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
                 print(current_map.get_unexplored_tiles())
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps()

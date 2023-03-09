@@ -30,7 +30,7 @@ class Drone(Zerg):
         self._path_to_goal: List[Coordinate] = []
         self._path_traveled: List[Coordinate] = []
         self._steps = 0
-        self._state = State.WAITING
+        self.state = State.WAITING
 
     @property
     def capacity(self) -> int:
@@ -64,7 +64,7 @@ class Drone(Zerg):
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)
-        self._state = State.TRAVELING if len(new_path) > 2 else State.WAITING
+        self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
     @property
     def dest(self) -> Optional[Coordinate]:
@@ -259,7 +259,7 @@ class Drone(Zerg):
         during travel. The drone base class will call this method whenever it
         reaches it's intended destination.
         """
-        self._state = State.WAITING
+        self.state = State.WAITING
 
     def steps(self) -> int:
         """Accumulated number of steps since the drone was created.
@@ -281,7 +281,7 @@ class Drone(Zerg):
             f"{base} current health = {self.health}, "
             f"max capacity = {self.capacity}, moves per turn = {self.moves}, "
             f"current destination = {self.dest}, "
-            f"Drone is {'' if self._state else 'not '}traveling"
+            f"Drone is {'' if self.state else 'not '}traveling"
         )
 
     def __repr__(self) -> str:

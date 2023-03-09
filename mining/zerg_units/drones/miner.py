@@ -45,7 +45,7 @@ class MinerDrone(Drone):
             str: The intended next destination of the drone.
         """
         result = super().action(context)
-        if self._state == State.WORKING:
+        if self.state == State.WORKING:
             return self._mine(context)
         else:
             return result
@@ -63,12 +63,10 @@ class MinerDrone(Drone):
         if self._hit_mineral(dest_icon):
             return self._mineral_direction.upper()
         super(type(self), type(self)).path.fset(self, self._path_traveled)
-        self._state = State.TRAVELING
+        self.state = State.TRAVELING
         return super().action(context)
 
     def _finish_traveling(self):
         # set state to working if miner tasked with a mineral
         # else assume at loading zone and wait for pickup
-        self._state = (
-            State.WORKING if self._mineral_location else State.WAITING
-        )
+        self.state = State.WORKING if self._mineral_location else State.WAITING

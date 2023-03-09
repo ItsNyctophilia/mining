@@ -55,7 +55,7 @@ class Overlord(Zerg):
             Tuple[int, "Drone", "Context"]
         ] = SimpleQueue()
         # a queue of map updates from zerg drones
-        self._pickup_queue: SimpleQueue[Tuple[int, int]] = SimpleQueue()
+        self._pickup_queue: SimpleQueue[Tuple[Map, Drone]] = SimpleQueue()
         # a queue of pick up requests from drones
         self._maps: Dict[int, "Map"] = {}
         # a map id as key and Map as value
@@ -135,7 +135,7 @@ class Overlord(Zerg):
         if map_id := self._deployed[id(drone)]:
             self._update_queue.put((map_id, drone, context))
 
-    def request_pickup(self, drone_id: int) -> None:
+    def request_pickup(self, drone: Drone) -> None:
         """Enqueue a drone pickup requests.
 
         This method will register the drone's request to be picked up to a
@@ -146,8 +146,8 @@ class Overlord(Zerg):
             drone (Drone): The drone requesting pickup.
             coordinate (Coordinate): The location of the drone.
         """
-        if map_id := self._deployed[drone_id]:
-            self._pickup_queue.put((map_id, drone_id))
+        if map_id := self._deployed[id(drone)]:
+            self._pickup_queue.put((self._maps[map_id], drone))
 
     def _distance_sort(self, start: "Coordinate", end: "Coordinate"):
         start_x, start_y = start
@@ -224,8 +224,10 @@ class Overlord(Zerg):
 
     def _recall_drones(self) -> str:
         if not self._pickup_queue.empty():
-            map_id, drone_id = self._pickup_queue.get()
-            return self._build_action(self.RETURN, drone_id, map_id)
+            map_, drone = self._pickup_queue.get()
+            if type(drone) == ScoutDrone:
+                map_.scout_count -= 1
+            return f"{self.RETURN} {id(drone)}"
         return ""
 
     def _deploy_miners(self) -> str:

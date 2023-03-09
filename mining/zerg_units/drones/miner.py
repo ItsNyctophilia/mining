@@ -82,5 +82,5 @@ class MinerDrone(Drone):
         if self._mineral_location:
             self.state = State.WORKING
         else:
-            self._overlord.request_pickup(id(self))
+            self._overlord.request_pickup(self)
             self.state = State.WAITING

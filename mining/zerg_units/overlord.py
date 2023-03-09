@@ -96,17 +96,18 @@ class Overlord(Zerg):
             del self._maps[map_id].minerals[coord]
 
     def _select_map(self) -> int:
-        """Select the map with the least number of zerg on it.
+        """Select the map with the least number of scouts on it.
 
         Returns:
             int: The id of the chosen map
         """
         # TODO: Only count DroneScouts to avoid conflicts with miners
-        zerg_per_map = {map_id: 0 for map_id in self._maps}
-        for drone_id in self._deployed:
-            if (current_map_id := self._deployed[drone_id]) is not None:
-                zerg_per_map[current_map_id] += 1
-        return min(zerg_per_map, key=zerg_per_map.get)
+        map_id, map_ = min(
+            self._maps.items(),
+            key=lambda map_pair: map_pair[1].scout_count,
+        )
+        map_.scout_count += 1
+        return map_id
 
     def enqueue_map_update(self, drone: Drone, context: Context) -> None:
         """Enqueue a map update of the drone's location and its context.
@@ -173,7 +174,8 @@ class Overlord(Zerg):
             str: The action for the overlord to perform
         """
         # Deploy all scouts at start
-        action = self._deploy_scouts()
+        if action := self._deploy_scouts():
+            return action
 
         # Drone map updates
         self._update_map()
@@ -181,11 +183,12 @@ class Overlord(Zerg):
         return action
 
     def _deploy_scouts(self) -> str:
-        action = "None"
+        action = ""
         for drone in self._drones[ScoutDrone].values():
             if not self._deployed[id(drone)]:
                 selected_map = self._select_map()
                 action = f"DEPLOY {id(drone)} {selected_map}"
+                action = self._build_action("DEPLOY", id(drone), selected_map)
                 self._deployed[id(drone)] = selected_map
                 break
         return action
@@ -199,3 +202,6 @@ class Overlord(Zerg):
                 print(current_map.get_unexplored_tiles())
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps()
+
+    def _build_action(self, action: str, drone_id: int, map_id: int) -> str:
+        return f"{action} {drone_id} {map_id}"

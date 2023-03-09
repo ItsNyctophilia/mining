@@ -31,6 +31,7 @@ class Map:
         self.minerals: Dict[Coordinate, Optional[int]] = {}
         # a set of the coords of minerals and drone id tasked to mining it
         self._stored_tiles_: Dict[Coordinate, Tile] = {}
+        self.scout_count = 0
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
         """Apply Dijkstra's Algorithm to find path between points.

@@ -39,7 +39,7 @@ class GUI_Map(tkinter.Toplevel):
                 self.log.insert(f"{x}.{y}", "\u02FD")
             self.log.insert(f"{x}.200", "\n")
         self.log.config(state="disabled")
-    
+
     def update(self) -> None:
         """
         Updates GUI Map with any updated coordinates that
@@ -47,7 +47,6 @@ class GUI_Map(tkinter.Toplevel):
         """
         for item in self.physicalmap._stored_tiles_.values():
             self.translate_tile(item)
-
 
     def translate_tile(self, new_tile: Tile) -> None:
         """Write a tile object to the map.
@@ -65,7 +64,7 @@ class GUI_Map(tkinter.Toplevel):
             Icon.EMPTY: " ",
         }
         unicode_character = unicode_dict.get(new_tile.icon, "\u2061")
-    
+
         coordinates = f"{new_tile.coordinate[1]}.{new_tile.coordinate[0]}"
         self.log.insert(coordinates, unicode_character)
         self.log.config(state="disabled")

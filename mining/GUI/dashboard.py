@@ -23,7 +23,7 @@ class Dashboard(tkinter.Toplevel):
         """
         super().__init__(parent)
         self.photo = tkinter.PhotoImage(file="icon.png")
-        
+
         self.configure(bg="#2C292C")
         self.map_dict = {}
         self.map_count = 0
@@ -33,7 +33,7 @@ class Dashboard(tkinter.Toplevel):
         self.title("Overlord's Dashboard")
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-    def make_tree(self, column_dictionary):
+    def make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
         Dashboards typically serve spreadsheets in the gui.
@@ -58,18 +58,18 @@ class Dashboard(tkinter.Toplevel):
         tree_view["show"] = "headings"
 
         for column_count, (column, width) in enumerate(
-            column_dictionary.items()
+                column_dictionary.items()
         ):
             string_column = str(column_count)
             tree_view.column(string_column, width=width, anchor="se")
             tree_view.heading(string_column, text=column)
         return tree_view
-    
-    def create_map_gui(self, example_map: map) -> None:
+
+    def create_map_gui(self, example_map: Map) -> None:
         """
         This creates a GUI for every map that the overlord has.
         """
-        
+
         self.map_count += 1
         new_map = GUI_Map(self, f'Map {self.map_count}', example_map)
         new_map.prepare_GUI_map()
@@ -88,7 +88,6 @@ class Dashboard(tkinter.Toplevel):
         """
         Prepare the three tree views in the dashboard.
         """
-        
 
         map_dict = {"Window Title": 180, "Map ID": 180}
 
@@ -152,15 +151,15 @@ class Dashboard(tkinter.Toplevel):
         for entry in drone_dict.values():
             self.add_drone_to_tree(entry)
 
-    def add_map_table(self, new_map: map) -> None:
+    def add_map_table(self, new_map: Map) -> None:
         """Fill map table with new maps that come from a dictionary.
 
         Arguments:
             new_map (map) : The map that will have it's ID added to the table
         """
         self.map_tree.insert(
-                "",
-                "end",
-                text="Listbox",
-                values=(f"Map {self.map_count}", id(map)),
-            )
+            "",
+            "end",
+            text="Listbox",
+            values=(f"Map {self.map_count}", id(new_map)),
+        )

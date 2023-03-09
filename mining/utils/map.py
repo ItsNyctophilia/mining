@@ -12,13 +12,12 @@ from .tile import Tile
 class Map:
     """A map object, used to describe the tile layout of an area."""
 
-    COORDINATE_OFFSETS = Coordinate(0, 0).cardinals()
-
     NODE_WEIGHTS = {
         Icon.EMPTY: 1,
         Icon.ZERG: 1,
         Icon.DEPLOY_ZONE: 1,
         Icon.ACID: 10,
+        None: 1,
     }
     DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
@@ -49,7 +48,7 @@ class Map:
         path_found = False
         pqueue: Queue[Tuple[int, Tile]] = Queue()
         pqueue.put((0, Tile(start)))
-        counter = 100
+        counter = 500
         while not pqueue.empty() and counter:
             _, tile = pqueue.get()
             node = tile.coordinate
@@ -66,7 +65,6 @@ class Map:
             # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
             # if not are_tiles_valid:
             #     continue
-            print(f"Target {end}/{node_neighbors}")
             if end in node_neighbors:
                 path_found = True
                 parents_map[end] = node
@@ -75,27 +73,25 @@ class Map:
             visited.add(node)
             for neighbor_coord in node_neighbors:
                 neighbor = self.get(neighbor_coord, None)
-                if (
-                    not neighbor
-                    or neighbor.coordinate in visited
-                    or neighbor.icon not in self.NODE_WEIGHTS
-                ):
+                if neighbor is None or neighbor in visited:
                     continue
-                parents_map[neighbor.coordinate] = node
+                if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
+                    continue
+                if neighbor.coordinate not in visited:
+                    parents_map[neighbor.coordinate] = node
                 pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
             counter -= 1
         if not path_found:
-            print("Map:", parents_map)
             return []
 
         curr = end
         while curr != start:
+            print("iteration")
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
             if start in coord.cardinals():
                 break
-        final_path.append(start)
         print(final_path)
         return final_path[::-1]
 
@@ -164,6 +160,18 @@ class Map:
         except KeyError:
             return default
 
+    def get_unexplored_tiles(self) -> List[Tile]:
+        """Return a list of all unexplored tiles on the map.
+
+        Returns:
+            List[Tile]: The unexplored tile list.
+        """
+        return [
+            tile
+            for tile in self._stored_tiles_.values()
+            if not tile.discovered
+        ]
+
     def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
         """Get the tile with the specified coordinates from the map.
 
@@ -191,12 +199,12 @@ class Map:
         """
         yield from self._stored_tiles_
 
-    # def __repr__(self) -> str:
-    #     """Return a representation of this object.
+    def __repr__(self) -> str:
+        """Return a representation of this object.
 
-    #     The string returned by this method is not valid for a call to eval.
+        The string returned by this method is not valid for a call to eval.
 
-    #     Returns:
-    #         str: The string representation of this object.
-    #     """
-    #     return f"Map({list(self.adjacency_list)})"
+        Returns:
+            str: The string representation of this object.
+        """
+        return f"Map({list(self._stored_tiles_)})"

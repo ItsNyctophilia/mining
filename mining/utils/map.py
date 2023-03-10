@@ -59,8 +59,7 @@ class Map:
         pqueue.put((0, start))
         # This counter is to timeout after 500 iterations if no path
         # can be found and loop does not exit.
-        counter = 500
-        while not pqueue.empty() and counter:
+        while not pqueue.empty():
             _, node = pqueue.get()
             if node in visited:
                 continue
@@ -84,7 +83,6 @@ class Map:
                 parents_map,
                 pqueue,
             )
-            counter -= 1
         return (
             self._build_final_path(start, end, parents_map)
             if path_found

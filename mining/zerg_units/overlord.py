@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from mining.utils import DEFAULT_TILE, Coordinate, Icon, Map
 
+import random
 from .drones import Drone, MinerDrone, ScoutDrone, State
 from .zerg import Zerg
 
@@ -209,7 +210,7 @@ class Overlord(Zerg):
             drone (Drone): The drone giving updates.
             context (Context): The update information.
         """
-        if (map_id := self._deployed[id(drone)]) is not None:
+        if (map_id := self._deployed.get(id(drone))) is not None:
             self._update_queue.put((map_id, drone, context))
 
     def request_pickup(self, drone: Drone) -> None:
@@ -240,7 +241,10 @@ class Overlord(Zerg):
             key=lambda tile: self._distance_sort(start, tile.coordinate),
             reverse=True,
         )
+        random.seed()
         for tile in unexplored_tiles:
+            if random.randint(1, 2) == 2:
+                continue
             coord = tile.coordinate
             neighbor_icons = (
                 current_map.get(coord, DEFAULT_TILE).icon

@@ -163,6 +163,7 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
+        # TODO: Remove test print
         print(
             f"Acting! context: {context} path: {self.path} traveled: "
             f"{self._path_traveled}"
@@ -208,6 +209,7 @@ class Drone(Zerg):
             if self.path:
                 dest = self.path[0]
             else:
+                # TODO: Remove test print
                 print(f"Path clear! {self.path}")
 
         return dest
@@ -234,6 +236,7 @@ class Drone(Zerg):
             self._finish_traveling()
         else:
             self._handle_moving(target)
+        # TODO: Remove test print
         print(f"Moving {direction}!")
         return direction
 

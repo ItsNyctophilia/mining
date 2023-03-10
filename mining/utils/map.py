@@ -71,12 +71,6 @@ class Map:
                 break
             node_neighbors = node.cardinals()
 
-            # default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
-            # tiles = [self.get(neighbor, default_tile).icon
-            #          for neighbor in node_neighbors]
-            # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
-            # if not are_tiles_valid:
-            #     continue
             if end in node_neighbors:
                 path_found = True
                 parents_map[end] = node
@@ -98,15 +92,16 @@ class Map:
 
         curr = end
         while curr != start:
-            print("iteration")
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
             if start in coord.cardinals():
                 break
         final_path.append(start)
-        print(final_path)
-        return final_path[::-1]
+        final_path = final_path[::-1]
+        # TODO: Remove test print
+        print("Final path:", final_path)
+        return final_path
 
     def update_context(self, context: "Context") -> None:
         """Update the adjacency list for the Map with a context object.

@@ -39,7 +39,7 @@ class Tile:
         Setting the icon for a tile implicitly makes it discovered. If a tile
         is not discovered, the icon will always be None.
         """
-        return self._icon or None
+        return self._icon
 
     @icon.setter
     def icon(self, icon: "Icon") -> None:

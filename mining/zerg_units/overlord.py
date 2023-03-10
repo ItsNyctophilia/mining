@@ -5,7 +5,7 @@ from __future__ import annotations
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
-from mining.utils import Coordinate, Icon, Map, Tile
+from mining.utils import DEFAULT_TILE, Coordinate, Icon, Map
 
 from .drones import MinerDrone, ScoutDrone, State
 from .zerg import Zerg
@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 
 class Overlord(Zerg):
     """Overlord, who oversees zerg drones and assigns tasks to them."""
-
-    DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
     DEPLOY = "DEPLOY"
     RETURN = "RETURN"
@@ -41,16 +39,15 @@ class Overlord(Zerg):
             dashboard (_type_, optional): The GUI dashboard. Defaults to None.
         """
         self.dashboard = dashboard
-        # a map id as key and summary as value
-        self._drones: Dict[Type["Drone"], Dict[int, "Drone"]] = {
-            ScoutDrone: {},
-            MinerDrone: {},
-        }
+        # self._drones: Dict[Type["Drone"], Dict[int, "Drone"]] = {
+        #     ScoutDrone: {},
+        #     MinerDrone: {},
+        # }
         self.drones: Dict[int, "Drone"] = {}
         # a drone id as key and drone as value
         self._deployed: Dict[int, Optional[int]] = {}
         # a drone id as key and map id as value
-        self._idle_miners: Set["Drone"] = set()
+        self._idle_drones: Dict[Type["Drone"], Set["Drone"]] = {}
         self._update_queue: SimpleQueue[
             Tuple[int, "Drone", "Context"]
         ] = SimpleQueue()
@@ -61,21 +58,18 @@ class Overlord(Zerg):
         # a map id as key and Map as value
 
         for _ in range(3):
-            # Create three MinerDrones and three ScoutDrones
+            # TODO: create custom drones based on available resources
             self._create_drone(MinerDrone)
             self._create_drone(ScoutDrone)
 
     def _create_drone(self, drone_type: Type["Drone"]) -> None:
         """Create a new zerg drone of the specified drone type."""
-        # TODO: create custom drones based on available resources
         new_drone = drone_type(self)
         drone_id = id(new_drone)
-        self._drones[drone_type][drone_id] = new_drone
+        # self._drones[drone_type][drone_id] = new_drone
         self.drones[drone_id] = new_drone
-        # Set 'map deployed to' for all drones to None
         self._deployed[drone_id] = None
-        if isinstance(new_drone, MinerDrone):
-            self._idle_miners.add(new_drone)
+        self._idle_drones.setdefault(drone_type, set()).add(new_drone)
 
     def mark_drone_dead(self, drone: "Drone") -> None:
         """Mark a drone as dead.
@@ -84,8 +78,8 @@ class Overlord(Zerg):
             drone (int): The drone to mark as dead.
         """
         drone_id = id(drone)
-        if map_id := self._deployed[drone_id]:
-            del self._drones[type(drone)][drone_id]
+        if (map_id := self._deployed[drone_id]) is not None:
+            # del self._drones[type(drone)][drone_id]
             del self._deployed[drone_id]
             del self.drones[drone_id]
             if type(drone) == ScoutDrone:
@@ -102,6 +96,7 @@ class Overlord(Zerg):
         physical_map = Map(summary)
         self._maps[map_id] = physical_map
         self.dashboard.create_map_gui(physical_map)
+        # TODO: Is this overwriting the drone table every time a map is added?
         self.dashboard.update_drone_table(self.drones.values())
 
     def del_mineral(self, coord: "Coordinate", drone_id: int) -> None:
@@ -112,11 +107,11 @@ class Overlord(Zerg):
             drone_id (int): The id of the drone who found the removed mineral.
         """
         # TODO: maybe pass in map id instead of drone id
-        if map_id := self._deployed[drone_id]:
+        if (map_id := self._deployed[drone_id]) is not None:
             del self._maps[map_id].minerals[coord]
 
     def _select_map(self) -> int:
-        """Select the map with the least number of scouts on it.
+        """Select the map to deploy a scout to.
 
         Returns:
             int: The id of the chosen map
@@ -137,7 +132,7 @@ class Overlord(Zerg):
             drone (Drone): The drone giving updates.
             context (Context): The update information.
         """
-        if map_id := self._deployed[id(drone)]:
+        if (map_id := self._deployed[id(drone)]) is not None:
             self._update_queue.put((map_id, drone, context))
 
     def request_pickup(self, drone: Drone) -> None:
@@ -151,7 +146,7 @@ class Overlord(Zerg):
             drone (Drone): The drone requesting pickup.
             coordinate (Coordinate): The location of the drone.
         """
-        if map_id := self._deployed[id(drone)]:
+        if (map_id := self._deployed[id(drone)]) is not None:
             self._pickup_queue.put((self._maps[map_id], drone))
 
     def _distance_sort(self, start: "Coordinate", end: "Coordinate"):
@@ -163,16 +158,15 @@ class Overlord(Zerg):
         self, map_id: int, start: "Coordinate"
     ) -> List["Coordinate"]:
         current_map = self._maps[map_id]
-        tiles = current_map.get_unexplored_tiles()
-        tiles.sort(
+        unexplored_tiles = current_map.get_unexplored_tiles()
+        unexplored_tiles.sort(
             key=lambda tile: self._distance_sort(start, tile.coordinate),
             reverse=True,
         )
-        path = []
-        for tile in tiles:
+        for tile in unexplored_tiles:
             coord = tile.coordinate
             neighbor_icons = [
-                current_map.get(coord, self.DEFAULT_TILE).icon
+                current_map.get(coord, DEFAULT_TILE).icon
                 for coord in coord.cardinals()
             ]
             if not any(
@@ -182,17 +176,22 @@ class Overlord(Zerg):
                 in [Icon.MINERAL, Icon.EMPTY, Icon.DEPLOY_ZONE, Icon.ACID]
             ):
                 continue
+            # TODO: Remove test print
             print(f"Finding path from {start} to {coord}")
             if path := current_map.dijkstra(start, tile.coordinate):
-                break
+                return path
 
-        return path
+        return []
 
     def _set_drone_path(self, drone: "Drone", context: "Context") -> None:
-        """Give a drone a path based on their role and context."""
-        if map_id := self._deployed[id(drone)]:
+        """Give a drone a path based on their role and context.
+
+        Args:
+            drone (Drone): The drone whose path will be set.
+            context (Context): The context of the drone.
+        """
+        if (map_id := self._deployed[id(drone)]) is not None:
             start = Coordinate(context.x, context.y)
-            # dest = self._spiral_search(start, map_id)
             dest = self._assign_scout_target(map_id, start)
             drone.path = dest
 
@@ -220,8 +219,7 @@ class Overlord(Zerg):
     def _update_map(self) -> None:
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()
-            current_map = self._maps[map_id]
-            current_map.update_context(drone_context)
+            self._maps[map_id].update_context(drone_context)
             if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps()
@@ -231,34 +229,34 @@ class Overlord(Zerg):
             map_, drone = self._pickup_queue.get()
             if isinstance(drone, ScoutDrone):
                 map_.scout_count -= 1
-            elif isinstance(drone, MinerDrone):
-                self._idle_miners.add(drone)
+            self._idle_drones[type(drone)].add(drone)
             action = f"{self.RETURN} {id(drone)}"
+            # TODO: Remove test print
             print(action)
             return action
         return ""
 
     def _deploy_miners(self) -> str:
         for map_id, map_ in self._maps.items():
-            if map_.untasked_minerals and self._idle_miners:
-                miner = self._idle_miners.pop()
-                miner_id = id(miner)
+            if map_.untasked_minerals and self._idle_drones[MinerDrone]:
+                miner = self._idle_drones[MinerDrone].pop()
                 map_.task_miner(miner)
-                print("IDLE MINERS", self._idle_miners)
-                self._deployed[miner_id] = map_id
-                return self._build_action(self.DEPLOY, miner_id, map_id)
+                # TODO: Remove test print
+                # print("IDLE MINERS", self._idle_drones[MinerDrone])
+                return self._deploy_drone(map_id, miner)
         return ""
 
     def _deploy_scouts(self) -> str:
-        for drone in self._drones[ScoutDrone].values():
-            drone_id = id(drone)
-            if not self._deployed[drone_id]:
-                map_id = self._select_map()
-                self._deployed[drone_id] = map_id
-                action = self._build_action(self.DEPLOY, drone_id, map_id)
-                print(action)
-                return action
+        if self._idle_drones[ScoutDrone]:
+            scout = self._idle_drones[ScoutDrone].pop()
+            map_id = self._select_map()
+            return self._deploy_drone(map_id, scout)
         return ""
 
-    def _build_action(self, action: str, drone_id: int, map_id: int) -> str:
-        return f"{action} {drone_id} {map_id}"
+    def _deploy_drone(self, map_id: int, drone: "Drone") -> str:
+        drone_id = id(drone)
+        self._deployed[drone_id] = map_id
+        action = f"{self.DEPLOY} {drone_id} {map_id}"
+        # TODO: Remove test print
+        print(drone.__class__.__name__, action)
+        return action

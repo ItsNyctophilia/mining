@@ -1,4 +1,6 @@
-"""Defines Map class along with the methods and attributes that it uses."""
+"""
+Defines Map class along with the methods and attributes that it uses.
+"""
 import tkinter
 from typing import TYPE_CHECKING
 
@@ -9,7 +11,8 @@ if TYPE_CHECKING:
 
 
 class GUI_Map(tkinter.Toplevel):
-    """Serves as the constructor for the Map object.
+    """
+    Serves as the constructor for the Map object.
 
     Arguments:
         parent (tkinter.Toplevel): Takes in a tkinter top level window
@@ -38,7 +41,9 @@ class GUI_Map(tkinter.Toplevel):
         self.log.pack()
 
     def prepare_GUI_map(self) -> None:
-        """Prepare map by filling it with unknown characters."""
+        """
+        Prepare map by filling it with unknown characters.
+        """
         self.log.config(state="normal")
         for x in range(1, 76):
             for y in range(1, 76):
@@ -49,7 +54,9 @@ class GUI_Map(tkinter.Toplevel):
 
 
     def update(self, drone_coords) -> None:
-        """Update GUI Map with any updated coordinates."""
+        """
+        Update GUI Map with any updated coordinates.
+        """
         for tile in self.physical_map._stored_tiles_.values():
             self.translate_tile(tile)
         for coord in drone_coords:
@@ -57,7 +64,8 @@ class GUI_Map(tkinter.Toplevel):
             self.translate_tile(zerg_tile)
 
     def translate_tile(self, new_tile: "Tile") -> None:
-        """Write a tile object to the map.
+        """
+        Write a tile object to the map.
 
         new_tile (Tile) : Specifies the tile that should be written into the
             map

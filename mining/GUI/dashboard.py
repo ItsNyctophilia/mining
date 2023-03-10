@@ -1,4 +1,5 @@
-"""This serves to define the dashboard class.
+"""
+This serves to define the dashboard class.
 
 Defines the attributes it has along with the methods that it uses.
 """
@@ -13,6 +14,7 @@ from mining.utils.coordinate import Coordinate
 from .map import GUI_Map
 
 from mining.utils.icon import Icon
+
 if TYPE_CHECKING:
     from typing import Dict, Iterable, List, Tuple
 
@@ -37,19 +39,17 @@ class Dashboard(tkinter.Toplevel):
 
         self.configure(bg="#2C292C")
         self.map_dict: Dict[GUI_Map, Map] = {}
-        self.map_count = 0
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
         self.legend_insertion()
         self.title("Overlord's Dashboard")
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
-        Dashboards typically serve spreadsheets in the gui.
-
+        Dashboards typically serve as spreadsheets in the gui.
+        https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         Arguments:
             column_dictionary (Dict[str, int]): Contains dictionaries and
                 width values for each column.
@@ -70,7 +70,7 @@ class Dashboard(tkinter.Toplevel):
         tree_view["show"] = "headings"
 
         for column_count, (column, width) in enumerate(
-            column_dictionary.items()
+                column_dictionary.items()
         ):
             string_column = str(column_count)
             tree_view.column(string_column, width=width, anchor="se")
@@ -78,14 +78,19 @@ class Dashboard(tkinter.Toplevel):
         return tree_view
 
     def create_map_gui(self, physical_map: "Map") -> None:
-        """Create a GUI for every map that the overlord has."""
-        self.map_count += 1
+        """
+        Create a GUI for every map that the overlord has.
+        Arguments:
+            physical_map (Map) : A map that will be loaded into the
+            object.
+
+        """
         new_map = GUI_Map(self, f'{id(physical_map)}', physical_map)
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = physical_map
 
     def update_maps(
-        self, drone_positions: List[Tuple[int, Coordinate]]
+            self, drone_positions: List[Tuple[int, Coordinate]]
     ) -> None:
         """Update the GUI Map with what it's physical map contains.
 
@@ -99,7 +104,8 @@ class Dashboard(tkinter.Toplevel):
             gui_map.update(zerg_on_map)
 
     def insert_action(self, action: str, tick: str) -> None:
-        """Insert action and tick info into the action table.
+        """
+        Insert action and tick info into the action table.
 
         Arguments:
             action (str): String that represents the action happening.
@@ -113,12 +119,13 @@ class Dashboard(tkinter.Toplevel):
             text="Listbox",
             values=(tick, action),
         )
+
     def legend_insertion(self) -> None:
         """
         Prepares the legend in the dashboard
         """
         for item_counter, (key, unicode) in enumerate(
-            Icon.unicode_mappings().items(), start=2
+                Icon.unicode_mappings().items(), start=2
         ):
             self.map_tree.insert(
                 "",
@@ -126,11 +133,12 @@ class Dashboard(tkinter.Toplevel):
                 text="Listbox",
                 values=(key, unicode),
             )
-        
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _prep_dashboard_trees(self) -> None:
-        """Prepare the three tree views in the dashboard."""
+        """
+        Prepare the three tree views in the dashboard.
+        https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
+        """
         map_dict = {"Map Symbol": 180, "Meaning": 180}
 
         action_tree = {"Action": 180, "Tick": 180}
@@ -155,7 +163,8 @@ class Dashboard(tkinter.Toplevel):
         )
 
     def add_drone_to_tree(self, new_drone: "Drone") -> None:
-        """Add a drone to the drone tree in the gui.
+        """
+        Add a drone to the drone tree in the gui.
 
         Arguments:
             new_drone (Drone) : this is the drone we are adding to the tree in
@@ -178,7 +187,8 @@ class Dashboard(tkinter.Toplevel):
         )
 
     def _clear_table(self, tree: ttk.Treeview) -> None:
-        """Clear any of the tables in the GUI.
+        """
+        Clear any of the tables in the GUI.
 
         Arguments:
             tree (ttk.Treeview): This is the tree we will be clearing.
@@ -187,7 +197,8 @@ class Dashboard(tkinter.Toplevel):
             tree.delete(entry)
 
     def update_drone_table(self, drone_dict: Iterable["Drone"]) -> None:
-        """Clear drone table and adds a new dictionary of drones to the table.
+        """
+        Clear drone table and adds a new dictionary of drones to the table.
 
         Arguments:
             drone_dict (dict) : This dictionary should contain all the drones
@@ -196,4 +207,3 @@ class Dashboard(tkinter.Toplevel):
         self._clear_table(self.drone_tree)
         for entry in drone_dict:
             self.add_drone_to_tree(entry)
-

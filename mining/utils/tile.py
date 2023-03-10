@@ -8,15 +8,15 @@ from .icon import Icon
 if TYPE_CHECKING:
     from typing import Optional
 
+    from mining.zerg_units.drones import Drone
+
     from .coordinate import Coordinate
 
 
 class Tile:
     """A single tile on the map."""
 
-    def __init__(
-        self, coordinate: "Coordinate", icon: Optional["Icon"] = None
-    ):
+    def __init__(self, coordinate: Coordinate, icon: Optional[Icon] = None):
         """Initialize the tile.
 
         Args:
@@ -26,23 +26,24 @@ class Tile:
         """
         self._coordinate = coordinate
         self._icon = icon
+        self._occupation: Optional[Drone] = None
 
     @property
-    def coordinate(self) -> "Coordinate":
+    def coordinate(self) -> Coordinate:
         """The coordinates of this tile on the map."""
         return self._coordinate
 
     @property
-    def icon(self) -> Optional["Icon"]:
+    def icon(self) -> Optional[Icon]:
         """The icon for this tile.
 
         Setting the icon for a tile implicitly makes it discovered. If a tile
         is not discovered, the icon will always be None.
         """
-        return self._icon
+        return self._occupation.icon if self._occupation else self._icon
 
     @icon.setter
-    def icon(self, icon: "Icon") -> None:
+    def icon(self, icon: Icon) -> None:
         if not icon:
             raise ValueError("Cannot set icon to None")
         self._icon = icon
@@ -52,7 +53,19 @@ class Tile:
         """True if the tile has been discovered and has an icon, else False."""
         return bool(self.icon)
 
-    def occupy(self) -> bool:
+    @property
+    def occupied_drone(self) -> Optional[Drone]:
+        """The drone occupying this tile, which may be None."""
+        return self._occupation
+
+    @occupied_drone.setter
+    def occupied_drone(self, drone: Optional[Drone]):
+        if drone:
+            self._occupy(drone)
+        else:
+            self._unoccupy()
+
+    def _occupy(self, drone: Drone) -> bool:
         """Occupy this tile with a zerg drone.
 
         An occupied tile will return a zerg icon for the icon property. An
@@ -68,15 +81,16 @@ class Tile:
         Returns:
             bool: Whether occupation of the tile succeeded.
         """
-        if not self.discovered:
+        if not self.icon:
             raise RuntimeError("An undiscovered tile cannot be occupied")
-        if self.icon in [Icon.ZERG, Icon.WALL, Icon.MINERAL]:
+        if not self.icon.traversable():
             return False
-        self._old_icon = self.icon
-        self._icon = Icon.ZERG
+        # self._old_icon = self.icon
+        # self._icon = Icon.ZERG
+        self._occupation = drone
         return True
 
-    def unoccupy(self) -> bool:
+    def _unoccupy(self) -> bool:
         """Unoccupy this tile with a zerg drone.
 
         Unoccupying a tile will cause the original icon on the tile to returned
@@ -93,12 +107,21 @@ class Tile:
         """
         if not self.discovered:
             raise RuntimeError("An undiscovered tile cannot be unoccupied")
-        if self.icon != Icon.ZERG:
+        if not self._occupation:
             return False
-        self._icon = self._old_icon
+        # self._icon = self._old_icon
+        self._occupation = None
         return True
 
     def __eq__(self, __o):
+        """Compare if this object is equal to the other object.
+
+        Args:
+            __o : The other object.
+
+        Returns:
+            bool: If this object is equal to the other object
+        """
         return (
             self._coordinate == __o._coordinate
             if isinstance(__o, Tile)
@@ -126,4 +149,9 @@ class Tile:
         return f"Tile({self.coordinate}, {self.icon})"
 
     def __hash__(self) -> int:
+        """The hash value of this object.
+
+        Returns:
+            int: This object's hash value.
+        """
         return hash(self.coordinate)

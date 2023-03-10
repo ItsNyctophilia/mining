@@ -9,7 +9,7 @@ from mining.utils import Directions, Icon
 from .drone import Drone
 
 if TYPE_CHECKING:
-    from mining.utils import Context, Coordinate
+    from mining.utils import Context, Coordinate, Tile
     from mining.zerg_units import Overlord
 
 
@@ -59,11 +59,11 @@ class ScoutDrone(Drone):
             return Directions.CENTER.name
         return super().action(context)
 
-    def _update_path(self, curr: Coordinate) -> Coordinate:
+    def _update_path(self, curr_tile: Tile) -> Coordinate:
         if self.path[0] == self.dest:
             # next step is an undiscovered tile, stop here
             # TODO: Remove test print
             print(f"Scout reached destination at {self.dest}, stopping here")
             self.path.pop(0)
-            return curr
-        return super()._update_path(curr)
+            return curr_tile.coordinate
+        return super()._update_path(curr_tile)

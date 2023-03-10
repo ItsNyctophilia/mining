@@ -29,24 +29,24 @@ class TestTile(unittest.TestCase):
         self.assertFalse(self.tile_undiscovered_.discovered)
 
     def test_tile_occupation(self):
-        self.assertFalse(self.tile_acid_.unoccupy())
+        self.assertFalse(self.tile_acid_._unoccupy())
         self.assertEqual(self.tile_acid_.icon, Icon.ACID)
         self.assertNotEqual(self.tile_acid_.icon, Icon.ZERG)
 
-        self.assertTrue(self.tile_acid_.occupy())
+        self.assertTrue(self.tile_acid_._occupy())
         self.assertNotEqual(self.tile_acid_.icon, Icon.ACID)
         self.assertEqual(self.tile_acid_.icon, Icon.ZERG)
-        self.assertFalse(self.tile_acid_.occupy())
+        self.assertFalse(self.tile_acid_._occupy())
 
-        self.assertTrue(self.tile_acid_.unoccupy())
+        self.assertTrue(self.tile_acid_._unoccupy())
         self.assertNotEqual(self.tile_acid_.icon, Icon.ZERG)
         self.assertEqual(self.tile_acid_.icon, Icon.ACID)
-        self.assertFalse(self.tile_acid_.unoccupy())
+        self.assertFalse(self.tile_acid_._unoccupy())
 
         with self.assertRaises(RuntimeError):
-            self.tile_undiscovered_.occupy()
+            self.tile_undiscovered_._occupy()
         with self.assertRaises(RuntimeError):
-            self.tile_undiscovered_.unoccupy()
+            self.tile_undiscovered_._unoccupy()
 
     def test_tile_comparison(self):
         diff_tile = Tile(self._randomize_coordinate())

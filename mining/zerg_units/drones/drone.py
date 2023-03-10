@@ -6,8 +6,7 @@ import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, TypeVar
 
-from mining.utils import Coordinate, Directions, Icon
-from mining.utils.map import Map
+from mining.utils import Coordinate, Directions, Icon, Map, Tile
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
@@ -34,6 +33,7 @@ class Drone(Zerg):
         self._steps = 0
         self.state = State.WAITING
         self.map: Optional[Map]
+        self._previous_tile: Optional[Tile] = None
 
     @property
     def capacity(self) -> int:
@@ -191,11 +191,11 @@ class Drone(Zerg):
         return result
 
     def _travel(self, context: Context):
-        current_location = Coordinate(context.x, context.y)
-        dest = self._update_path(current_location)
-        return self._choose_direction(current_location, dest, context)
+        curr_tile = self.map[Coordinate(context.x, context.y)]
+        dest = self._update_path(curr_tile)
+        return self._choose_direction(curr_tile.coordinate, dest, context)
 
-    def _update_path(self, curr: Coordinate) -> Coordinate:
+    def _update_path(self, curr_tile: Tile) -> Coordinate:
         """Check if the current location is on the path, and remove if so.
 
         Args:
@@ -206,16 +206,20 @@ class Drone(Zerg):
         """
         next_step = self.path[0]
         # only pop if last action caused movement
-        if curr == next_step:
+        if curr_tile.coordinate == next_step:
+            self._handle_occupation(curr_tile)
             self._path_traveled.insert(0, self.path.pop(0))
             # if false, currently at destination
             if self.path:
                 next_step = self.path[0]
-            else:
-                # TODO: Remove test print
-                print(f"Path clear! {self.path}")
 
         return next_step
+
+    def _handle_occupation(self, curr_tile: Tile) -> None:
+        curr_tile.occupied_drone = self
+        if self._previous_tile:
+            self._previous_tile.occupied_drone = None
+        self._previous_tile = curr_tile
 
     def _choose_direction(
         self, curr: Coordinate, dest: Coordinate, context: Context
@@ -237,7 +241,7 @@ class Drone(Zerg):
         if direction == Directions.CENTER.name:
             self._finish_traveling()
         else:
-            target = Icon(getattr(context, direction.lower(), Icon.EMPTY))
+            target = Icon(getattr(context, direction.lower()))
             self._handle_moving(target)
         # TODO: Remove test print
         print(f"Moving {direction}!")
@@ -333,7 +337,7 @@ class Drone(Zerg):
         logger.setLevel(logging.DEBUG)
         drone_id = id(self)
         drone_type = type(self).__name__
-        #Scoutdrone id has been created
+        # Scoutdrone id has been created
         logger.info(f"{drone_type} {drone_id} {message}")
 
 

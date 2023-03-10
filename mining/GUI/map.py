@@ -40,10 +40,10 @@ class GUI_Map(tkinter.Toplevel):
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
-        for x in range(75):
-            for y in range(75):
+        for x in range(76):
+            for y in range(76):
                 self.log.insert(f"{x}.{y}", Icon.UNKNOWN.unicode())
-            self.log.insert(f"{x}.75", "\n")
+            self.log.insert(tkinter.END, "\n")
 
         self.log.config(state="disabled")
 

@@ -8,6 +8,8 @@ import tkinter
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
+from mining.utils.icon import Icon
+
 from .map import GUI_Map
 
 if TYPE_CHECKING:
@@ -38,6 +40,7 @@ class Dashboard(tkinter.Toplevel):
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
+        self.legend_insertion()
         self.title("Overlord's Dashboard")
 
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
@@ -76,10 +79,9 @@ class Dashboard(tkinter.Toplevel):
     def create_map_gui(self, physical_map: Map) -> None:
         """Create a GUI for every map that the overlord has."""
         self.map_count += 1
-        new_map = GUI_Map(self, f"Map {self.map_count}", physical_map)
+        new_map = GUI_Map(self, f"{physical_map.map_id}", physical_map)
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = physical_map
-        self.add_map_table(physical_map)
 
     def update_maps(
         self, drone_positions: Iterable[Mapping[str, Any]]
@@ -113,26 +115,39 @@ class Dashboard(tkinter.Toplevel):
             values=(tick, action),
         )
 
+    def legend_insertion(self) -> None:
+        """Prepare the legend in the dashboard."""
+        for item_counter, (key, unicode) in enumerate(
+            Icon.unicode_mappings().items(), start=2
+        ):
+            self.legend_tree.insert(
+                "",
+                "end",
+                text="Listbox",
+                values=(key, unicode),
+            )
+
     # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _prep_dashboard_trees(self) -> None:
         """Prepare the three tree views in the dashboard."""
-        map_dict = {"Window Title": 180, "Map ID": 180}
+        legend_labels = {"Map Symbol": 180, "Meaning": 180}
 
-        action_tree = {"Action": 180, "Tick": 180}
+        action_labels = {"Action": 180, "Tick": 180}
 
-        drone_tree = {
+        drone_labels = {
             "Drone ID": 180,
-            "Drone Type": 180,
-            "Health": 120,
-            "Capacity": 120,
-            "Moves": 120,
+            "Drone Type": 120,
+            "State": 120,
+            "Health": 90,
+            "Capacity": 90,
+            "Moves": 90,
         }
         padding = (20, 20)
-        self.map_tree = self._make_tree(map_dict)
-        self.map_tree.grid(row=0, column=0, padx=padding, pady=padding)
-        self.turn_tree = self._make_tree(action_tree)
+        self.legend_tree = self._make_tree(legend_labels)
+        self.legend_tree.grid(row=0, column=0, padx=padding, pady=padding)
+        self.turn_tree = self._make_tree(action_labels)
         self.turn_tree.grid(row=0, column=1, padx=padding, pady=padding)
-        self.drone_tree = self._make_tree(drone_tree)
+        self.drone_tree = self._make_tree(drone_labels)
         self.drone_tree.grid(
             row=1, column=0, columnspan=2, padx=padding, pady=padding
         )
@@ -145,6 +160,7 @@ class Dashboard(tkinter.Toplevel):
                 the dashboard.
         """
         type_of_drone = type(new_drone).__name__
+        status_of_drone = new_drone.state.name
         self.drone_tree.insert(
             "",
             "end",
@@ -152,6 +168,7 @@ class Dashboard(tkinter.Toplevel):
             values=(
                 id(new_drone),
                 type_of_drone,
+                status_of_drone,
                 new_drone.health,
                 new_drone.capacity,
                 new_drone.moves,
@@ -177,16 +194,3 @@ class Dashboard(tkinter.Toplevel):
         self._clear_table(self.drone_tree)
         for entry in drone_dict:
             self.add_drone_to_tree(entry)
-
-    def add_map_table(self, new_map: Map) -> None:
-        """Fill map table with new maps that come from a dictionary.
-
-        Arguments:
-            new_map (map) : The map that will have it's ID added to the table.
-        """
-        self.map_tree.insert(
-            "",
-            "end",
-            text="Listbox",
-            values=(f"Map {self.map_count}", id(new_map)),
-        )

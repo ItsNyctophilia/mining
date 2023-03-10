@@ -28,12 +28,13 @@ class Map:
         None: 1,
     }
 
-    def __init__(self, density: float) -> None:
+    def __init__(self, map_id: int, density: float) -> None:
         """Initialize a Map with a context object.
 
         Args:
             context (Context): The origin of the map.
         """
+        self.map_id = map_id
         self.density = density
         # a set of the coords of minerals and drone id tasked to mining it
         self.untasked_minerals: Set[Coordinate] = set()

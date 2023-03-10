@@ -88,7 +88,7 @@ class Overlord(Zerg):
             map_id (int): The id of the map.
             summary (float): The density of minerals in the map.
         """
-        physical_map = Map(summary)
+        physical_map = Map(map_id, summary)
         self._maps[map_id] = physical_map
         self.dashboard.create_map_gui(physical_map)
         # TODO: Is this overwriting the drone table every time a map is added?

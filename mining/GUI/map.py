@@ -40,21 +40,13 @@ class GUI_Map(tkinter.Toplevel):
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
-        for x in range(75):
-            for y in range(75):
+        for x in range(76):
+            for y in range(76):
                 self.log.insert(f"{x}.{y}", Icon.UNKNOWN.unicode())
-            self.log.insert(f"{x}.75", "\n")
+            self.log.insert(tkinter.END, "\n")
 
-        self.insert_legend()
         self.log.config(state="disabled")
 
-    def insert_legend(self) -> None:
-        """Insert a legend into a map."""
-        self.log.insert("1.end", "MAP LEGEND")
-        for item_counter, (key, unicode) in enumerate(
-            Icon.unicode_mappings().items(), start=2
-        ):
-            self.log.insert(f"{item_counter}.end", f"{key} => {unicode}")
 
     def update(self, zerg_on_map) -> None:
         """Update GUI Map with any updated coordinates."""

@@ -116,7 +116,7 @@ class Map:
         parents_map: Dict[Coordinate, Coordinate],
     ) -> list[Coordinate]:
         curr = end
-        final_path: List[Coordinate] = []
+        final_path: List[Coordinate] = [end]
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)

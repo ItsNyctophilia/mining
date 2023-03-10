@@ -1,5 +1,7 @@
 """Scout drone, whose primary purpose is revealing the map."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from mining.utils import Directions, Icon
@@ -7,7 +9,7 @@ from mining.utils import Directions, Icon
 from .drone import Drone
 
 if TYPE_CHECKING:
-    from mining.utils import Context
+    from mining.utils import Context, Coordinate
     from mining.zerg_units import Overlord
 
 
@@ -18,7 +20,7 @@ class ScoutDrone(Drone):
     max_capacity = 5
     max_moves = 1
 
-    def __init__(self, overlord: "Overlord") -> None:
+    def __init__(self, overlord: Overlord) -> None:
         """Initialize a ScoutDrone.
 
         Args:
@@ -26,7 +28,7 @@ class ScoutDrone(Drone):
         """
         super().__init__(overlord)
 
-    def action(self, context: "Context") -> str:
+    def action(self, context: Context) -> str:
         """Perform some action, based on the type of drone.
 
         The scout will check if its current location is the deployment zone and
@@ -51,3 +53,10 @@ class ScoutDrone(Drone):
             self._overlord.request_pickup(self)
             return Directions.CENTER.name
         return super().action(context)
+
+    def _update_path(self, curr: Coordinate) -> Coordinate:
+        if self.path[0] == self.dest:
+            # next step is an undiscovered tile, stop here
+            self.path.pop(0)
+            return curr
+        return super()._update_path(curr)

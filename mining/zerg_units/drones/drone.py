@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, TypeVar
 
-# TODO: Remove Icon import once better implementation added
 from mining.utils import Coordinate, Directions, Icon
 from mining.zerg_units.zerg import Zerg
 
@@ -25,7 +23,7 @@ class Drone(Zerg):
     max_capacity = 10
     max_moves = 1
 
-    def __init__(self, overlord: "Overlord") -> None:
+    def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
@@ -63,14 +61,14 @@ class Drone(Zerg):
         return self._path_to_goal
 
     @path.setter
-    def path(self, new_path: List["Coordinate"]) -> None:
+    def path(self, new_path: List[Coordinate]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)
         self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
     @property
-    def dest(self) -> Optional["Coordinate"]:
+    def dest(self) -> Optional[Coordinate]:
         """The coordinates of the current intended destination of this drone.
 
         This value will automatically be set when the path is updated.
@@ -154,7 +152,7 @@ class Drone(Zerg):
             + (cls.max_moves * 3)
         )
 
-    def action(self, context: "Context") -> str:
+    def action(self, context: Context) -> str:
         """Perform some action, based on the type of drone.
 
         Args:
@@ -177,21 +175,12 @@ class Drone(Zerg):
             self._finish_traveling()
         return result
 
-    def _travel(self, context):
+    def _travel(self, context: Context):
         current_location = Coordinate(context.x, context.y)
         dest = self._update_path(current_location)
-        result = self._choose_direction(current_location, dest, context)
-        # TODO: Remove this code and the Icon import when
-        # better implementation is created
-        if map_id := self._overlord._deployed[id(self)]:
-            map_object = self._overlord._maps[map_id]
-            with contextlib.suppress(AttributeError):
-                if map_object[dest].icon == Icon.WALL:
-                    self.path = []
-                    self._finish_traveling()
-        return result
+        return self._choose_direction(current_location, dest, context)
 
-    def _update_path(self, curr: "Coordinate") -> "Coordinate":
+    def _update_path(self, curr: Coordinate) -> Coordinate:
         """Check if the current location is on the path, and remove if so.
 
         Args:
@@ -201,21 +190,21 @@ class Drone(Zerg):
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        dest = self.path[0]
+        next_step = self.path[0]
         # only pop if last action caused movement
-        if curr == dest:
+        if curr == next_step:
             self._path_traveled.insert(0, self.path.pop(0))
             # if false, currently at destination
             if self.path:
-                dest = self.path[0]
+                next_step = self.path[0]
             else:
                 # TODO: Remove test print
                 print(f"Path clear! {self.path}")
 
-        return dest
+        return next_step
 
     def _choose_direction(
-        self, curr: "Coordinate", dest: "Coordinate", context: "Context"
+        self, curr: Coordinate, dest: Coordinate, context: Context
     ) -> str:
         """Choose which cardinal direction the drone should head.
 
@@ -230,17 +219,17 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone should head to reach the destination.
         """
-        direction = curr.direction(dest)
-        target = Icon(getattr(context, direction, Icon.EMPTY))
-        if (direction := direction.upper()) == Directions.CENTER.name:
+        direction = curr.direction(dest).upper()
+        if direction == Directions.CENTER.name:
             self._finish_traveling()
         else:
+            target = Icon(getattr(context, direction.lower(), Icon.EMPTY))
             self._handle_moving(target)
         # TODO: Remove test print
         print(f"Moving {direction}!")
         return direction
 
-    def _handle_moving(self, target: "Icon") -> None:
+    def _handle_moving(self, target: Icon) -> None:
         """Perform any necessary tasks that come with moving the drone.
 
         Args:
@@ -251,7 +240,7 @@ class Drone(Zerg):
         if target.traversable():
             self._steps += 1
 
-    def _hit_mineral(self, target: "Icon") -> bool:
+    def _hit_mineral(self, target: Icon) -> bool:
         if (
             is_mineral := (target == Icon.MINERAL)
         ) and self._capacity <= self.max_capacity:

@@ -45,16 +45,8 @@ class GUI_Map(tkinter.Toplevel):
                 self.log.insert(f"{x}.{y}", Icon.UNKNOWN.unicode())
             self.log.insert(f"{x}.75", "\n")
 
-        self.insert_legend()
         self.log.config(state="disabled")
 
-    def insert_legend(self) -> None:
-        """Insert a legend into a map."""
-        self.log.insert("1.end", "MAP LEGEND")
-        for item_counter, (key, unicode) in enumerate(
-            Icon.unicode_mappings().items(), start=2
-        ):
-            self.log.insert(f"{item_counter}.end", f"{key} => {unicode}")
 
     def update(self, drone_coords) -> None:
         """Update GUI Map with any updated coordinates."""

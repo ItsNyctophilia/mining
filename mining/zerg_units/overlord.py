@@ -182,7 +182,6 @@ class Overlord(Zerg):
         physical_map = Map(map_id, summary)
         self._maps[map_id] = physical_map
         self.dashboard.create_map_gui(physical_map)
-        # TODO: Is this overwriting the drone table every time a map is added?
         self.dashboard.update_drone_table(self.drones.values())
 
     def del_mineral(self, coord: Coordinate, drone_id: int) -> None:
@@ -331,6 +330,7 @@ class Overlord(Zerg):
             if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps(drone_positions)
+        self.dashboard.update_drone_table(self.drones.values())
 
     def _recall_drones(self) -> str:
         if self._pickup_queue.empty():

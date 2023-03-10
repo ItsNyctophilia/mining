@@ -112,7 +112,8 @@ class Drone(Zerg):
         health: int,
         capacity: int,
         moves: int,
-        drone_class: Optional[Type[T]] = None,
+        class_name: str,
+        drone_class: Optional[Type[T]] = None
     ) -> Type[T]:
         """Create a custom drone class, with given stats.
 
@@ -123,6 +124,7 @@ class Drone(Zerg):
             health (int): The drone's maximum health.
             capacity (int): The drone's maximum mineral capacity.
             moves (int): The drone's maximum move's per tick.
+            class_name (str): The custom class' name.
             drone_class (Type[Drone]): The type the custom class will
                 extend from.
 
@@ -133,7 +135,7 @@ class Drone(Zerg):
         if not drone_class:
             drone_class = cls  # type: ignore
         new_drone_type: Type[T] = type(
-            "CustomDrone",
+            class_name,
             (drone_class,),  # type: ignore
             {
                 "max_health": health,

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from mining.utils import DEFAULT_TILE, Coordinate, Icon, Map
 
-from .drones import MinerDrone, ScoutDrone, State
+from .drones import Drone, MinerDrone, ScoutDrone, State
 from .zerg import Zerg
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from mining.GUI.dashboard import Dashboard
     from mining.utils import Context
 
-    from .drones import Drone
+
 
 
 class Overlord(Zerg):
@@ -52,11 +52,91 @@ class Overlord(Zerg):
         # a queue of pick up requests from drones
         self._maps: Dict[int, Map] = {}
         # a map id as key and Map as value
+        num_scouts, num_miners, classes = self._create_drone_classes(refined_minerals)
+        print (num_scouts, num_miners)
+        for _ in range(num_scouts):
+            self._create_drone(classes["Scout"])
+        for _ in range(num_miners):   
+            self._create_drone(classes["Miner"])
+    
+    def _purchase_part(self, minerals: int, cost: int, drones: int):
+        cost = drones * cost
+        if (minerals := minerals - cost) < 0:
+            return None
+        return minerals 
 
-        for _ in range(3):
-            # TODO: create custom drones based on available resources
-            self._create_drone(MinerDrone)
-            self._create_drone(ScoutDrone)
+    def _create_drone_classes(self, minerals: int) -> Dict(Drone):
+        """Create custom drone classes based on number of minerals
+        
+        Args:
+            minerals (int): Number of allotted minerals for drone
+                creation
+
+        Returns:
+            List(Drone): List of drone classes containing a custom
+            ScoutDrone and MinerDrone
+        """
+        # Maximum desired drones to create at instantiation,
+        # leaving leftover minerals for drone stat upgrades
+        MAX_ALLOWABLE_DRONES = 12
+        # Minimum drone: 10HP, 5 Capacity, 1 Move = 5 Minerals
+        MIN_DRONE_DEFAULTS = (10, 5, 1)
+        MIN_MINERALS = 5
+        # +10HP = 1 Mineral,
+        HP_COST = 1
+        # +5 Capacity = 1 Mineral,
+        CAP_COST = 1
+        # +1 Move = 3 Minerals
+        MOVE_COST = 3
+
+        max_drones = int(minerals / 5)
+        if max_drones > MAX_ALLOWABLE_DRONES:
+            max_drones = MAX_ALLOWABLE_DRONES
+        num_scouts = int(max_drones / 2)
+        if num_scouts < 1:
+            num_scouts = 1
+        num_miners = max_drones - num_scouts
+
+        leftover = minerals - (MAX_ALLOWABLE_DRONES * MIN_MINERALS)
+
+        scout_hp, scout_cap, scout_moves = MIN_DRONE_DEFAULTS
+        miner_hp, miner_cap, miner_moves = MIN_DRONE_DEFAULTS
+
+        drone_classes = {}
+        while leftover > 0:
+            if scout_hp < 40:
+                leftover = self._purchase_part(leftover, HP_COST, num_scouts)
+                if leftover is None:
+                    break
+                scout_hp += 10
+            elif miner_cap < 10:
+                leftover = self._purchase_part(leftover, CAP_COST, num_miners)
+                if leftover is None:
+                    break
+                miner_cap += 5
+            elif miner_hp < 40:
+                leftover = self._purchase_part(leftover, HP_COST, num_miners)
+                if leftover is None:
+                    break
+                miner_hp += 10
+            elif miner_moves < 2:
+                leftover = self._purchase_part(leftover, MOVE_COST, num_miners)
+                if leftover is None:
+                    break
+                miner_moves += 1
+            else:
+                leftover = self._purchase_part(leftover, HP_COST, num_scouts)
+                if leftover is None:
+                    break
+                scout_hp += 10
+        custom_scout = Drone.drone_blueprint(scout_hp, scout_cap, scout_moves,
+                                      "Custom Scout", ScoutDrone)
+        custom_miner = Drone.drone_blueprint(miner_hp, miner_cap, miner_moves,
+                                      "Custom Miner", MinerDrone)       
+        drone_classes.update({"Scout": custom_scout})
+        drone_classes.update({"Miner": custom_miner})
+
+        return (num_scouts, num_miners, drone_classes)
 
     def _create_drone(self, drone_type: Type[Drone]) -> None:
         """Create a new zerg drone of the specified drone type."""
@@ -65,7 +145,9 @@ class Overlord(Zerg):
         # self._drones[drone_type][drone_id] = new_drone
         self.drones[drone_id] = new_drone
         self._deployed[drone_id] = None
-        self._idle_drones.setdefault(drone_type, set()).add(new_drone)
+        print(f"{drone_type} : {drone_type.__bases__[0]}")
+        self._idle_drones.setdefault(drone_type.__bases__[0],
+                                     set()).add(new_drone)
 
     def mark_drone_dead(self, drone: Drone) -> None:
         """Mark a drone as dead.
@@ -77,7 +159,7 @@ class Overlord(Zerg):
         if (map_id := self._deployed[drone_id]) is not None:
             del self._deployed[drone_id]
             del self.drones[drone_id]
-            if type(drone) == ScoutDrone:
+            if isinstance(drone, ScoutDrone):
                 self._maps[map_id].scout_count -= 1
             # TODO: if miner dies, untask a mineral it may have been working on
 
@@ -131,7 +213,7 @@ class Overlord(Zerg):
             self._update_queue.put((map_id, drone, context))
 
     def request_pickup(self, drone: Drone) -> None:
-        """Enqueue a drone pickup requests.
+        """Enqueue a drone pickup request.
 
         This method will register the drone's request to be picked up to a
         queue that will be processed at a later time. If a drone is not on the
@@ -232,7 +314,7 @@ class Overlord(Zerg):
         # TODO: have map track all drones, make this a generic counter
         if isinstance(drone, ScoutDrone):
             map_.scout_count -= 1
-        self._idle_drones[type(drone)].add(drone)
+        self._idle_drones[type(drone).__bases__[0]].add(drone)
         drone.reset_minerals()
         action = f"{self.RETURN} {id(drone)}"
         # TODO: Remove test print

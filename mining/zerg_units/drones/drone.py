@@ -244,7 +244,7 @@ class Drone(Zerg):
         # TODO: Remove test print
         print(f"Checking Tile {target} capacity: {self._capacity}...")
         if (
-            is_mineral := (target == Icon.MINERAL)
+            is_mineral := (target == Icon.MINERAL.value)
         ) and self._capacity <= self.max_capacity:
             # TODO: Remove test print
             print("Target is a mineral!")

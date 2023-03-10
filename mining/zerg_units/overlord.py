@@ -177,7 +177,7 @@ class Overlord(Zerg):
             ):
                 continue
             # TODO: Remove test print
-            print(f"Finding path from {start} to {coord}")
+            print(f"Finding path from {start} to {tile.coordinate}")
             if path := current_map.dijkstra(start, tile.coordinate):
                 return path
 
@@ -245,7 +245,7 @@ class Overlord(Zerg):
                 miner = self._idle_drones[MinerDrone].pop()
                 map_.task_miner(miner)
                 # TODO: Remove test print
-                # print("IDLE MINERS", self._idle_drones[MinerDrone])
+                print("IDLE MINERS", self._idle_drones[MinerDrone])
                 return self._deploy_drone(map_id, miner)
         return ""
 

@@ -177,6 +177,8 @@ class Map:
         Args:
             miner (Drone): The miner to task.
         """
+        # TODO: Remove test print
+        print(f"Untasked minerals: {self.untasked_minerals}")
         mineral = self.untasked_minerals.pop()
         # TODO: Remove test print
         print(f"Mineral at {mineral} is being tasked")

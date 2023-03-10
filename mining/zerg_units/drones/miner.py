@@ -54,6 +54,8 @@ class MinerDrone(Drone):
         Returns:
             str: The intended next destination of the drone.
         """
+        # TODO: Remove test print
+        print(f"Looking for mineral at {self._mineral_location}")
         result = super().action(context)
         if self.state == State.WORKING:
             return self._mine(context)
@@ -71,6 +73,8 @@ class MinerDrone(Drone):
         """
         dest_icon = getattr(context, self._mineral_direction)
         if self._hit_mineral(dest_icon):
+            # TODO: Remove test print
+            print(f"Mining mineral at {self._mineral_location}")
             return self._mineral_direction.upper()
         super(type(self), type(self)).path.fset(self, self._path_traveled)
         self.state = State.TRAVELING

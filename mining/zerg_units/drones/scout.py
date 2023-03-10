@@ -57,6 +57,8 @@ class ScoutDrone(Drone):
     def _update_path(self, curr: Coordinate) -> Coordinate:
         if self.path[0] == self.dest:
             # next step is an undiscovered tile, stop here
+            # TODO: Remove test print
+            print(f"Scout reached destination at {self.dest}, stopping here")
             self.path.pop(0)
             return curr
         return super()._update_path(curr)

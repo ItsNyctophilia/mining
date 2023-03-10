@@ -163,8 +163,8 @@ class Drone(Zerg):
         """
         # TODO: Remove test print
         print(
-            f"Acting! context: {context} path: {self.path} traveled: "
-            f"{self._path_traveled}"
+            f"Acting!ID: {id(self)} context: {context} path: {self.path} "
+            f" traveled:{self._path_traveled}"
         )
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
@@ -241,9 +241,13 @@ class Drone(Zerg):
             self._steps += 1
 
     def _hit_mineral(self, target: Icon) -> bool:
+        # TODO: Remove test print
+        print(f"Checking Tile {target} capacity: {self._capacity}...")
         if (
             is_mineral := (target == Icon.MINERAL)
         ) and self._capacity <= self.max_capacity:
+            # TODO: Remove test print
+            print("Target is a mineral!")
             self._capacity += 1
         return is_mineral
 

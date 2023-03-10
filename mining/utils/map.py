@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from queue import PriorityQueue as Queue
+from queue import PriorityQueue
 from typing import TYPE_CHECKING, overload
 
 from .coordinate import Coordinate
@@ -10,7 +10,7 @@ from .icon import Icon
 from .tile import Tile
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Set, Tuple, Union
+    from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
     from mining.zerg_units.drones import Drone
 
@@ -54,43 +54,69 @@ class Map:
             list(Coordinate): Path in the form of a Coordinate list
         """
         # TODO: dynamically assign acid weight
-        visited: Set["Coordinate"] = set()
-        parents_map: Dict["Coordinate", "Coordinate"] = {}
-        final_path: List["Coordinate"] = []
+        visited: Set[Coordinate] = set()
+        parents_map: Dict[Coordinate, Coordinate] = {}
         path_found = False
-        pqueue: Queue[Tuple[int, "Tile"]] = Queue()
-        pqueue.put((0, Tile(start)))
+        pqueue: PriorityQueue[Tuple[int, Coordinate]] = PriorityQueue()
+        pqueue.put((0, start))
+        # counter to prevent infinite pathing
         counter = 500
         while not pqueue.empty() and counter:
-            _, tile = pqueue.get()
-            node = tile.coordinate
+            _, node = pqueue.get()
             if node in visited:
                 continue
             if node == end:
                 path_found = True
                 break
-            node_neighbors = node.cardinals()
 
-            if end in node_neighbors:
+            neighbors = node.cardinals()
+            if end in neighbors:
                 path_found = True
                 parents_map[end] = node
                 break
 
             visited.add(node)
-            for neighbor_coord in node_neighbors:
-                neighbor = self.get(neighbor_coord, None)
-                if neighbor is None or neighbor in visited:
-                    continue
-                if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
-                    continue
-                if neighbor.coordinate not in visited:
-                    parents_map[neighbor.coordinate] = node
-                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
+            neighbors_gen = (
+                neighbor for neighbor in neighbors if neighbor not in visited
+            )
+            self._add_to_path(
+                node,
+                neighbors_gen,
+                parents_map,
+                pqueue,
+            )
             counter -= 1
-        if not path_found:
-            return []
+        return (
+            self._build_final_path(start, end, parents_map)
+            if path_found
+            else []
+        )
 
+    def _add_to_path(
+        self,
+        node: Coordinate,
+        neighbors: Iterable["Coordinate"],
+        parents_map: Dict[Coordinate, Coordinate],
+        pqueue: PriorityQueue[Tuple[int, Coordinate]],
+    ) -> None:
+        for neighbor_coord in neighbors:
+            if (neighbor := self.get(neighbor_coord, None)) is None:
+                # tile not in map
+                continue
+            if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
+                # tile not pathable
+                continue
+            parents_map[neighbor.coordinate] = node
+            pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
+
+    def _build_final_path(
+        self,
+        start: Coordinate,
+        end: Coordinate,
+        parents_map: Dict[Coordinate, Coordinate],
+    ) -> list[Coordinate]:
         curr = end
+        final_path: List[Coordinate] = []
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)
@@ -152,6 +178,8 @@ class Map:
             miner (Drone): The miner to task.
         """
         mineral = self.untasked_minerals.pop()
+        # TODO: Remove test print
+        print(f"Mineral at {mineral} is being tasked")
         miner.path = self.dijkstra(self.origin, mineral)
 
     @overload

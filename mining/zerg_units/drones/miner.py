@@ -43,7 +43,7 @@ class MinerDrone(Drone):
         self._mineral_direction = new_path[-1].direction(
             self._mineral_location
         )
-        super(type(self), type(self)).path.fset(self, new_path)
+        Drone.path.fset(self, new_path)
 
     def action(self, context: "Context") -> str:
         # sourcery skip: assign-if-exp, reintroduce-else
@@ -90,7 +90,7 @@ class MinerDrone(Drone):
         if self.map and self._mineral_location:
             self.map.tasked_minerals.remove(self._mineral_location)
             self._mineral_location = None
-            super(type(self), type(self)).path.fset(self, self._path_traveled)
+            Drone.path.fset(self, self._path_traveled)
             self.state = State.TRAVELING
 
     def _finish_traveling(self):

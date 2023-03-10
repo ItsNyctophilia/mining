@@ -43,7 +43,7 @@ class Map:
         self.scout_count = 0
 
     def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
-        """Apply Dijkstra's Algorithm to find path between points.
+        """Apply Dijkstra's Algorithm to find a path between two points.
 
         Args:
             start (Coordinate): The start point for the search
@@ -59,8 +59,7 @@ class Map:
         pqueue.put((0, start))
         # This counter is to timeout after 500 iterations if no path
         # can be found and loop does not exit.
-        counter = 500
-        while not pqueue.empty() and counter:
+        while not pqueue.empty():
             _, node = pqueue.get()
             if node in visited:
                 continue
@@ -84,7 +83,6 @@ class Map:
                 parents_map,
                 pqueue,
             )
-            counter -= 1
         return (
             self._build_final_path(start, end, parents_map)
             if path_found
@@ -106,7 +104,8 @@ class Map:
                 # tile not pathable
                 continue
             parents_map[neighbor.coordinate] = node
-            pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
+            pqueue.put((self.NODE_WEIGHTS[neighbor.icon],
+                        neighbor.coordinate))
 
     def _build_final_path(
         self,
@@ -170,8 +169,9 @@ class Map:
     def task_miner(self, miner: Drone) -> None:
         """Task the miner with mining an available mineral.
 
-        The miner will have their path variable set, and the mineral they are
-        tasked with will be removed from the untasked_minerals set.
+        The miner will have their path variable set, and the mineral
+        they are tasked with will be removed from the untasked_minerals
+        set.
 
         Args:
             miner (Drone): The miner to task.

@@ -7,6 +7,8 @@ class Icon(Enum):
     """An icon on the map."""
 
     ZERG = "Z"
+    SCOUT = "S"
+    MINER = "M"
     WALL = "#"
     DEPLOY_ZONE = "_"
     MINERAL = "*"
@@ -46,6 +48,8 @@ class Icon(Enum):
         return {
             Icon.WALL: "\u00A4",
             Icon.ACID: "\u05e1",
+            Icon.SCOUT: "\u00A7",
+            Icon.MINER: "\u00A3",
             Icon.MINERAL: "\u0275",
             Icon.ZERG: "\u017e",
             Icon.DEPLOY_ZONE: "\u02c5",

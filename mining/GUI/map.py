@@ -36,12 +36,22 @@ class GUI_Map(tkinter.Toplevel):
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
-        for x in range(200):
-            for y in range(200):
+        for x in range(75):
+            for y in range(75):
                 self.log.insert(f"{x}.{y}", "\u02FD")
-            self.log.insert(f"{x}.200", "\n")
+            self.log.insert(f"{x}.75", "\n")
+
+        self.insert_legend()
         self.log.config(state="disabled")
 
+    def insert_legend(self) -> None:
+        self.log.insert('1.end', "MAP LEGEND")
+        self.log.insert('2.end', "WALL => \u00A4")
+        self.log.insert('3.end', "ACID => \u05e1")
+        self.log.insert('4.end', "MINERAL => \u0275")
+        self.log.insert('5.end', "DEPLOY ZONE => \u02c5")
+        self.log.insert('6.end', "SCOUT => \u00A7")
+        self.log.insert('7.end', "MINER => \u00A3")
     def update(self) -> None:
         """Update GUI Map with any updated coordinates."""
         for tile in self.physical_map._stored_tiles_.values():

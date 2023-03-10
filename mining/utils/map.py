@@ -27,7 +27,6 @@ class Map:
         Icon.ACID: 10,
         None: 1,
     }
-    DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
     def __init__(self, density: "float") -> None:
         """Initialize a Map with a context object.

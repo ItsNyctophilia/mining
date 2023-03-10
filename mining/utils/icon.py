@@ -1,18 +1,21 @@
 """An icon on the map."""
 
 from enum import Enum
+from typing import Mapping
 
 
 class Icon(Enum):
     """An icon on the map."""
 
     ZERG = "Z"
+    SCOUT = "S"
+    MINER = "M"
     WALL = "#"
     DEPLOY_ZONE = "_"
     MINERAL = "*"
     ACID = "~"
     EMPTY = " "
-    UNREACHABLE = "X"
+    UNKNOWN = "?"
 
     def traversable(self) -> bool:
         """Whether a tile with this icon is traversable by a drone.
@@ -46,8 +49,20 @@ class Icon(Enum):
         return {
             Icon.WALL: "\u00A4",
             Icon.ACID: "\u05e1",
+            Icon.SCOUT: "\u00A7",
+            Icon.MINER: "\u00A3",
             Icon.MINERAL: "\u0275",
             Icon.ZERG: "\u017e",
             Icon.DEPLOY_ZONE: "\u02c5",
             Icon.EMPTY: " ",
+            Icon.UNKNOWN: "\u02FD",
         }[self]
+
+    @classmethod
+    def unicode_mappings(cls) -> Mapping[str, str]:
+        """Return a mapping of Icon name to Icon unicode representation.
+
+        Returns:
+            Mapping[str, str]: The unicode mappings.
+        """
+        return {icon.name: icon.unicode() for icon in cls.__members__.values()}

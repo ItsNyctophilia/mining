@@ -2,8 +2,10 @@
 import tkinter
 from typing import TYPE_CHECKING
 
-#if TYPE_CHECKING:
-from mining.utils import Map, Tile, Icon
+from mining.utils import Icon, Tile
+
+if TYPE_CHECKING:
+    from mining.utils import Map
 
 
 class GUI_Map(tkinter.Toplevel):
@@ -13,7 +15,9 @@ class GUI_Map(tkinter.Toplevel):
         parent (tkinter.Toplevel): Takes in a tkinter top level window
     """
 
-    def __init__(self, parent, title: str, physical_map: "Map") -> None:
+    def __init__(
+        self, parent: tkinter.Misc, title: str, physical_map: "Map"
+    ) -> None:
         """Initialize the GUI map.
 
         Args:
@@ -36,11 +40,21 @@ class GUI_Map(tkinter.Toplevel):
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
-        for x in range(200):
-            for y in range(200):
-                self.log.insert(f"{x}.{y}", "\u02FD")
-            self.log.insert(f"{x}.200", "\n")
+        for x in range(75):
+            for y in range(75):
+                self.log.insert(f"{x}.{y}", Icon.UNKNOWN.unicode())
+            self.log.insert(f"{x}.75", "\n")
+
+        self.insert_legend()
         self.log.config(state="disabled")
+
+    def insert_legend(self) -> None:
+        """Insert a legend into a map."""
+        self.log.insert("1.end", "MAP LEGEND")
+        for item_counter, (key, unicode) in enumerate(
+            Icon.unicode_mappings().items(), start=2
+        ):
+            self.log.insert(f"{item_counter}.end", f"{key} => {unicode}")
 
     def update(self, drone_coords) -> None:
         """Update GUI Map with any updated coordinates."""

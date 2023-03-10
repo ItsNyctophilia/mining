@@ -18,8 +18,6 @@ if TYPE_CHECKING:
     from mining.utils import Context
 
 
-
-
 class Overlord(Zerg):
     """Overlord, who oversees zerg drones and assigns tasks to them."""
 
@@ -53,22 +51,31 @@ class Overlord(Zerg):
         # a queue of pick up requests from drones
         self._maps: Dict[int, Map] = {}
         # a map id as key and Map as value
-        num_scouts, num_miners, classes = self._create_drone_classes(refined_minerals)
-        print (num_scouts, num_miners)
-        for _ in range(num_scouts):
+        scouts, miners, classes = self._create_drone_classes(refined_minerals)
+        for _ in range(scouts):
             self._create_drone(classes["Scout"])
-        for _ in range(num_miners):   
+        for _ in range(miners):
             self._create_drone(classes["Miner"])
-    
+
     def _purchase_part(self, minerals: int, cost: int, drones: int):
+        """Helper function to determine if zerg stat upgrade is possible.
+
+        Args:
+            minerals (int): Amount of total minerals in stockpile
+            cost (int): Cost of a particular part upgrade for one Zerg
+            drones (int): Number of drones to upgrade
+        Returns:
+            int or None: Number of minerals after upgrade purchase or
+                None if purchase was not possible.
+        """
         cost = drones * cost
         if (minerals := minerals - cost) < 0:
             return None
-        return minerals 
+        return minerals
 
     def _create_drone_classes(self, minerals: int) -> Dict(Drone):
         """Create custom drone classes based on number of minerals
-        
+
         Args:
             minerals (int): Number of allotted minerals for drone
                 creation
@@ -130,10 +137,11 @@ class Overlord(Zerg):
                 if leftover is None:
                     break
                 scout_hp += 10
+
         custom_scout = Drone.drone_blueprint(scout_hp, scout_cap, scout_moves,
-                                      "Custom Scout", ScoutDrone)
+                                             "Custom Scout", ScoutDrone)
         custom_miner = Drone.drone_blueprint(miner_hp, miner_cap, miner_moves,
-                                      "Custom Miner", MinerDrone)       
+                                             "Custom Miner", MinerDrone)       
         drone_classes.update({"Scout": custom_scout})
         drone_classes.update({"Miner": custom_miner})
 
@@ -157,7 +165,7 @@ class Overlord(Zerg):
             drone (int): The drone to mark as dead.
         """
         drone_id = id(drone)
-        if (map_id := self._deployed[drone_id]) is not None:
+        if (map_id := self._deployed.get(drone_id)) is not None:
             del self._deployed[drone_id]
             del self.drones[drone_id]
             if isinstance(drone, ScoutDrone):
@@ -194,11 +202,11 @@ class Overlord(Zerg):
         Returns:
             int: The id of the chosen map
         """
-        map_id, map_ = min(
+        map_id, map = min(
             self._maps.items(),
-            key=lambda map_pair: map_pair[1].scout_count,
-        )
-        map_.scout_count += 1
+            key=lambda map: (map[1].scout_count, map[1].density)
+            )
+        map.scout_count += 1
         return map_id
 
     def enqueue_map_update(self, drone: Drone, context: Context) -> None:
@@ -228,6 +236,7 @@ class Overlord(Zerg):
             self._pickup_queue.put((self._maps[map_id], drone))
 
     def _distance_sort(self, start: Coordinate, end: Coordinate):
+        """Return raw distance between two Coordinates"""
         start_x, start_y = start
         end_x, end_y = end
         return (start_x - end_x) + (start_y - end_y)
@@ -235,6 +244,18 @@ class Overlord(Zerg):
     def _assign_scout_target(
         self, map_id: int, start: Coordinate
     ) -> List[Coordinate]:
+        """Assigns a scout an exploration target.
+
+        Iterates through unexplored tiles in order of closest raw
+        distance between tiles and calls Dijkstra's algorithm to
+        find path between tiles, returning it if one was found.
+        
+        Args:
+            map_id (int): id of map to search on
+            start (Coordinate): Start coordinate to start search from
+        Returns:
+            List[Coordinate]: Path from Start to End Coordinates
+        """
         current_map = self._maps[map_id]
         unexplored_tiles = current_map.get_unexplored_tiles()
         unexplored_tiles.sort(
@@ -298,6 +319,7 @@ class Overlord(Zerg):
         return self._deploy_scouts()
 
     def _update_map(self) -> None:
+        """Updates the Overlord's Dashboard with new Map data"""
         drone_positions = []
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()

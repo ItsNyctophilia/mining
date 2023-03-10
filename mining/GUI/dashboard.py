@@ -122,10 +122,12 @@ class Dashboard(tkinter.Toplevel):
 
         drone_tree = {
             "Drone ID": 180,
-            "Drone Type": 180,
-            "Health": 120,
-            "Capacity": 120,
-            "Moves": 120,
+            "Drone Type": 120,
+            "State": 120,
+            "Health": 90,
+            "Capacity": 90,
+            "Moves": 90,
+
         }
         padding = (20, 20)
         self.map_tree = self._make_tree(map_dict)
@@ -145,6 +147,7 @@ class Dashboard(tkinter.Toplevel):
                 the dashboard.
         """
         type_of_drone = type(new_drone).__name__
+        status_of_drone = new_drone.state.name
         self.drone_tree.insert(
             "",
             "end",
@@ -152,6 +155,7 @@ class Dashboard(tkinter.Toplevel):
             values=(
                 id(new_drone),
                 type_of_drone,
+                status_of_drone,
                 new_drone.health,
                 new_drone.capacity,
                 new_drone.moves,

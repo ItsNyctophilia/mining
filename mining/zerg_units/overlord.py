@@ -314,7 +314,7 @@ class Overlord(Zerg):
         return self._deploy_scouts()
 
     def _update_map(self) -> None:
-        """Updates the Overlord's Dashboard with new Map data"""
+        """Update the Overlord's Dashboard with new Map data."""
         moving_drones: List[Drone] = self._process_updates()
         self._handle_collisions(moving_drones)
 
@@ -371,12 +371,20 @@ class Overlord(Zerg):
         self.dashboard.update_maps(drone_positions)
         return moving_drones
 
-    def _handle_collisions(self, moving_drones: List[Drone]) -> None:
+    def _detect_collisions(self, moving_drones: List[Drone]):
         for drone in moving_drones:
-            if drone.state == State.TRAVELING:
-                pass
+            if drone.map and drone.path:
+                next_step = drone.map[drone.path[0]]
+                if next_step and (other_drone := next_step.occupied_drone):
+                    if other_drone.path[0] == next_step:
+                        yield (drone, other_drone)
 
-    def _deploy_drone(self, map_: Map, drone: "Drone") -> str:
+    def _handle_collisions(self, moving_drones: List[Drone]) -> None:
+        for drone, other_drone in self._detect_collisions(moving_drones):
+            # TODO: Remove test print
+            print("Collision detected")
+
+    def _deploy_drone(self, map_: Map, drone: Drone) -> str:
         drone_id = id(drone)
         self._deployed[drone_id] = map_
         drone.map = map_

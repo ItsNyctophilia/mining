@@ -100,6 +100,8 @@ class Drone(Zerg):
         if not (alive := self._health > 0):
             # If the drone times out before the action can be returned, this
             # may cause an issue
+            # TODO: Remove test print
+            print(f"{self.health=}")
             self._overlord.mark_drone_dead(self)
         return alive
 
@@ -115,7 +117,7 @@ class Drone(Zerg):
         capacity: int,
         moves: int,
         class_name: str,
-        drone_class: Optional[Type[T]] = None
+        drone_class: Optional[Type[T]] = None,
     ) -> Type[T]:
         """Create a custom drone class, with given stats.
 
@@ -183,6 +185,7 @@ class Drone(Zerg):
             f"Acting!ID: {id(self)} context: {context} path: {self.path} "
             f" traveled:{self._path_traveled}"
         )
+        print(f"{self}")
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set

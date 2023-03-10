@@ -28,22 +28,20 @@ class Map:
         None: 1,
     }
 
-    def __init__(self, density: "float") -> None:
+    def __init__(self, density: float) -> None:
         """Initialize a Map with a context object.
 
         Args:
             context (Context): The origin of the map.
         """
         self.density = density
-        self.minerals: Dict["Coordinate", Optional[int]] = {}
         # a set of the coords of minerals and drone id tasked to mining it
-        self.untasked_minerals: Set["Coordinate"] = set()
-        self._stored_tiles_: Dict["Coordinate", "Tile"] = {}
+        self.untasked_minerals: Set[Coordinate] = set()
+        self.tasked_minerals: Set[Coordinate] = set()
+        self._stored_tiles_: Dict[Coordinate, Tile] = {}
         self.scout_count = 0
 
-    def dijkstra(
-        self, start: "Coordinate", end: "Coordinate"
-    ) -> List["Coordinate"]:
+    def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
         """Apply Dijkstra's Algorithm to find path between points.
 
         Args:
@@ -95,7 +93,7 @@ class Map:
     def _add_to_path(
         self,
         node: Coordinate,
-        neighbors: Iterable["Coordinate"],
+        neighbors: Iterable[Coordinate],
         parents_map: Dict[Coordinate, Coordinate],
         pqueue: PriorityQueue[Tuple[int, Coordinate]],
     ) -> None:
@@ -129,7 +127,7 @@ class Map:
         print("Final path:", final_path)
         return final_path
 
-    def update_context(self, context: "Context") -> None:
+    def update_context(self, context: Context) -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -156,7 +154,7 @@ class Map:
                     neighbor_tile = Tile(neighbor_coordinate)
                     self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
-    def add_tile(self, tile: "Tile") -> None:
+    def add_tile(self, tile: Tile) -> None:
         """Add tile to map.
 
         Args:
@@ -164,11 +162,11 @@ class Map:
         """
         self._stored_tiles_[tile.coordinate] = tile
 
-    def _track_mineral(self, icon: "Icon", coordinate: "Coordinate") -> None:
-        if icon == Icon.MINERAL and not self.minerals.setdefault(coordinate):
+    def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
+        if icon == Icon.MINERAL and coordinate not in self.tasked_minerals:
             self.untasked_minerals.add(coordinate)
 
-    def task_miner(self, miner: "Drone") -> None:
+    def task_miner(self, miner: Drone) -> None:
         """Task the miner with mining an available mineral.
 
         The miner will have their path variable set, and the mineral they are
@@ -180,18 +178,19 @@ class Map:
         # TODO: Remove test print
         print(f"Untasked minerals: {self.untasked_minerals}")
         mineral = self.untasked_minerals.pop()
+        self.tasked_minerals.add(mineral)
         # TODO: Remove test print
         print(f"Mineral at {mineral} is being tasked")
         miner.path = self.dijkstra(self.origin, mineral)
 
     @overload
     def get(
-        self, key: Union["Tile", "Coordinate"], default: None
-    ) -> Optional["Tile"]:
+        self, key: Union[Tile, Coordinate], default: None
+    ) -> Optional[Tile]:
         pass
 
     @overload
-    def get(self, key: Union["Tile", "Coordinate"], default: "Tile") -> "Tile":
+    def get(self, key: Union[Tile, Coordinate], default: Tile) -> Tile:
         pass
 
     def get(self, key, default):
@@ -213,7 +212,7 @@ class Map:
         except KeyError:
             return default
 
-    def get_unexplored_tiles(self) -> List["Tile"]:
+    def get_unexplored_tiles(self) -> List[Tile]:
         """Return a list of all unexplored tiles on the map.
 
         Returns:
@@ -225,7 +224,7 @@ class Map:
             if not tile.discovered
         ]
 
-    def __getitem__(self, key: Union["Tile", "Coordinate"]) -> "Tile":
+    def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
         """Get the tile with the specified coordinates from the map.
 
         A Tile or Coordinate object may be passed in as the key; if a Tile is

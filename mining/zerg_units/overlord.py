@@ -103,7 +103,7 @@ class Overlord(Zerg):
         """
         # TODO: maybe pass in map id instead of drone id
         if (map_id := self._deployed[drone_id]) is not None:
-            self._maps[map_id].minerals.pop(coord, None)
+            self._maps[map_id].tasked_minerals.remove(coord)
 
     def _select_map(self) -> int:
         """Select the map to deploy a scout to.

@@ -216,7 +216,9 @@ class Overlord(Zerg):
         while not self._update_queue.empty():
             map_id, drone, drone_context = self._update_queue.get()
             zerg_coord = Coordinate(drone_context.x, drone_context.y)
-            drone_positions.append((map_id, zerg_coord))
+            drone_positions.append(
+                {"map_id": map_id, "coord": zerg_coord, "icon": drone.icon}
+            )
             self._maps[map_id].update_context(drone_context)
             if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
                 self._set_drone_path(drone, drone_context)

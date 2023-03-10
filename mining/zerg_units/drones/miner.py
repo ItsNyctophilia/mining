@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from mining.utils import Icon
+
 from .drone import Drone, State
 
 if TYPE_CHECKING:
@@ -27,6 +29,11 @@ class MinerDrone(Drone):
         """
         super().__init__(overlord)
         self._mineral_location: Optional["Coordinate"] = None
+
+    @property
+    def icon(self) -> Icon:
+        """The icon of this drone type."""
+        return Icon.MINER
 
     @Drone.path.setter
     def path(self, new_path: List["Coordinate"]) -> None:

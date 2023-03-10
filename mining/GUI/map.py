@@ -56,12 +56,12 @@ class GUI_Map(tkinter.Toplevel):
         ):
             self.log.insert(f"{item_counter}.end", f"{key} => {unicode}")
 
-    def update(self, drone_coords) -> None:
+    def update(self, zerg_on_map) -> None:
         """Update GUI Map with any updated coordinates."""
         for tile in self.physical_map._stored_tiles_.values():
             self.translate_tile(tile)
-        for coord in drone_coords:
-            zerg_tile = Tile(coord, Icon.ZERG)
+        for drone_info in zerg_on_map:
+            zerg_tile = Tile(drone_info["coord"], drone_info["icon"])
             self.translate_tile(zerg_tile)
 
     def translate_tile(self, new_tile: "Tile") -> None:

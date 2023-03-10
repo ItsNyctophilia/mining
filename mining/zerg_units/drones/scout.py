@@ -28,6 +28,11 @@ class ScoutDrone(Drone):
         """
         super().__init__(overlord)
 
+    @property
+    def icon(self) -> Icon:
+        """The icon of this drone type."""
+        return Icon.SCOUT
+
     def action(self, context: Context) -> str:
         """Perform some action, based on the type of drone.
 

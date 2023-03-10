@@ -79,7 +79,7 @@ class Dashboard(tkinter.Toplevel):
     def create_map_gui(self, physical_map: Map) -> None:
         """Create a GUI for every map that the overlord has."""
         self.map_count += 1
-        new_map = GUI_Map(self, f"{physical_map.map_id}", physical_map)
+        new_map = GUI_Map(self, f"Map {physical_map.map_id}", physical_map)
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = physical_map
 

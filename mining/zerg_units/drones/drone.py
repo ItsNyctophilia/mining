@@ -42,6 +42,14 @@ class Drone(Zerg):
         """
         return self.max_capacity
 
+    def reset_minerals(self) -> None:
+        """Reset all minerals this drone may be carrying.
+
+        This should only be called by the overlord after the drone has be
+        retrieved from the map.
+        """
+        self._capacity = 0
+
     @property
     def moves(self) -> int:
         """The max moves this drone can take in 1 tick.

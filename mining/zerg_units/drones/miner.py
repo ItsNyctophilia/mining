@@ -76,9 +76,14 @@ class MinerDrone(Drone):
             # TODO: Remove test print
             print(f"Mining mineral at {self._mineral_location}")
             return self._mineral_direction.upper()
+        self._deplete_mineral()
+        return super().action(context)
+
+    def _deplete_mineral(self):
+        self._overlord.del_mineral(self._mineral_location, id(self))
+        self._mineral_location = None
         super(type(self), type(self)).path.fset(self, self._path_traveled)
         self.state = State.TRAVELING
-        return super().action(context)
 
     def _finish_traveling(self):
         # set state to working if miner tasked with a mineral

@@ -108,7 +108,7 @@ class Overlord(Zerg):
         """
         # TODO: maybe pass in map id instead of drone id
         if (map_id := self._deployed[drone_id]) is not None:
-            del self._maps[map_id].minerals[coord]
+            self._maps[map_id].minerals.pop(coord, None)
 
     def _select_map(self) -> int:
         """Select the map to deploy a scout to.
@@ -228,16 +228,19 @@ class Overlord(Zerg):
         self.dashboard.update_maps(drone_positions)
 
     def _recall_drones(self) -> str:
-        if not self._pickup_queue.empty():
-            map_, drone = self._pickup_queue.get()
-            if isinstance(drone, ScoutDrone):
-                map_.scout_count -= 1
-            self._idle_drones[type(drone)].add(drone)
-            action = f"{self.RETURN} {id(drone)}"
-            # TODO: Remove test print
-            print(action)
-            return action
-        return ""
+        if self._pickup_queue.empty():
+            return ""
+
+        map_, drone = self._pickup_queue.get()
+        # TODO: have map track all drones, make this a generic counter
+        if isinstance(drone, ScoutDrone):
+            map_.scout_count -= 1
+        self._idle_drones[type(drone)].add(drone)
+        drone.reset_minerals()
+        action = f"{self.RETURN} {id(drone)}"
+        # TODO: Remove test print
+        print(action)
+        return action
 
     def _deploy_miners(self) -> str:
         for map_id, map_ in self._maps.items():
@@ -250,11 +253,12 @@ class Overlord(Zerg):
         return ""
 
     def _deploy_scouts(self) -> str:
-        if self._idle_drones[ScoutDrone]:
-            scout = self._idle_drones[ScoutDrone].pop()
-            map_id = self._select_map()
-            return self._deploy_drone(map_id, scout)
-        return ""
+        if not self._idle_drones[ScoutDrone]:
+            return ""
+
+        scout = self._idle_drones[ScoutDrone].pop()
+        map_id = self._select_map()
+        return self._deploy_drone(map_id, scout)
 
     def _deploy_drone(self, map_id: int, drone: "Drone") -> str:
         drone_id = id(drone)

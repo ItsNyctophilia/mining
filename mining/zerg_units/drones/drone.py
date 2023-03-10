@@ -7,6 +7,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, TypeVar
 
 from mining.utils import Coordinate, Directions, Icon
+from mining.utils.map import Map
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ class Drone(Zerg):
         self._path_traveled: List["Coordinate"] = []
         self._steps = 0
         self.state = State.WAITING
+        self.map: Optional[Map]
 
     @property
     def capacity(self) -> int:
@@ -198,7 +200,6 @@ class Drone(Zerg):
 
         Args:
             curr (Coordinate): The drone's current location.
-            path (List[Coordinate]): The path the drone should follow.
 
         Returns:
             Coordinate: The intended next destination of the drone.

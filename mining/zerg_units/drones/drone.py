@@ -305,11 +305,13 @@ class Drone(Zerg):
             f"{self.path=})"
         )
 
-    def log_creation(self) -> None:
+    def log_creation(self, message: str) -> None:
         """Log the creation of a drone.
 
         Logging is stored in a special file in the current directory.
         https://www.geeksforgeeks.org/logging-in-python/
+        arguments:
+            message (str) : message that will display in the log.
         """
         # Create and configure logger
         logging.basicConfig(
@@ -325,7 +327,8 @@ class Drone(Zerg):
         logger.setLevel(logging.DEBUG)
         drone_id = id(self)
         drone_type = type(self).__name__
-        logger.info(f"{drone_type} {drone_id} has been created")
+        #Scoutdrone id has been created
+        logger.info(f"{drone_type} {drone_id} {message}")
 
 
 class State(Enum):

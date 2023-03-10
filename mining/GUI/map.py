@@ -45,13 +45,24 @@ class GUI_Map(tkinter.Toplevel):
         self.log.config(state="disabled")
 
     def insert_legend(self) -> None:
+        """
+        inserts a legend into a map
+        """
+        symbol_dict = {
+            "WALL" : "\u00A4",
+            "ACID" : "\u05e1",
+            "MINERAL" : "\u0275",
+            "DEPLOY ZONE" : "\u02c5",
+            "SCOUT" : "\u00A7",
+            "MINER" : "\u00A3",
+            }        
+        item_counter = 1
         self.log.insert('1.end', "MAP LEGEND")
-        self.log.insert('2.end', "WALL => \u00A4")
-        self.log.insert('3.end', "ACID => \u05e1")
-        self.log.insert('4.end', "MINERAL => \u0275")
-        self.log.insert('5.end', "DEPLOY ZONE => \u02c5")
-        self.log.insert('6.end', "SCOUT => \u00A7")
-        self.log.insert('7.end', "MINER => \u00A3")
+        for key, value in symbol_dict.items():
+            item_counter += 1
+            self.log.insert(f'{item_counter}.end', f'{key} => {value}')
+
+
     def update(self) -> None:
         """Update GUI Map with any updated coordinates."""
         for tile in self.physical_map._stored_tiles_.values():

@@ -131,7 +131,7 @@ class Dashboard(tkinter.Toplevel):
                 "",
                 "end",
                 text="Listbox",
-                values=(key, unicode),
+                values=(unicode, key),
             )
 
     def _prep_dashboard_trees(self) -> None:

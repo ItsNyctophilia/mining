@@ -29,7 +29,7 @@ class Overlord(Zerg):
         self,
         total_ticks: int,
         refined_minerals: int,
-        dashboard: "Dashboard",
+        dashboard: Dashboard,
     ) -> None:
         """Initialize the Overlord.
 
@@ -39,22 +39,18 @@ class Overlord(Zerg):
             dashboard (_type_, optional): The GUI dashboard. Defaults to None.
         """
         self.dashboard = dashboard
-        # self._drones: Dict[Type["Drone"], Dict[int, "Drone"]] = {
-        #     ScoutDrone: {},
-        #     MinerDrone: {},
-        # }
-        self.drones: Dict[int, "Drone"] = {}
+        self.drones: Dict[int, Drone] = {}
         # a drone id as key and drone as value
         self._deployed: Dict[int, Optional[int]] = {}
         # a drone id as key and map id as value
-        self._idle_drones: Dict[Type["Drone"], Set["Drone"]] = {}
+        self._idle_drones: Dict[Type[Drone], Set[Drone]] = {}
         self._update_queue: SimpleQueue[
-            Tuple[int, "Drone", "Context"]
+            Tuple[int, Drone, Context]
         ] = SimpleQueue()
         # a queue of map updates from zerg drones
         self._pickup_queue: SimpleQueue[Tuple[Map, Drone]] = SimpleQueue()
         # a queue of pick up requests from drones
-        self._maps: Dict[int, "Map"] = {}
+        self._maps: Dict[int, Map] = {}
         # a map id as key and Map as value
 
         for _ in range(3):
@@ -62,7 +58,7 @@ class Overlord(Zerg):
             self._create_drone(MinerDrone)
             self._create_drone(ScoutDrone)
 
-    def _create_drone(self, drone_type: Type["Drone"]) -> None:
+    def _create_drone(self, drone_type: Type[Drone]) -> None:
         """Create a new zerg drone of the specified drone type."""
         new_drone = drone_type(self)
         drone_id = id(new_drone)
@@ -71,7 +67,7 @@ class Overlord(Zerg):
         self._deployed[drone_id] = None
         self._idle_drones.setdefault(drone_type, set()).add(new_drone)
 
-    def mark_drone_dead(self, drone: "Drone") -> None:
+    def mark_drone_dead(self, drone: Drone) -> None:
         """Mark a drone as dead.
 
         Args:
@@ -79,7 +75,6 @@ class Overlord(Zerg):
         """
         drone_id = id(drone)
         if (map_id := self._deployed[drone_id]) is not None:
-            # del self._drones[type(drone)][drone_id]
             del self._deployed[drone_id]
             del self.drones[drone_id]
             if type(drone) == ScoutDrone:
@@ -99,7 +94,7 @@ class Overlord(Zerg):
         # TODO: Is this overwriting the drone table every time a map is added?
         self.dashboard.update_drone_table(self.drones.values())
 
-    def del_mineral(self, coord: "Coordinate", drone_id: int) -> None:
+    def del_mineral(self, coord: Coordinate, drone_id: int) -> None:
         """Remove a mineral from the set of known minerals.
 
         Args:
@@ -123,7 +118,7 @@ class Overlord(Zerg):
         map_.scout_count += 1
         return map_id
 
-    def enqueue_map_update(self, drone: "Drone", context: "Context") -> None:
+    def enqueue_map_update(self, drone: Drone, context: Context) -> None:
         """Enqueue a map update of the drone's location and its context.
 
         This method will register the update information to a queue that will
@@ -149,14 +144,14 @@ class Overlord(Zerg):
         if (map_id := self._deployed[id(drone)]) is not None:
             self._pickup_queue.put((self._maps[map_id], drone))
 
-    def _distance_sort(self, start: "Coordinate", end: "Coordinate"):
+    def _distance_sort(self, start: Coordinate, end: Coordinate):
         start_x, start_y = start
         end_x, end_y = end
         return (start_x - end_x) + (start_y - end_y)
 
     def _assign_scout_target(
-        self, map_id: int, start: "Coordinate"
-    ) -> List["Coordinate"]:
+        self, map_id: int, start: Coordinate
+    ) -> List[Coordinate]:
         current_map = self._maps[map_id]
         unexplored_tiles = current_map.get_unexplored_tiles()
         unexplored_tiles.sort(
@@ -165,10 +160,10 @@ class Overlord(Zerg):
         )
         for tile in unexplored_tiles:
             coord = tile.coordinate
-            neighbor_icons = [
+            neighbor_icons = (
                 current_map.get(coord, DEFAULT_TILE).icon
                 for coord in coord.cardinals()
-            ]
+            )
             if not any(
                 True
                 for icon in neighbor_icons

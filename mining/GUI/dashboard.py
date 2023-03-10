@@ -2,13 +2,19 @@
 
 Defines the attributes it has along with the methods that it uses.
 """
+from __future__ import annotations
+
 import tkinter
 from tkinter import ttk
-from typing import TYPE_CHECKING, Dict, Iterable
+from typing import TYPE_CHECKING
+
+from mining.utils.coordinate import Coordinate
 
 from .map import GUI_Map
 
 if TYPE_CHECKING:
+    from typing import Dict, Iterable, List, Tuple
+
     from mining.utils import Map
     from mining.zerg_units.drones import Drone
 
@@ -77,10 +83,19 @@ class Dashboard(tkinter.Toplevel):
         self.map_dict[new_map] = physical_map
         self.add_map_table(physical_map)
 
-    def update_maps(self) -> None:
-        """Update the GUI Map with what it's physical map contains."""
-        for gui_map in self.map_dict:
-            gui_map.update()
+    def update_maps(
+        self, drone_positions: List[Tuple[int, Coordinate]]
+    ) -> None:
+        """Update the GUI Map with what it's physical map contains.
+
+        Args:
+            drone_positions (List[Tuple[int, Coordinate]]): The positions.
+        """
+        for idx, gui_map in enumerate(self.map_dict):
+            zerg_on_map = [
+                drone[1] for drone in drone_positions if drone[0] == idx
+            ]
+            gui_map.update(zerg_on_map)
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.

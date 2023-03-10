@@ -59,7 +59,8 @@ class Map:
         path_found = False
         pqueue: PriorityQueue[Tuple[int, Coordinate]] = PriorityQueue()
         pqueue.put((0, start))
-        # counter to prevent infinite pathing
+        # This counter is to timeout after 500 iterations if no path
+        # can be found and loop does not exit.
         counter = 500
         while not pqueue.empty() and counter:
             _, node = pqueue.get()

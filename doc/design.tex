@@ -42,34 +42,34 @@
 
 
 \section{Project Summary}
-The program is designed to be an API which will help a developer in coding an actual program. This API will consist of Zerg overlords and Zerg Drones. The overlords will send drones out upon mining expeditions to collect and bring back minerals that the Zerg race need to survive. As these drones are deployed and explore the map they will suggest a route that is the best path to the minerals according to the drone's current knowledge of the map.
+This program is a package that will be imported by a user to implement the functionality of Zerg drones scouting for, mining, and retrieving minerals from several given tile maps in a certain amount of time and given a certain amount of starting minerals with which to create the drones. The Overlord will spend its time routing drones to their destination and ensuring collisions are resolved. The drones themselves are responsible for the physical actions of scouting, harvesting minerals, and being retrieved by returning to the drop zone.
 \section{Features Targeted}
 \subsection{Map}
-The program will be able to read maps, that will have certain mineral densities. These mineral densities will detail to the zerg overlord, How much minerals there are overall in the map. These maps will also have hazards to the drones such as walls and puddles of acids.
+The program will be able to read maps, that will have certain mineral densities. These mineral densities will detail to the Zerg Overlord how many minerals there are on the map. The maps will also have hazards such as walls and pools of acid.
 \subsection{Drones}
-Drones in this program will explore the maps and collect minerals on the behalf of the overlord. While exploring the map after being deployed they will endure hazards such as acid and puddles and will return not only minerals to the Zerg Overlord that they work for but also the next desired position based off knowledge they currently hold of the map.
+Drones in this program will explore the maps and collect minerals on the behalf of the overlord. While exploring the map, after being deployed, they will endure hazards such as pools of acid and will return minerals to the Zerg Overlord as well as update the Overlord's internal maps with the discovered terrain data.
 \subsection{Overlord}
-The Overlord will handle the movement of drones, from deployment into the map, movement around the map and return from the map. Based off knowledge returned from the drones, the overlord will make the decision they seem best. If the Overlord does not make their decision within one second(they are on a tight schedule) their move will be skipped.
+The Overlord will handle the movement of drones from deployment onto the map, movement around it, and eventually retrieval. Based off context relayed by the drones, the overlord will make pathfinding decisions. If the Overlord does not make their decision within one second, (they are on a tight schedule), their move will be skipped.
 \newpage
 \subsection{Refined Mineral}
-Refined minerals are what the entire program will revolve around. The drones will collect refined minerals for the Overlord and refined minerals will be used in the production of not only normal drones but other classes of drones as well. For every 10 points of health a drone will have it will cost 1 refined mineral. For every 5 units of capacity the drone will have it will cost 1 mineral. For every 1 move that the drone will have it will cost 3 minerals.
+Refined minerals are what the entire program will revolve around. The Overlord starts with a number of minerals to use to construct drones and then must harvest as many minerals as possible from each map. Every 10 points of health will cost 1 mineral, every 5 points of mineral capacity will cost 1 mineral, and every move per tick will cost 3 minerals. These three statistics make up a drone, where no stat can be zero.
 \subsection{Dashboard}
-The dashboard will be what the user uses to see the full context of the map, It will display the map with specific items representing hazards among other things that may prove beneficial for the overlord. A "\#" symbol represents a wall, a "\_" represents a deployment zone and "*" represents minerals. These representations will be among others detailed in the map description page of the rubric.
+The dashboard will be what the user uses to see the full context of the map, It will display the map with specific items representing hazards among other things that may prove beneficial for the overlord. A "\#" symbol represents a wall, a "\_" represents a deployment zone and "*" represents minerals.
 \subsection{Path Finding Algorithm}
 A path finding algorithm will be needed to best find a way to reach specific minerals in a map. This will most likely be Dijkstra's algorithm, however if we find implementation easier then thought then we can implement A* algorithm. This will require heavy testing as it will serve as the foundation of the program.
 \subsection{Map Context}
-The map context is what the drone object will return to the overlord at the end of a tick. This will show what is at either direction of the drone and where the drone currently is on the map with an X and Y coordinate.
+The map context is what the drone object will return to the overlord at the end of each tick. This will show what is at the tiles in the four cardinal directions from the drone and where the drone currently is on the map with an X and Y coordinate.
 \newpage
 \section{Architecture}
 \subsection{Data}
-The file will read in the files initially as a string. Their will be a Zerg parent class. The Overlord class and the Drone class will inherit from that Zerg parent class. There will also be a dashboard class that will be responsible for drone movements and their surroundings. This class will be present in the GUI.
+There will be a Zerg parent class, likely an abstract base class. The Overlord class and the Drone class will inherit from that Zerg parent class. There will also be a Dashboard class that will be responsible for displaying drone movements and their surroundings. This class will be present in the GUI.
 \section{Significant Functions}
 
 \begin{lstlisting}[basicstyle=\large]
 
-Overlord.build_drone(health, capacity, moves)
+Overlord._create_drone(drone_type)
 \end{lstlisting}
-\large{This method takes in a health integer, capacity integer and a moves integer as a parameter and builds a drone.}\\
+\large{This method takes in a drone type and creates a new drone of that specified type.}\\
 
 \begin{lstlisting}[basicstyle=\large]
 Overlord.add_map(map_id, summary)
@@ -81,9 +81,9 @@ Overlord.action(context)
 \large{This method takes a map context object as parameter and returns a value representing the action taken}\\
 \newpage
 \begin{lstlisting}[basicstyle=\large]
-Overlord.remove_drone(drone)
+Overlord.recall_drones()
 \end{lstlisting}
-\large{This function removes a drone from the game Overlord's inventory, usually when said drone is dead.}\\
+\large{Recalls drones back to the overlord}\\
 
 \begin{lstlisting}[basicstyle=\large]
 drone.action(context)
@@ -93,22 +93,22 @@ drone.action(context)
 \begin{lstlisting}[basicstyle=\large]
 drone.steps()
 \end{lstlisting}
-\large{returns cumulative steps a drone has taken since deployment.}\\
+\large{Returns cumulative steps a drone has taken since deployment.}\\
 
 \begin{lstlisting}[basicstyle=\large]
 drone.get_init_cost()
 \end{lstlisting}
-\large{returns the cost in minerals needed for a drone to be built}\\
+\large{Returns the cost in minerals needed for a drone to be built}\\
 
 \begin{lstlisting}[basicstyle=\large]
-Overlord.return_drone(drone)
+Overlord._del_minerals(coord, drone_id)
 \end{lstlisting}
-\large{calls the drone to be returned to the overlord}\\
+\large{Remove a mineral from the set of known minerals}\\
 
 \begin{lstlisting}[basicstyle=\large]
-Menu.present()
+Overlord._select_map()
 \end{lstlisting}
-\large{presents a overall menu to the user}\\
+\large{Select the map to deploy the scout to.}\\
 
 \section{Order of features}
 \begin{enumerate}
@@ -128,5 +128,5 @@ Menu.present()
   \item final writeup.
 \end{enumerate}
 \section{User Interface}
-This program will use the CLI on the initial start up so the user can decide what maps the program will take. It will use a GUI to show what parts of the map the drones have discovered as well as what stats are being used during game play.
+This program uses a GUI to display information related to the moment-to-moment action, including drone statistics, a tile map for each map file, and a legend for that map.
 \end{document}

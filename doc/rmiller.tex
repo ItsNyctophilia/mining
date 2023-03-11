@@ -1,0 +1,34 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+
+\title{Writeup}
+\author{Raymone Miller}
+\date{March 2023}
+
+\begin{document}
+    \maketitle
+
+    \section*{Project Summary}
+        Write a mining package API that defines and Overlord, a Drone, 2
+    subclasses of Drone and a Dashboard GUI.
+
+    \section*{Challenges}
+        The largest issue I had with this project was with pathfinding.
+    Getting the zerg drones to move where I wanted them to go without
+    knowing what was already on the map was very vexing. Drones would
+    often collide with each other and I had no way to programmically
+    detect or prevent it.
+
+    \section*{Successes}
+        I was able to compartmentalize my code into appropriate sections.
+    I feel that my code for this project was very DRY.
+
+    \section*{Lessons Learned}
+        A lesson I learned on this project is that it is very important
+    to pay attention to design specifications. There was a detail about
+    acid tiles that I did not realize until the last moment, which messed
+    up the logic for a lot of my code.
+
+
+\end{document}

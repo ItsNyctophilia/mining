@@ -191,26 +191,24 @@ class Drone(Zerg):
             if current_tile.icon == Icon.ACID:
                 self.take_damage(3)  # Acid deals 3 damage
             current_tile._occupy(self)
+        if self.state == State.REVERSING:
+            self.state = self._old_state
+            self._swap_path()
         return result
 
     def _travel(self, context: Context):
         curr_tile = self.map[Coordinate(context.x, context.y)]
         dest = self._update_path(curr_tile)
-        # if (curr_map := self.map.get(dest, None)) is not None:
-        #     if curr_map.icon == Icon.WALL:
-        #         # Remove path and do not move if next move would be
-        #         # a wall.
-        #         self.path = []
-        #         return "CENTER"
-        adj_tiles = {Directions.NORTH.name: context.north,
-                     Directions.SOUTH.name: context.south,
-                     Directions.EAST.name: context.east,
-                     Directions.WEST.name: context.west}
+        adj_tiles = {
+            Directions.NORTH.name: context.north,
+            Directions.SOUTH.name: context.south,
+            Directions.EAST.name: context.east,
+            Directions.WEST.name: context.west,
+        }
         direction = self._choose_direction(curr_tile.coordinate, dest, context)
-        if direction in adj_tiles:
-            if adj_tiles[direction] == Icon.WALL.value:
-                self.path = []
-                direction = Directions.CENTER
+        if direction in adj_tiles and adj_tiles[direction] == Icon.WALL.value:
+            self.path = []
+            direction = Directions.CENTER.name
         return direction
 
     def _update_path(self, curr_tile: Tile) -> Coordinate:
@@ -230,8 +228,19 @@ class Drone(Zerg):
             # if false, currently at destination
             if self.path:
                 next_step = self.path[0]
-
         return next_step
+
+    def reverse_path(self) -> None:
+        """Temporarily reverse the drone's path, due to collisions."""
+        self._old_state = self.state
+        self.state = State.REVERSING
+        self._swap_path()
+
+    def _swap_path(self) -> None:
+        self._path_to_goal, self._path_traveled = (
+            self._path_traveled,
+            self._path_to_goal,
+        )
 
     def _handle_occupation(self, curr_tile: Tile) -> None:
         curr_tile.occupied_drone = self
@@ -359,6 +368,7 @@ class State(Enum):
     TRAVELING = auto()
     WORKING = auto()
     WAITING = auto()
+    REVERSING = auto()
 
 
 T = TypeVar("T", bound=Drone)

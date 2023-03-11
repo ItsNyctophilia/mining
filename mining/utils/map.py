@@ -57,8 +57,6 @@ class Map:
         path_found = False
         pqueue: PriorityQueue[Tuple[int, Coordinate]] = PriorityQueue()
         pqueue.put((0, start))
-        # This counter is to timeout after 500 iterations if no path
-        # can be found and loop does not exit.
         while not pqueue.empty():
             _, node = pqueue.get()
             if node in visited:
@@ -176,12 +174,8 @@ class Map:
         Args:
             miner (Drone): The miner to task.
         """
-        # TODO: Remove test print
-        print(f"Untasked minerals: {self.untasked_minerals}")
         mineral = self.untasked_minerals.pop()
         self.tasked_minerals.add(mineral)
-        # TODO: Remove test print
-        print(f"Mineral at {mineral} is being tasked")
         miner.path = self.dijkstra(self.origin, mineral)
 
     @overload

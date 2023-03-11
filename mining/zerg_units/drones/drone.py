@@ -1,4 +1,4 @@
-"""Parent class for all drone zerg units."""
+"""Contains the Drone class and the drone State class"""
 
 from __future__ import annotations
 
@@ -100,8 +100,6 @@ class Drone(Zerg):
         if not (alive := self._health > 0):
             # If the drone times out before the action can be returned, this
             # may cause an issue
-            # TODO: Remove test print
-            print(f"{self.health=}")
             self._overlord.mark_drone_dead(self)
         return alive
 
@@ -180,12 +178,6 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
-        # TODO: Remove test print
-        print(
-            f"Acting!ID: {id(self)} context: {context} path: {self.path} "
-            f" traveled:{self._path_traveled}"
-        )
-        print(f"{self}")
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set
@@ -193,6 +185,12 @@ class Drone(Zerg):
             result = self._travel(context)
         else:
             self._finish_traveling()
+        current_tile = self.map.get(Coordinate(context.x, context.y), None)
+        if current_tile is not None:
+            current_tile._unoccupy()
+            if current_tile.icon == Icon.ACID:
+                self.take_damage(3)  # Acid deals 3 damage
+            current_tile._occupy(self)
         return result
 
     def _travel(self, context: Context):
@@ -248,8 +246,6 @@ class Drone(Zerg):
         else:
             target = Icon(getattr(context, direction.lower()))
             self._handle_moving(target)
-        # TODO: Remove test print
-        print(f"Moving {direction}!")
         return direction
 
     def _handle_moving(self, target: Icon) -> None:
@@ -258,19 +254,14 @@ class Drone(Zerg):
         Args:
             target (Icon): The icon of the targeted tile.
         """
-        self.take_damage(target.health_cost())
         self._hit_mineral(target)
         if target.traversable():
             self._steps += 1
 
     def _hit_mineral(self, target: Icon) -> bool:
-        # TODO: Remove test print
-        print(f"Checking Tile {target} capacity: {self._capacity}...")
         if (
             is_mineral := (target == Icon.MINERAL.value)
         ) and self._capacity <= self.max_capacity:
-            # TODO: Remove test print
-            print("Target is a mineral!")
             self._capacity += 1
         return is_mineral
 
@@ -325,7 +316,8 @@ class Drone(Zerg):
 
         Logging is stored in a special file in the current directory.
         https://www.geeksforgeeks.org/logging-in-python/
-        arguments:
+
+        Args:
             message (str) : message that will display in the log.
         """
         # Create and configure logger
@@ -347,7 +339,7 @@ class Drone(Zerg):
 
 
 class State(Enum):
-    """Drone states."""
+    """States that a zerg Drone can be in."""
 
     TRAVELING = auto()
     WORKING = auto()

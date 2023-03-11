@@ -336,10 +336,11 @@ class Overlord(Zerg):
     def _deploy_miners(self) -> str:
         for map_ in self._maps.values():
             if map_.untasked_minerals and self._idle_drones[MinerDrone]:
+                if (origin := map_.get(map_.origin, None)) is not None:
+                    if origin.icon == Icon.ZERG:
+                        continue
                 miner = self._idle_drones[MinerDrone].pop()
                 map_.task_miner(miner)
-                # TODO: Remove test print
-                print("IDLE MINERS", self._idle_drones[MinerDrone])
                 return self._deploy_drone(map_, miner)
         return ""
 

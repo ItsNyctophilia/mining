@@ -51,7 +51,6 @@ class Map:
         Returns:
             list(Coordinate): Path in the form of a Coordinate list
         """
-        # TODO: dynamically assign acid weight
         visited: Set[Coordinate] = set()
         parents_map: Dict[Coordinate, Coordinate] = {}
         path_found = False
@@ -104,8 +103,7 @@ class Map:
                 # tile not pathable
                 continue
             parents_map[neighbor.coordinate] = node
-            pqueue.put((self.NODE_WEIGHTS[neighbor.icon],
-                        neighbor.coordinate))
+            pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
 
     def _build_final_path(
         self,
@@ -123,8 +121,6 @@ class Map:
                 break
         final_path.append(start)
         final_path = final_path[::-1]
-        # TODO: Remove test print
-        print("Final path:", final_path)
         return final_path
 
     def update_context(self, context: Context) -> None:
@@ -176,12 +172,8 @@ class Map:
         Args:
             miner (Drone): The miner to task.
         """
-        # TODO: Remove test print
-        print(f"Untasked minerals: {self.untasked_minerals}")
         mineral = self.untasked_minerals.pop()
         self.tasked_minerals.add(mineral)
-        # TODO: Remove test print
-        print(f"Mineral at {mineral} is being tasked")
         miner.path = self.dijkstra(self.origin, mineral)
 
     @overload

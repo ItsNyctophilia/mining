@@ -151,7 +151,6 @@ class Overlord(Zerg):
         drone_id = id(new_drone)
         self.drones[drone_id] = new_drone
         self._deployed[drone_id] = None
-        print(f"{drone_type} : {drone_type.__bases__[0]}")
         self._idle_drones.setdefault(drone_type.__bases__[0], set()).add(
             new_drone
         )
@@ -168,7 +167,6 @@ class Overlord(Zerg):
             del self.drones[drone_id]
             if isinstance(drone, ScoutDrone):
                 map_.scout_count -= 1
-            # TODO: if miner dies, untask a mineral it may have been working on
 
     def add_map(self, map_id: int, summary: float) -> None:
         """Register ID for map and summary of mineral density.
@@ -181,16 +179,6 @@ class Overlord(Zerg):
         self._maps[map_id] = physical_map
         self.dashboard.create_map_gui(physical_map)
         self.dashboard.update_drone_table(self.drones.values())
-
-    # TODO: deprecated method, remove
-    def del_mineral(self, coord: Coordinate, map_: Map) -> None:
-        """Remove a mineral from the set of known minerals.
-
-        Args:
-            coord (Coordinate): The coordinate of the mineral to delete.
-            map_ (Map): The map of the removed mineral.
-        """
-        map_.tasked_minerals.remove(coord)
 
     def _select_map(self) -> Map:
         """Select the map to deploy a scout to.
@@ -273,8 +261,6 @@ class Overlord(Zerg):
                 in [Icon.MINERAL, Icon.EMPTY, Icon.DEPLOY_ZONE, Icon.ACID]
             ):
                 continue
-            # TODO: Remove test print
-            print(f"Finding path from {start} to {tile.coordinate}")
             if path := map_.dijkstra(start, tile.coordinate):
                 return path
 
@@ -315,31 +301,24 @@ class Overlord(Zerg):
 
     def _update_map(self) -> None:
         """Update the Overlord's Dashboard with new Map data."""
-        moving_drones: List[Drone] = self._process_updates()
-        self._handle_collisions(moving_drones)
+        self._process_updates()
 
     def _recall_drones(self) -> str:
         if self._pickup_queue.empty():
             return ""
 
         map_, drone = self._pickup_queue.get()
-        # TODO: have map track all drones, make this a generic counter
         if isinstance(drone, ScoutDrone):
             map_.scout_count -= 1
         self._idle_drones[type(drone).__bases__[0]].add(drone)
         drone.reset_minerals()
-        action = f"{self.RETURN} {id(drone)}"
-        # TODO: Remove test print
-        print(action)
-        return action
+        return f"{self.RETURN} {id(drone)}"
 
     def _deploy_miners(self) -> str:
         for map_ in self._maps.values():
             if map_.untasked_minerals and self._idle_drones[MinerDrone]:
                 miner = self._idle_drones[MinerDrone].pop()
                 map_.task_miner(miner)
-                # TODO: Remove test print
-                print("IDLE MINERS", self._idle_drones[MinerDrone])
                 return self._deploy_drone(map_, miner)
         return ""
 
@@ -351,12 +330,10 @@ class Overlord(Zerg):
         map_ = self._select_map()
         return self._deploy_drone(map_, scout)
 
-    def _process_updates(self) -> List[Drone]:
+    def _process_updates(self) -> None:
         drone_positions = []
-        moving_drones: List[Drone] = []
         while not self._update_queue.empty():
             map_, drone, drone_context = self._update_queue.get()
-            moving_drones.append(drone)
             zerg_coord = Coordinate(drone_context.x, drone_context.y)
             drone_positions.append(
                 {
@@ -369,7 +346,6 @@ class Overlord(Zerg):
             if drone.state == State.WAITING and isinstance(drone, ScoutDrone):
                 self._set_drone_path(drone, drone_context)
         self.dashboard.update_maps(drone_positions)
-        return moving_drones
 
     def _detect_collisions(self, moving_drones: List[Drone]):
         for drone in moving_drones:
@@ -379,16 +355,8 @@ class Overlord(Zerg):
                     if other_drone.path[0] == next_step:
                         yield (drone, other_drone)
 
-    def _handle_collisions(self, moving_drones: List[Drone]) -> None:
-        for drone, other_drone in self._detect_collisions(moving_drones):
-            # TODO: Remove test print
-            print("Collision detected")
-
     def _deploy_drone(self, map_: Map, drone: Drone) -> str:
         drone_id = id(drone)
         self._deployed[drone_id] = map_
         drone.map = map_
-        action = f"{self.DEPLOY} {drone_id} {map_.map_id}"
-        # TODO: Remove test print
-        print(drone.__class__.__name__, action)
-        return action
+        return f"{self.DEPLOY} {drone_id} {map_.map_id}"

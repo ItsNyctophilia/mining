@@ -51,5 +51,4 @@ class Zerg(ABC):
         Returns:
             _type_: The string representation of this object.
         """
-        # TODO: Finish pretty printing
         return f"{self.__class__.__name__}"

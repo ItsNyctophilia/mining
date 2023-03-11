@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from queue import PriorityQueue as Queue
+from queue import PriorityQueue
 from typing import TYPE_CHECKING, overload
 
 from .coordinate import Coordinate
@@ -10,7 +10,7 @@ from .icon import Icon
 from .tile import Tile
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Set, Tuple, Union
+    from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
     from mining.zerg_units.drones import Drone
 
@@ -27,25 +27,23 @@ class Map:
         Icon.ACID: 10,
         None: 1,
     }
-    DEFAULT_TILE = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
 
-    def __init__(self, density: "float") -> None:
+    def __init__(self, map_id: int, density: float) -> None:
         """Initialize a Map with a context object.
 
         Args:
             context (Context): The origin of the map.
         """
+        self.map_id = map_id
         self.density = density
-        self.minerals: Dict["Coordinate", Optional[int]] = {}
         # a set of the coords of minerals and drone id tasked to mining it
-        self.untasked_minerals: Set["Coordinate"] = set()
-        self._stored_tiles_: Dict["Coordinate", "Tile"] = {}
+        self.untasked_minerals: Set[Coordinate] = set()
+        self.tasked_minerals: Set[Coordinate] = set()
+        self._stored_tiles_: Dict[Coordinate, Tile] = {}
         self.scout_count = 0
 
-    def dijkstra(
-        self, start: "Coordinate", end: "Coordinate"
-    ) -> List["Coordinate"]:
-        """Apply Dijkstra's Algorithm to find path between points.
+    def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
+        """Apply Dijkstra's Algorithm to find a path between two points.
 
         Args:
             start (Coordinate): The start point for the search
@@ -54,60 +52,82 @@ class Map:
             list(Coordinate): Path in the form of a Coordinate list
         """
         # TODO: dynamically assign acid weight
-        visited: Set["Coordinate"] = set()
-        parents_map: Dict["Coordinate", "Coordinate"] = {}
-        final_path: List["Coordinate"] = []
+        visited: Set[Coordinate] = set()
+        parents_map: Dict[Coordinate, Coordinate] = {}
         path_found = False
-        pqueue: Queue[Tuple[int, "Tile"]] = Queue()
-        pqueue.put((0, Tile(start)))
-        counter = 500
-        while not pqueue.empty() and counter:
-            _, tile = pqueue.get()
-            node = tile.coordinate
+        pqueue: PriorityQueue[Tuple[int, Coordinate]] = PriorityQueue()
+        pqueue.put((0, start))
+        # This counter is to timeout after 500 iterations if no path
+        # can be found and loop does not exit.
+        while not pqueue.empty():
+            _, node = pqueue.get()
             if node in visited:
                 continue
             if node == end:
                 path_found = True
                 break
-            node_neighbors = node.cardinals()
 
-            # default_tile = Tile(Coordinate(0, 0), Icon.UNREACHABLE)
-            # tiles = [self.get(neighbor, default_tile).icon
-            #          for neighbor in node_neighbors]
-            # are_tiles_valid = any(i in tiles for i in self.NODE_WEIGHTS)
-            # if not are_tiles_valid:
-            #     continue
-            if end in node_neighbors:
+            neighbors = node.cardinals()
+            if end in neighbors:
                 path_found = True
                 parents_map[end] = node
                 break
 
             visited.add(node)
-            for neighbor_coord in node_neighbors:
-                neighbor = self.get(neighbor_coord, None)
-                if neighbor is None or neighbor in visited:
-                    continue
-                if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
-                    continue
-                if neighbor.coordinate not in visited:
-                    parents_map[neighbor.coordinate] = node
-                pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor))
-            counter -= 1
-        if not path_found:
-            return []
+            neighbors_gen = (
+                neighbor for neighbor in neighbors if neighbor not in visited
+            )
+            self._add_to_path(
+                node,
+                neighbors_gen,
+                parents_map,
+                pqueue,
+            )
+        return (
+            self._build_final_path(start, end, parents_map)
+            if path_found
+            else []
+        )
 
+    def _add_to_path(
+        self,
+        node: Coordinate,
+        neighbors: Iterable[Coordinate],
+        parents_map: Dict[Coordinate, Coordinate],
+        pqueue: PriorityQueue[Tuple[int, Coordinate]],
+    ) -> None:
+        for neighbor_coord in neighbors:
+            if (neighbor := self.get(neighbor_coord, None)) is None:
+                # tile not in map
+                continue
+            if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
+                # tile not pathable
+                continue
+            parents_map[neighbor.coordinate] = node
+            pqueue.put((self.NODE_WEIGHTS[neighbor.icon],
+                        neighbor.coordinate))
+
+    def _build_final_path(
+        self,
+        start: Coordinate,
+        end: Coordinate,
+        parents_map: Dict[Coordinate, Coordinate],
+    ) -> list[Coordinate]:
         curr = end
+        final_path: List[Coordinate] = [end]
         while curr != start:
-            print("iteration")
             coord = parents_map[curr]
             final_path.append(coord)
             curr = coord
             if start in coord.cardinals():
                 break
-        print(final_path)
-        return final_path[::-1]
+        final_path.append(start)
+        final_path = final_path[::-1]
+        # TODO: Remove test print
+        print("Final path:", final_path)
+        return final_path
 
-    def update_context(self, context: "Context") -> None:
+    def update_context(self, context: Context) -> None:
         """Update the adjacency list for the Map with a context object.
 
         Arguments:
@@ -134,7 +154,7 @@ class Map:
                     neighbor_tile = Tile(neighbor_coordinate)
                     self._stored_tiles_[neighbor_coordinate] = neighbor_tile
 
-    def add_tile(self, tile: "Tile") -> None:
+    def add_tile(self, tile: Tile) -> None:
         """Add tile to map.
 
         Args:
@@ -142,30 +162,36 @@ class Map:
         """
         self._stored_tiles_[tile.coordinate] = tile
 
-    def _track_mineral(self, icon: "Icon", coordinate: "Coordinate") -> None:
-        if icon == Icon.MINERAL and not self.minerals.setdefault(coordinate):
+    def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
+        if icon == Icon.MINERAL and coordinate not in self.tasked_minerals:
             self.untasked_minerals.add(coordinate)
 
-    def task_miner(self, miner: "Drone") -> None:
+    def task_miner(self, miner: Drone) -> None:
         """Task the miner with mining an available mineral.
 
-        The miner will have their path variable set, and the mineral they are
-        tasked with will be removed from the untasked_minerals set.
+        The miner will have their path variable set, and the mineral
+        they are tasked with will be removed from the untasked_minerals
+        set.
 
         Args:
             miner (Drone): The miner to task.
         """
+        # TODO: Remove test print
+        print(f"Untasked minerals: {self.untasked_minerals}")
         mineral = self.untasked_minerals.pop()
+        self.tasked_minerals.add(mineral)
+        # TODO: Remove test print
+        print(f"Mineral at {mineral} is being tasked")
         miner.path = self.dijkstra(self.origin, mineral)
 
     @overload
     def get(
-        self, key: Union["Tile", "Coordinate"], default: None
-    ) -> Optional["Tile"]:
+        self, key: Union[Tile, Coordinate], default: None
+    ) -> Optional[Tile]:
         pass
 
     @overload
-    def get(self, key: Union["Tile", "Coordinate"], default: "Tile") -> "Tile":
+    def get(self, key: Union[Tile, Coordinate], default: Tile) -> Tile:
         pass
 
     def get(self, key, default):
@@ -187,7 +213,7 @@ class Map:
         except KeyError:
             return default
 
-    def get_unexplored_tiles(self) -> List["Tile"]:
+    def get_unexplored_tiles(self) -> List[Tile]:
         """Return a list of all unexplored tiles on the map.
 
         Returns:
@@ -199,7 +225,7 @@ class Map:
             if not tile.discovered
         ]
 
-    def __getitem__(self, key: Union["Tile", "Coordinate"]) -> "Tile":
+    def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
         """Get the tile with the specified coordinates from the map.
 
         A Tile or Coordinate object may be passed in as the key; if a Tile is

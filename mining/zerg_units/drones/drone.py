@@ -1,14 +1,12 @@
-"""Parent class for all drone zerg units."""
+"""Contains the Drone class and the drone State class"""
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from enum import Enum, auto
 from typing import TYPE_CHECKING, TypeVar
 
-# TODO: Remove Icon import once better implementation added
-from mining.utils import Coordinate, Directions, Icon
+from mining.utils import Coordinate, Directions, Icon, Map, Tile
 from mining.zerg_units.zerg import Zerg
 
 if TYPE_CHECKING:
@@ -25,7 +23,7 @@ class Drone(Zerg):
     max_capacity = 10
     max_moves = 1
 
-    def __init__(self, overlord: "Overlord") -> None:
+    def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
@@ -34,6 +32,8 @@ class Drone(Zerg):
         self._path_traveled: List["Coordinate"] = []
         self._steps = 0
         self.state = State.WAITING
+        self.map: Optional[Map]
+        self._previous_tile: Optional[Tile] = None
 
     @property
     def capacity(self) -> int:
@@ -43,6 +43,14 @@ class Drone(Zerg):
             int: The max capacity.
         """
         return self.max_capacity
+
+    def reset_minerals(self) -> None:
+        """Reset all minerals this drone may be carrying.
+
+        This should only be called by the overlord after the drone has be
+        retrieved from the map.
+        """
+        self._capacity = 0
 
     @property
     def moves(self) -> int:
@@ -63,14 +71,14 @@ class Drone(Zerg):
         return self._path_to_goal
 
     @path.setter
-    def path(self, new_path: List["Coordinate"]) -> None:
+    def path(self, new_path: List[Coordinate]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)
         self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
     @property
-    def dest(self) -> Optional["Coordinate"]:
+    def dest(self) -> Optional[Coordinate]:
         """The coordinates of the current intended destination of this drone.
 
         This value will automatically be set when the path is updated.
@@ -95,12 +103,18 @@ class Drone(Zerg):
             self._overlord.mark_drone_dead(self)
         return alive
 
+    @property
+    def icon(self) -> Icon:
+        """The icon of this drone type."""
+        raise NotImplementedError("Drone subtypes must implement icon")
+
     @classmethod
     def drone_blueprint(
         cls,
         health: int,
         capacity: int,
         moves: int,
+        class_name: str,
         drone_class: Optional[Type[T]] = None,
     ) -> Type[T]:
         """Create a custom drone class, with given stats.
@@ -112,6 +126,7 @@ class Drone(Zerg):
             health (int): The drone's maximum health.
             capacity (int): The drone's maximum mineral capacity.
             moves (int): The drone's maximum move's per tick.
+            class_name (str): The custom class' name.
             drone_class (Type[Drone]): The type the custom class will
                 extend from.
 
@@ -122,7 +137,7 @@ class Drone(Zerg):
         if not drone_class:
             drone_class = cls  # type: ignore
         new_drone_type: Type[T] = type(
-            "CustomDrone",
+            class_name,
             (drone_class,),  # type: ignore
             {
                 "max_health": health,
@@ -154,7 +169,7 @@ class Drone(Zerg):
             + (cls.max_moves * 3)
         )
 
-    def action(self, context: "Context") -> str:
+    def action(self, context: Context) -> str:
         """Perform some action, based on the type of drone.
 
         Args:
@@ -163,10 +178,6 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone would like to move.
         """
-        print(
-            f"Acting! context: {context} path: {self.path} traveled: "
-            f"{self._path_traveled}"
-        )
         self._overlord.enqueue_map_update(self, context)
         result = Directions.CENTER.name
         # do not move if no path set
@@ -174,46 +185,71 @@ class Drone(Zerg):
             result = self._travel(context)
         else:
             self._finish_traveling()
+        current_tile = self.map.get(Coordinate(context.x, context.y), None)
+        if current_tile is not None:
+            current_tile._unoccupy()
+            if current_tile.icon == Icon.ACID:
+                self.take_damage(3)  # Acid deals 3 damage
+            current_tile._occupy(self)
+        if self.state == State.REVERSING:
+            self.state = self._old_state
+            self._swap_path()
         return result
 
-    def _travel(self, context):
-        current_location = Coordinate(context.x, context.y)
-        dest = self._update_path(current_location)
-        result = self._choose_direction(current_location, dest, context)
-        # TODO: Remove this code and the Icon import when
-        # better implementation is created
-        if map_id := self._overlord._deployed[id(self)]:
-            map_object = self._overlord._maps[map_id]
-            with contextlib.suppress(AttributeError):
-                if map_object[dest].icon == Icon.WALL:
-                    self.path = []
-                    self._finish_traveling()
-        return result
+    def _travel(self, context: Context):
+        curr_tile = self.map[Coordinate(context.x, context.y)]
+        dest = self._update_path(curr_tile)
+        adj_tiles = {
+            Directions.NORTH.name: context.north,
+            Directions.SOUTH.name: context.south,
+            Directions.EAST.name: context.east,
+            Directions.WEST.name: context.west,
+        }
+        direction = self._choose_direction(curr_tile.coordinate, dest, context)
+        if direction in adj_tiles and adj_tiles[direction] == Icon.WALL.value:
+            self.path = []
+            direction = Directions.CENTER.name
+        return direction
 
-    def _update_path(self, curr: "Coordinate") -> "Coordinate":
+    def _update_path(self, curr_tile: Tile) -> Coordinate:
         """Check if the current location is on the path, and remove if so.
 
         Args:
             curr (Coordinate): The drone's current location.
-            path (List[Coordinate]): The path the drone should follow.
 
         Returns:
             Coordinate: The intended next destination of the drone.
         """
-        dest = self.path[0]
+        next_step = self.path[0]
         # only pop if last action caused movement
-        if curr == dest:
+        if curr_tile.coordinate == next_step:
+            self._handle_occupation(curr_tile)
             self._path_traveled.insert(0, self.path.pop(0))
             # if false, currently at destination
             if self.path:
-                dest = self.path[0]
-            else:
-                print(f"Path clear! {self.path}")
+                next_step = self.path[0]
+        return next_step
 
-        return dest
+    def reverse_path(self) -> None:
+        """Temporarily reverse the drone's path, due to collisions."""
+        self._old_state = self.state
+        self.state = State.REVERSING
+        self._swap_path()
+
+    def _swap_path(self) -> None:
+        self._path_to_goal, self._path_traveled = (
+            self._path_traveled,
+            self._path_to_goal,
+        )
+
+    def _handle_occupation(self, curr_tile: Tile) -> None:
+        curr_tile.occupied_drone = self
+        if self._previous_tile:
+            self._previous_tile.occupied_drone = None
+        self._previous_tile = curr_tile
 
     def _choose_direction(
-        self, curr: "Coordinate", dest: "Coordinate", context: "Context"
+        self, curr: Coordinate, dest: Coordinate, context: Context
     ) -> str:
         """Choose which cardinal direction the drone should head.
 
@@ -228,29 +264,27 @@ class Drone(Zerg):
         Returns:
             str: The direction the drone should head to reach the destination.
         """
-        direction = curr.direction(dest)
-        target = Icon(getattr(context, direction, Icon.EMPTY))
-        if (direction := direction.upper()) == Directions.CENTER.name:
+        direction = curr.direction(dest).upper()
+        if direction == Directions.CENTER.name:
             self._finish_traveling()
         else:
+            target = Icon(getattr(context, direction.lower()))
             self._handle_moving(target)
-        print(f"Moving {direction}!")
         return direction
 
-    def _handle_moving(self, target: "Icon") -> None:
+    def _handle_moving(self, target: Icon) -> None:
         """Perform any necessary tasks that come with moving the drone.
 
         Args:
             target (Icon): The icon of the targeted tile.
         """
-        self.take_damage(target.health_cost())
         self._hit_mineral(target)
         if target.traversable():
             self._steps += 1
 
-    def _hit_mineral(self, target: "Icon") -> bool:
+    def _hit_mineral(self, target: Icon) -> bool:
         if (
-            is_mineral := (target == Icon.MINERAL)
+            is_mineral := (target == Icon.MINERAL.value)
         ) and self._capacity <= self.max_capacity:
             self._capacity += 1
         return is_mineral
@@ -301,15 +335,18 @@ class Drone(Zerg):
             f"{self.path=})"
         )
 
-    def log_creation(self) -> None:
+    def log_creation(self, message: str) -> None:
         """Log the creation of a drone.
 
         Logging is stored in a special file in the current directory.
         https://www.geeksforgeeks.org/logging-in-python/
+
+        Args:
+            message (str) : message that will display in the log.
         """
         # Create and configure logger
         logging.basicConfig(
-            filename="drone.log",
+            filename="mining/drone.log",
             format="%(asctime)s %(message)s",
             filemode="w",
         )
@@ -321,15 +358,17 @@ class Drone(Zerg):
         logger.setLevel(logging.DEBUG)
         drone_id = id(self)
         drone_type = type(self).__name__
-        logger.info(f"{drone_type} {drone_id} has been created")
+        # Scoutdrone id has been created
+        logger.info(f"{drone_type} {drone_id} {message}")
 
 
 class State(Enum):
-    """Drone states."""
+    """States that a zerg Drone can be in."""
 
     TRAVELING = auto()
     WORKING = auto()
     WAITING = auto()
+    REVERSING = auto()
 
 
 T = TypeVar("T", bound=Drone)

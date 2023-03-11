@@ -2,8 +2,10 @@
 import tkinter
 from typing import TYPE_CHECKING
 
+from mining.utils import Icon, Tile
+
 if TYPE_CHECKING:
-    from mining.utils import Map, Tile
+    from mining.utils import Map
 
 
 class GUI_Map(tkinter.Toplevel):
@@ -13,7 +15,9 @@ class GUI_Map(tkinter.Toplevel):
         parent (tkinter.Toplevel): Takes in a tkinter top level window
     """
 
-    def __init__(self, parent, title: str, physical_map: "Map") -> None:
+    def __init__(
+        self, parent: tkinter.Misc, title: str, physical_map: "Map"
+    ) -> None:
         """Initialize the GUI map.
 
         Args:
@@ -36,16 +40,20 @@ class GUI_Map(tkinter.Toplevel):
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
-        for x in range(200):
-            for y in range(200):
-                self.log.insert(f"{x}.{y}", "\u02FD")
-            self.log.insert(f"{x}.200", "\n")
+        for x in range(1, 76):
+            for y in range(1, 76):
+                self.log.insert(f"{x}.{y}", Icon.UNKNOWN.unicode())
+                self.log.insert(tkinter.END, "\n")
+
         self.log.config(state="disabled")
 
-    def update(self) -> None:
+    def update(self, zerg_on_map) -> None:
         """Update GUI Map with any updated coordinates."""
         for tile in self.physical_map._stored_tiles_.values():
             self.translate_tile(tile)
+        for drone_info in zerg_on_map:
+            zerg_tile = Tile(drone_info["coord"], drone_info["icon"])
+            self.translate_tile(zerg_tile)
 
     def translate_tile(self, new_tile: "Tile") -> None:
         """Write a tile object to the map.

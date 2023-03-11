@@ -2,13 +2,19 @@
 
 Defines the attributes it has along with the methods that it uses.
 """
+from __future__ import annotations
+
 import tkinter
 from tkinter import ttk
-from typing import TYPE_CHECKING, Dict, Iterable
+from typing import TYPE_CHECKING
+
+from mining.utils.icon import Icon
 
 from .map import GUI_Map
 
 if TYPE_CHECKING:
+    from typing import Any, Dict, Iterable, Mapping
+
     from mining.utils import Map
     from mining.zerg_units.drones import Drone
 
@@ -30,18 +36,17 @@ class Dashboard(tkinter.Toplevel):
 
         self.configure(bg="#2C292C")
         self.map_dict: Dict[GUI_Map, Map] = {}
-        self.map_count = 0
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
+        self.legend_insertion()
         self.title("Overlord's Dashboard")
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
-        Dashboards typically serve spreadsheets in the gui.
-
+        Dashboards typically serve as spreadsheets in the gui.
+        https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         Arguments:
             column_dictionary (Dict[str, int]): Contains dictionaries and
                 width values for each column.
@@ -69,18 +74,32 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def create_map_gui(self, physical_map: "Map") -> None:
-        """Create a GUI for every map that the overlord has."""
-        self.map_count += 1
-        new_map = GUI_Map(self, f"Map {self.map_count}", physical_map)
+    def create_map_gui(self, physical_map: Map) -> None:
+        """Create a GUI for every map that the overlord has.
+
+        Arguments:
+            physical_map (Map) : A map that will be loaded into the
+            object.
+        """
+        new_map = GUI_Map(self, f"Map {physical_map.map_id}", physical_map)
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = physical_map
-        self.add_map_table(physical_map)
 
-    def update_maps(self) -> None:
-        """Update the GUI Map with what it's physical map contains."""
-        for gui_map in self.map_dict:
-            gui_map.update()
+    def update_maps(
+        self, drone_positions: Iterable[Mapping[str, Any]]
+    ) -> None:
+        """Update the GUI Map with what it's physical map contains.
+
+        Args:
+            drone_positions (List[Tuple[int, Coordinate]]): The positions.
+        """
+        for idx, gui_map in enumerate(self.map_dict):
+            zerg_on_map = [
+                drone_info
+                for drone_info in drone_positions
+                if drone_info["map_id"] == idx
+            ]
+            gui_map.update(zerg_on_map)
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.
@@ -98,31 +117,44 @@ class Dashboard(tkinter.Toplevel):
             values=(tick, action),
         )
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
+    def legend_insertion(self) -> None:
+        """Prepare the legend in the dashboard."""
+        for item_counter, (key, unicode) in enumerate(
+            Icon.unicode_mappings().items(), start=2
+        ):
+            self.legend_tree.insert(
+                "",
+                "end",
+                text="Listbox",
+                values=(unicode, key),
+            )
+
     def _prep_dashboard_trees(self) -> None:
         """Prepare the three tree views in the dashboard."""
-        map_dict = {"Window Title": 180, "Map ID": 180}
+        # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
+        legend_labels = {"Map Symbol": 180, "Meaning": 180}
 
-        action_tree = {"Action": 180, "Tick": 180}
+        action_labels = {"Action": 180, "Tick": 180}
 
-        drone_tree = {
+        drone_labels = {
             "Drone ID": 180,
-            "Drone Type": 180,
-            "Health": 120,
-            "Capacity": 120,
-            "Moves": 120,
+            "Drone Type": 120,
+            "State": 120,
+            "Health": 90,
+            "Capacity": 90,
+            "Moves": 90,
         }
         padding = (20, 20)
-        self.map_tree = self._make_tree(map_dict)
-        self.map_tree.grid(row=0, column=0, padx=padding, pady=padding)
-        self.turn_tree = self._make_tree(action_tree)
+        self.legend_tree = self._make_tree(legend_labels)
+        self.legend_tree.grid(row=0, column=0, padx=padding, pady=padding)
+        self.turn_tree = self._make_tree(action_labels)
         self.turn_tree.grid(row=0, column=1, padx=padding, pady=padding)
-        self.drone_tree = self._make_tree(drone_tree)
+        self.drone_tree = self._make_tree(drone_labels)
         self.drone_tree.grid(
             row=1, column=0, columnspan=2, padx=padding, pady=padding
         )
 
-    def add_drone_to_tree(self, new_drone: "Drone") -> None:
+    def add_drone_to_tree(self, new_drone: Drone) -> None:
         """Add a drone to the drone tree in the gui.
 
         Arguments:
@@ -130,6 +162,7 @@ class Dashboard(tkinter.Toplevel):
                 the dashboard.
         """
         type_of_drone = type(new_drone).__name__
+        status_of_drone = new_drone.state.name
         self.drone_tree.insert(
             "",
             "end",
@@ -137,6 +170,7 @@ class Dashboard(tkinter.Toplevel):
             values=(
                 id(new_drone),
                 type_of_drone,
+                status_of_drone,
                 new_drone.health,
                 new_drone.capacity,
                 new_drone.moves,
@@ -162,16 +196,3 @@ class Dashboard(tkinter.Toplevel):
         self._clear_table(self.drone_tree)
         for entry in drone_dict:
             self.add_drone_to_tree(entry)
-
-    def add_map_table(self, new_map: "Map") -> None:
-        """Fill map table with new maps that come from a dictionary.
-
-        Arguments:
-            new_map (map) : The map that will have it's ID added to the table.
-        """
-        self.map_tree.insert(
-            "",
-            "end",
-            text="Listbox",
-            values=(f"Map {self.map_count}", id(new_map)),
-        )

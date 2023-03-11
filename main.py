@@ -4,9 +4,12 @@ from tkinter import Tk, mainloop
 
 from mining.GUI.dashboard import Dashboard
 from mining.utils.map import Map
+from mining.zerg_units.overlord import Overlord
 from mining.utils.tile import Tile
 from mining.utils.coordinate import Coordinate
 from mining.utils.icon import Icon
+from mining.zerg_units.drones.scout import ScoutDrone
+
 def file_read(file_name):
     new_map = Map()
     Tile_dict = {}
@@ -33,10 +36,8 @@ root = Tk()
 
 example = Dashboard(root)
 
+new_overlord = Overlord(example, 5, 10)
 
-cocopebbles = file_read("map03.txt")
-cocopebbles2 = file_read("map02.txt")
-example.create_map_gui(cocopebbles2)
-example.create_map_gui(cocopebbles)
-example.update_maps()
+new_drone = ScoutDrone(new_overlord)
+example.add_drone_to_tree(new_drone)
 mainloop()

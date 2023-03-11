@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from mining.utils import Icon
+
 from .drone import Drone, State
 
 if TYPE_CHECKING:
@@ -28,6 +30,11 @@ class MinerDrone(Drone):
         super().__init__(overlord)
         self._mineral_location: Optional["Coordinate"] = None
 
+    @property
+    def icon(self) -> Icon:
+        """The icon of this drone type."""
+        return Icon.MINER
+
     @Drone.path.setter
     def path(self, new_path: List["Coordinate"]) -> None:
         """Set the path this drone will take towards the tasked mineral."""
@@ -36,7 +43,7 @@ class MinerDrone(Drone):
         self._mineral_direction = new_path[-1].direction(
             self._mineral_location
         )
-        super(type(self), type(self)).path.fset(self, new_path)
+        Drone.path.fset(self, new_path)
 
     def action(self, context: "Context") -> str:
         # sourcery skip: assign-if-exp, reintroduce-else
@@ -54,6 +61,8 @@ class MinerDrone(Drone):
         Returns:
             str: The intended next destination of the drone.
         """
+        # TODO: Remove test print
+        print(f"Looking for mineral at {self._mineral_location}")
         result = super().action(context)
         if self.state == State.WORKING:
             return self._mine(context)
@@ -71,10 +80,18 @@ class MinerDrone(Drone):
         """
         dest_icon = getattr(context, self._mineral_direction)
         if self._hit_mineral(dest_icon):
+            # TODO: Remove test print
+            print(f"Mining mineral at {self._mineral_location}")
             return self._mineral_direction.upper()
-        super(type(self), type(self)).path.fset(self, self._path_traveled)
-        self.state = State.TRAVELING
+        self._deplete_mineral()
         return super().action(context)
+
+    def _deplete_mineral(self):
+        if self.map and self._mineral_location:
+            self.map.tasked_minerals.remove(self._mineral_location)
+            self._mineral_location = None
+            Drone.path.fset(self, self._path_traveled)
+            self.state = State.TRAVELING
 
     def _finish_traveling(self):
         # set state to working if miner tasked with a mineral

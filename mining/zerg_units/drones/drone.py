@@ -133,12 +133,11 @@ class Drone(Zerg):
         Returns:
             Type[Drone]: A custom drone class.
         """
-        # TODO: type hints still not working perfectly
         if not drone_class:
-            drone_class = cls  # type: ignore
+            drone_class = cls
         new_drone_type: Type[T] = type(
             class_name,
-            (drone_class,),  # type: ignore
+            (drone_class,),
             {
                 "max_health": health,
                 "max_capacity": capacity,
@@ -312,27 +311,12 @@ class Drone(Zerg):
         Returns:
             str: The string representation of this object.
         """
-        # TODO: Finish pretty printing
         base = super().__str__()
         return (
             f"{base} current health = {self.health}, "
             f"max capacity = {self.capacity}, moves per turn = {self.moves}, "
             f"current destination = {self.dest}, "
             f"Drone is {'' if self.state else 'not '}traveling"
-        )
-
-    def __repr__(self) -> str:
-        """Return a representation of this object.
-
-        The string returned by this method is not valid for a call to eval.
-
-        Returns:
-            str: The string representation of this object.
-        """
-        # TODO: Finish string representation
-        return (
-            f"Drone({self.health=}, {self.capacity=}, {self.moves=}, "
-            f"{self.path=})"
         )
 
     def log_creation(self, message: str) -> None:

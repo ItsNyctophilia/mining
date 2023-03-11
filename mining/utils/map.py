@@ -51,7 +51,6 @@ class Map:
         Returns:
             list(Coordinate): Path in the form of a Coordinate list
         """
-        # TODO: dynamically assign acid weight
         visited: Set[Coordinate] = set()
         parents_map: Dict[Coordinate, Coordinate] = {}
         path_found = False
@@ -102,8 +101,7 @@ class Map:
                 # tile not pathable
                 continue
             parents_map[neighbor.coordinate] = node
-            pqueue.put((self.NODE_WEIGHTS[neighbor.icon],
-                        neighbor.coordinate))
+            pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
 
     def _build_final_path(
         self,
@@ -121,8 +119,6 @@ class Map:
                 break
         final_path.append(start)
         final_path = final_path[::-1]
-        # TODO: Remove test print
-        print("Final path:", final_path)
         return final_path
 
     def update_context(self, context: Context) -> None:

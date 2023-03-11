@@ -346,7 +346,7 @@ class Drone(Zerg):
         """
         # Create and configure logger
         logging.basicConfig(
-            filename="drone.log",
+            filename="mining/drone.log",
             format="%(asctime)s %(message)s",
             filemode="w",
         )

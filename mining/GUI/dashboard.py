@@ -36,19 +36,17 @@ class Dashboard(tkinter.Toplevel):
 
         self.configure(bg="#2C292C")
         self.map_dict: Dict[GUI_Map, Map] = {}
-        self.map_count = 0
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
         self.legend_insertion()
         self.title("Overlord's Dashboard")
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
-        Dashboards typically serve spreadsheets in the gui.
-
+        Dashboards typically serve as spreadsheets in the gui.
+        https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         Arguments:
             column_dictionary (Dict[str, int]): Contains dictionaries and
                 width values for each column.
@@ -77,8 +75,12 @@ class Dashboard(tkinter.Toplevel):
         return tree_view
 
     def create_map_gui(self, physical_map: Map) -> None:
-        """Create a GUI for every map that the overlord has."""
-        self.map_count += 1
+        """Create a GUI for every map that the overlord has.
+
+        Arguments:
+            physical_map (Map) : A map that will be loaded into the
+            object.
+        """
         new_map = GUI_Map(self, f"Map {physical_map.map_id}", physical_map)
         new_map.prepare_GUI_map()
         self.map_dict[new_map] = physical_map
@@ -124,12 +126,12 @@ class Dashboard(tkinter.Toplevel):
                 "",
                 "end",
                 text="Listbox",
-                values=(key, unicode),
+                values=(unicode, key),
             )
 
-    # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
     def _prep_dashboard_trees(self) -> None:
         """Prepare the three tree views in the dashboard."""
+        # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         legend_labels = {"Map Symbol": 180, "Meaning": 180}
 
         action_labels = {"Action": 180, "Tick": 180}

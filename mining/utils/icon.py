@@ -47,7 +47,7 @@ class Icon(Enum):
             str: The icon as a unicode character.
         """
         return {
-            Icon.WALL: "\u00A4",
+            Icon.WALL: "\u039E",
             Icon.ACID: "\u05e1",
             Icon.SCOUT: "\u00A7",
             Icon.MINER: "\u00A3",
@@ -55,7 +55,7 @@ class Icon(Enum):
             Icon.ZERG: "\u017e",
             Icon.DEPLOY_ZONE: "\u02c5",
             Icon.EMPTY: " ",
-            Icon.UNKNOWN: "\u02FD",
+            Icon.UNKNOWN: "\u02D1",
         }[self]
 
     @classmethod

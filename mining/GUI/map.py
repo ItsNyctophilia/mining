@@ -40,13 +40,12 @@ class GUI_Map(tkinter.Toplevel):
     def prepare_GUI_map(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self.log.config(state="normal")
-        for x in range(76):
-            for y in range(76):
+        for x in range(1, 76):
+            for y in range(1, 76):
                 self.log.insert(f"{x}.{y}", Icon.UNKNOWN.unicode())
-            self.log.insert(tkinter.END, "\n")
+                self.log.insert(tkinter.END, "\n")
 
         self.log.config(state="disabled")
-
 
     def update(self, zerg_on_map) -> None:
         """Update GUI Map with any updated coordinates."""
